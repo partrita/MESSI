@@ -33,3 +33,6 @@ Results/
 Figure/
 .DS_Store
 /messi.local.json
+# pixi environments
+.pixi/*
+!.pixi/config.toml
