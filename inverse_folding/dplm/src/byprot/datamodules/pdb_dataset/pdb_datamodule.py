@@ -3,7 +3,6 @@
 
 """PDB data loader."""
 
-import functools as fn
 import logging
 import math
 import random
@@ -24,8 +23,6 @@ from byprot.datamodules import register_datamodule
 from byprot.datamodules.dataset.data_utils import MaxTokensBatchSampler
 from byprot.datamodules.pdb_dataset import utils as du
 
-from .utils import aatype_to_seq, seq_to_aatype
-
 log = utils.get_logger(__name__)
 
 
@@ -33,7 +30,6 @@ SHAPE_SCHEMA = dict(OF_CONFIG.data.common.feat)
 SHAPE_SCHEMA["chain_index"] = SHAPE_SCHEMA["residue_index"]
 SHAPE_SCHEMA["gvp_feat"] = SHAPE_SCHEMA["residue_index"]
 
-from textwrap import wrap
 
 struct_seq_to_ids = lambda struct_seq: [
     int(elem) for elem in struct_seq.strip().split(",")
@@ -104,7 +100,7 @@ class PdbDataModule(LightningDataModule):
                     else self.loader_cfg.prefetch_factor
                 ),
                 pin_memory=True,
-                persistent_workers=True if num_workers > 0 else False,
+                persistent_workers=num_workers > 0,
             )
         elif self.loader_cfg.get("bucket_sort"):
             if not hasattr(self, "train_batch_sampler"):
@@ -146,7 +142,7 @@ class PdbDataModule(LightningDataModule):
                     else self.loader_cfg.prefetch_factor
                 ),
                 pin_memory=True,
-                persistent_workers=True if num_workers > 0 else False,
+                persistent_workers=num_workers > 0,
                 collate_fn=self.collate_batch,
             )
 
@@ -554,7 +550,7 @@ class PdbDataset(Dataset):
                 )
                 modeled_mask = plddt > 70
                 processed_feats["atom_positions"][~modeled_mask] = np.nan
-            except Exception as e:
+            except Exception:  # noqa: BLE001
                 print(csv_row.pdb_name, csv_row["plddt"])
 
         processed_feats = PdbDataset.process_chain(

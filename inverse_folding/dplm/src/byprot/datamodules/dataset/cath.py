@@ -4,8 +4,8 @@
 
 import json
 import os
-from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from collections.abc import Callable, Sequence
+from typing import Any
 
 import esm
 import numpy as np
@@ -33,16 +33,16 @@ def CATH(
     verbose=False,
     filter_nan=False,
 ):
-    alphabet_set = set([a for a in alphabet])
-    split_paths = dict(
-        train=os.path.join(root, "train.json"),
-        valididation=os.path.join(root, "validation.json"),
-        test=os.path.join(root, "test.json"),
-    )
+    alphabet_set = {a for a in alphabet}
+    {
+        "train": os.path.join(root, "train.json"),
+        "valididation": os.path.join(root, "validation.json"),
+        "test": os.path.join(root, "test.json"),
+    }
 
     # if os.path.exists(split_paths['train']):
 
-    src_transform, tgt_transform = transforms
+    _src_transform, _tgt_transform = transforms
 
     discard_count = {"bad_chars": 0, "too_long": 0, "nan_coords": 0}
 
@@ -57,14 +57,14 @@ def CATH(
         #   seq: str. sequence of amino acids
         #   coords: Dict[str, List[1d-array]]). e.g., {"N": [[0, 0, 0], [0.1, 0.1, 0.1], ..], "Ca": [...], ..}
 
-        dataset: List[Dict] = []
+        dataset: list[dict] = []
 
         lines = f.readlines()
         for i, line in enumerate(lines):
             # if i > 300: break
             entry = json.loads(line)
             seq = entry["seq"]
-            name = entry["name"]
+            entry["name"]
 
             nan_detect = False
             # Convert raw coords to np arrays
@@ -80,7 +80,7 @@ def CATH(
                     continue
 
             # Check if in alphabet
-            bad_chars = set([s for s in seq]).difference(alphabet_set)
+            bad_chars = {s for s in seq}.difference(alphabet_set)
             if len(bad_chars) == 0:
                 if len(entry["seq"]) <= max_length:
                     dataset.append(entry)
@@ -91,7 +91,7 @@ def CATH(
                 discard_count["bad_chars"] += 1
 
             if verbose and (i + 1) % 100000 == 0:
-                print("{} entries ({} loaded)".format(len(dataset), i + 1))
+                print(f"{len(dataset)} entries ({i + 1} loaded)")
 
             # Truncate early
             if truncate is not None and len(dataset) == truncate:
@@ -141,7 +141,7 @@ def CATH(
 #   seq: str. sequence of amino acids
 #   coords: Dict[str, List[1d-array]]). e.g., {"N": [[0, 0, 0], [0.1, 0.1, 0.1], ..], "Ca": [...], ..}
 def collate_batch(
-    batch: List[Dict[str, Any]],
+    batch: list[dict[str, Any]],
     batch_converter,
     transform=None,
     atoms=("N", "CA", "C", "O"),
@@ -161,7 +161,7 @@ def collate_batch(
     (
         coords,
         confidence,
-        strs,
+        _strs,
         tokens,
         lengths,
         coord_mask,
@@ -200,7 +200,7 @@ class CoordBatchConverter(esm.data.BatchConverter):
         self.to_pifold_format = to_pifold_format
         self.coord_nan_to_zero = coord_nan_to_zero
 
-    def __call__(self, raw_batch: Sequence[Tuple[Sequence, str]], device=None):
+    def __call__(self, raw_batch: Sequence[tuple[Sequence, str]], device=None):
         """
         Args:
             raw_batch: List of tuples (coords, confidence, seq)
@@ -220,7 +220,7 @@ class CoordBatchConverter(esm.data.BatchConverter):
         for coords, confidence, seq in raw_batch:
             if confidence is None:
                 confidence = 1.0
-            if isinstance(confidence, float) or isinstance(confidence, int):
+            if isinstance(confidence, (float, int)):
                 confidence = [float(confidence)] * len(coords)
             if seq is None:
                 seq = "X" * len(coords)
@@ -305,12 +305,12 @@ class CoordBatchConverter(esm.data.BatchConverter):
         """
         if len(samples) == 0:
             return torch.Tensor()
-        if len(set(x.dim() for x in samples)) != 1:
+        if len({x.dim() for x in samples}) != 1:
             raise RuntimeError(
                 f"Samples has varying dimensions: {[x.dim() for x in samples]}"
             )
         (device,) = tuple(
-            set(x.device for x in samples)
+            {x.device for x in samples}
         )  # assumes all on same device
         max_shape = [max(lst) for lst in zip(*[x.shape for x in samples])]
         result = torch.empty(
@@ -335,7 +335,7 @@ def new_arange(x, *size):
     return torch.arange(size[-1], device=x.device).expand(*size).contiguous()
 
 
-class ToSabdabDataFormat(object):
+class ToSabdabDataFormat:
     def __init__(self, alphabet) -> None:
         self.alphabet_ori = alphabet
 
@@ -407,7 +407,7 @@ def ToPiFoldFormat(X, S, cfd, pad_special_tokens=False):
     return X, S, cfd_new
 
 
-class Featurizer(object):
+class Featurizer:
     def __init__(
         self,
         alphabet: Alphabet,
@@ -441,7 +441,7 @@ class Featurizer(object):
         (
             coords,
             confidence,
-            strs,
+            _strs,
             tokens,
             lengths,
             coord_mask,

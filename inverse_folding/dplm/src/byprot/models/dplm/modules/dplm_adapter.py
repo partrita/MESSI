@@ -5,22 +5,18 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
 
-import numpy as np
 import torch
-import torch.nn as nn
+from byprot import utils
+from byprot.models.dplm import DiffusionProteinLanguageModel
+from byprot.models.utils import NetConfig, get_net
 from omegaconf import OmegaConf
-from transformers import AutoConfig
+from torch import nn
 from transformers.models.esm.modeling_esm import (
     EsmAttention,
     EsmIntermediate,
     EsmOutput,
     EsmSelfAttention,
-    EsmSelfOutput,
 )
-
-from byprot import utils
-from byprot.models.dplm import DiffusionProteinLanguageModel
-from byprot.models.utils import NetConfig, get_net
 
 logger = utils.get_logger(__name__)
 

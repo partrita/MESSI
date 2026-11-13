@@ -20,15 +20,14 @@ from operator import add
 import numpy as np
 import torch
 
-from openfold.config import NUM_RES, NUM_EXTRA_SEQ, NUM_TEMPLATES, NUM_MSA_SEQ
+from openfold.config import NUM_EXTRA_SEQ, NUM_MSA_SEQ, NUM_RES, NUM_TEMPLATES
 from openfold.np import residue_constants as rc
-from openfold.utils.rigid_utils import Rotation, Rigid
+from openfold.utils.rigid_utils import Rigid, Rotation
 from openfold.utils.tensor_utils import (
-    tree_map,
-    tensor_tree_map,
     batched_gather,
+    tensor_tree_map,
+    tree_map,
 )
-
 
 MSA_FEATURE_NAMES = [
     "msa",
@@ -121,7 +120,7 @@ def correct_msa_restypes(protein):
                 20,
                 21,
                 22,
-            ], "num_dim for %s out of expected range: %s" % (k, num_dim)
+            ], f"num_dim for {k} out of expected range: {num_dim}"
             protein[k] = torch.dot(protein[k], perm_matrix[:num_dim, :num_dim])
     
     return protein
@@ -269,7 +268,7 @@ def block_delete_msa(protein, config):
     combined = torch.cat((torch.range(1, num_seq)[None], del_indices[None]))
     uniques, counts = combined.unique(return_counts=True)
     difference = uniques[counts == 1]
-    intersection = uniques[counts > 1]
+    uniques[counts > 1]
     keep_indices = torch.squeeze(difference, 0)
 
     for k in MSA_FEATURE_NAMES:
@@ -602,7 +601,7 @@ def make_atom14_masks(protein):
         atom_name_to_idx14 = {name: i for i, name in enumerate(atom_names)}
         restype_atom37_to_atom14.append(
             [
-                (atom_name_to_idx14[name] if name in atom_name_to_idx14 else 0)
+                (atom_name_to_idx14.get(name, 0))
                 for name in rc.atom_types
             ]
         )
@@ -875,7 +874,7 @@ def atom37_to_frames(protein, eps=1e-8):
         (*((1,) * batch_dims), 21, 8, 1, 1),
     )
 
-    for resname, _ in rc.residue_atom_renaming_swaps.items():
+    for resname in rc.residue_atom_renaming_swaps:
         restype = rc.restype_order[rc.restype_3to1[resname]]
         chi_idx = int(sum(rc.chi_angles_mask[restype]) - 1)
         restype_rigidgroup_is_ambiguous[..., restype, chi_idx + 4] = 1

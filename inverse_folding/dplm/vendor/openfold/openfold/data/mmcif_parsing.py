@@ -17,18 +17,16 @@
 import collections
 import dataclasses
 import io
-import json
 import logging
-import os
-from typing import Any, Mapping, Optional, Sequence, Tuple
+from collections.abc import Mapping, Sequence
+from typing import Any
 
+import numpy as np
 from Bio import PDB
 from Bio.Data import SCOPData
-import numpy as np
 
 from openfold.data.errors import MultipleChainsError
-import openfold.np.residue_constants as residue_constants
-
+from openfold.np import residue_constants
 
 # Type aliases:
 ChainId = str
@@ -68,7 +66,7 @@ class ResiduePosition:
 
 @dataclasses.dataclass(frozen=True)
 class ResidueAtPosition:
-    position: Optional[ResiduePosition]
+    position: ResiduePosition | None
     name: str
     is_missing: bool
     hetflag: str
@@ -110,8 +108,8 @@ class ParsingResult:
       errors: A dict mapping (file_id, chain_id) to any exception generated.
     """
 
-    mmcif_object: Optional[MmcifObject]
-    errors: Mapping[Tuple[str, str], Any]
+    mmcif_object: MmcifObject | None
+    errors: Mapping[tuple[str, str], Any]
 
 
 class ParseError(Exception):
@@ -143,8 +141,8 @@ def mmcif_loop_to_list(
             cols.append(key)
             data.append(value)
 
-    assert all([len(xs) == len(data[0]) for xs in data]), (
-        "mmCIF error: Not all loops are the same length: %s" % cols
+    assert all(len(xs) == len(data[0]) for xs in data), (
+        f"mmCIF error: Not all loops are the same length: {cols}"
     )
 
     return [dict(zip(cols, xs)) for xs in zip(*data)]
@@ -331,7 +329,7 @@ def _get_header(parsed_info: MmCIFDict) -> PdbHeader:
     if "_pdbx_audit_revision_history.revision_date" in parsed_info:
         header["release_date"] = get_release_date(parsed_info)
     else:
-        logging.warning(
+        logging.warning(  # noqa: LOG015
             "Could not determine release_date: %s", parsed_info["_entry.id"]
         )
 
@@ -346,7 +344,7 @@ def _get_header(parsed_info: MmCIFDict) -> PdbHeader:
                 raw_resolution = parsed_info[res_key][0]
                 header["resolution"] = float(raw_resolution)
             except ValueError:
-                logging.info(
+                logging.info(  # noqa: LOG015
                     "Invalid resolution format: %s", parsed_info[res_key]
                 )
 
@@ -414,10 +412,8 @@ def _get_protein_chains(
 
         # Reject polymers without any peptide-like components, such as DNA/RNA.
         if any(
-            [
-                "peptide" in chem_comps[monomer.id]["_chem_comp.type"]
+            "peptide" in chem_comps[monomer.id]["_chem_comp.type"]
                 for monomer in seq_info
-            ]
         ):
             for chain_id in chain_ids:
                 valid_chains[chain_id] = seq_info
@@ -433,7 +429,7 @@ def get_atom_coords(
     mmcif_object: MmcifObject, 
     chain_id: str, 
     _zero_center_positions: bool = False
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     # Locate the right chain
     chains = list(mmcif_object.structure.get_chains())
     relevant_chains = [c for c in chains if c.id == chain_id]
@@ -466,7 +462,7 @@ def get_atom_coords(
             for atom in res.get_atoms():
                 atom_name = atom.get_name()
                 x, y, z = atom.get_coord()
-                if atom_name in residue_constants.atom_order.keys():
+                if atom_name in residue_constants.atom_order:
                     pos[residue_constants.atom_order[atom_name]] = [x, y, z]
                     mask[residue_constants.atom_order[atom_name]] = 1.0
                 elif atom_name.upper() == "SE" and res.get_resname() == "MSE":

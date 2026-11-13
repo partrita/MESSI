@@ -6,14 +6,14 @@ from __future__ import annotations
 import argparse
 import json
 import math
-import os
 import subprocess
 import sys
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -26,7 +26,6 @@ from inverse_folding.evaluation.h_maps import (
     load_h_maps,
     sequence_md5,
 )
-
 
 CANONICAL_AA = set("ACDEFGHIKLMNPQRSTVWY")
 
@@ -327,8 +326,8 @@ def score_entry(
 def predict_with_batch_size(predictor: Any, sequence: str, window_batch_size: int) -> dict[str, Any]:
     """Run predictor while honoring ``--window-batch-size`` when possible."""
     if all(hasattr(predictor, attr) for attr in ("encode_sequence", "enumerate_and_score", "aggregate_hotspot_and_risk")):
-        min_k = int(getattr(predictor, "min_k"))
-        max_k = int(getattr(predictor, "max_k"))
+        min_k = int(predictor.min_k)
+        max_k = int(predictor.max_k)
         center_method = predictor.inference_cfg.get("hotspot_center_method", "median")
         clamp_method = predictor.inference_cfg.get("hotspot_clamp", "none")
         G, encode_debug = predictor.encode_sequence(sequence)

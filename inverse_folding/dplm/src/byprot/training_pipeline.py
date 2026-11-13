@@ -3,27 +3,20 @@
 
 
 import os
-from typing import List, Optional
 
 import hydra
-from lightning.pytorch.strategies import FSDPStrategy
 from omegaconf import DictConfig
 from pytorch_lightning import (
-    Callback,
-    LightningDataModule,
-    LightningModule,
     Trainer,
     seed_everything,
 )
-from pytorch_lightning.loggers import Logger as LightopenningLoggerBase
-from torch import nn
 
 from byprot import utils
 
 log = utils.get_logger(__name__)
 
 
-def train(config: DictConfig) -> Optional[float]:
+def train(config: DictConfig) -> float | None:
     """Contains the training pipeline. Can additionally evaluate model on a
     testset, using best weights achieved during training.
 
@@ -85,7 +78,7 @@ def train(config: DictConfig) -> Optional[float]:
     # Get metric score for hyperparameter optimization
     optimized_metric = config.get("optimized_metric")
     if optimized_metric and optimized_metric not in trainer.callback_metrics:
-        raise Exception(
+        raise Exception(  # noqa: TRY002
             "Metric for hyperparameter optimization not found! "
             "Make sure the `optimized_metric` in `hparams_search` config is correct!"
         )

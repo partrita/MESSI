@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -15,8 +14,8 @@ def args_for(tmp_path, *extra):
 
 
 def make_structure(tmp_path, suffix='.pdb', missing=False):
-    from Bio.PDB import Atom, Chain, Model, Residue, Structure, PDBIO, MMCIFIO
     import numpy as np
+    from Bio.PDB import MMCIFIO, PDBIO, Atom, Chain, Model, Residue, Structure
 
     structure = Structure.Structure('test')
     model = Model.Model(0)
@@ -52,15 +51,20 @@ def test_defaults_and_lightweight_help(tmp_path):
     assert args_for(tmp_path, '--reentry-offset', '5').reentry_offset == 5
     assert entry.allele_name('HLA-DRB1_15_01') == args.allele
     script = "import deimmunize,sys; assert 'torch' not in sys.modules; deimmunize.build_parser().parse_args(['--help'])"
-    result = subprocess.run([sys.executable, '-S', '-c', script], cwd=entry.ROOT, capture_output=True)
+    result = subprocess.run(
+        [sys.executable, '-S', '-c', script],
+        cwd=entry.ROOT, capture_output=True, check=False,
+    )
     assert result.returncode == 0
 
 
 def test_bundled_calibration_matches_frozen_official_values():
-    from scripts.materialize_v2_canary_config import head_config_hash
-    from inverse_folding.reference_flow.fusion_v2.schedule import load_band_table
     from inverse_folding.reference_flow.fusion_v2.config import (
-        PolicyCalibrationArtifact, policy_calibration_source_ref)
+        PolicyCalibrationArtifact,
+        policy_calibration_source_ref,
+    )
+    from inverse_folding.reference_flow.fusion_v2.schedule import load_band_table
+    from scripts.materialize_v2_canary_config import head_config_hash
     recipe = json.loads((entry.ROOT / 'examples/messi_official.json').read_text())
     for tag, expected in recipe['alleles'].items():
         load_band_table(entry.ROOT / f'examples/calibration/drb{tag}/global_B_r40.json')
@@ -158,9 +162,9 @@ def test_all_preflights_precede_gpu_and_dry_run_never_generates(tmp_path, monkey
     bundles = [tmp_path / str(i) for i in range(4)]
     for bundle in bundles:
         bundle.mkdir()
-        (bundle / 'run_manifest.json').write_text(json.dumps(dict(accepted_fragments=['ok'],
-            missing_proteins=[], rejected_fragments=[],
-            realized_caps=dict(within=True, breached=[], unverifiable=[]))))
+        (bundle / 'run_manifest.json').write_text(json.dumps({'accepted_fragments': ['ok'],
+            'missing_proteins': [], 'rejected_fragments': [],
+            'realized_caps': {'within': True, 'breached': [], 'unverifiable': []}}))
     def run(command, **kwargs):
         calls.append(command)
         return SimpleNamespace(returncode=2 if command == ['root2'] else 0)
@@ -203,6 +207,7 @@ def test_existing_output_and_missing_settings_refused_before_writes(tmp_path):
 
 def test_selector_output_is_not_padded(tmp_path, monkeypatch):
     import pandas as pd
+
     from scripts import materialize_v2_archive_facade as facade
 
     args = args_for(tmp_path)

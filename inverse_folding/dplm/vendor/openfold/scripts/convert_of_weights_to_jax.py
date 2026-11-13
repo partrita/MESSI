@@ -18,13 +18,11 @@ import argparse
 
 import numpy as np
 import torch
-
 from openfold.config import model_config
 from openfold.model.model import AlphaFold
 from openfold.utils.import_weights import (
-    Param, 
-    ParamType, 
-    generate_translation_dict, 
+    ParamType,
+    generate_translation_dict,
     process_translation_dict,
 )
 from openfold.utils.tensor_utils import tree_map

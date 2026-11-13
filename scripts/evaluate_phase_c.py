@@ -7,12 +7,11 @@ import argparse
 import hashlib
 import json
 import math
-import os
 import subprocess
 import sys
 import time
 from collections.abc import Mapping
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -20,12 +19,16 @@ import numpy as np
 import pandas as pd
 import yaml
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from inverse_folding.evaluation.immunogenicity import NMP_PEP_LENGTHS
+from inverse_folding.evaluation.refold import (
+    CACHE_READ_BACKENDS,
+    load_refold_model,
+    refold,
+)
 from inverse_folding.evaluation.schema import (
     IMMUNOGENICITY_HEAD_COLUMNS,
     IMMUNOGENICITY_NMP_COLUMNS,
@@ -36,9 +39,7 @@ from inverse_folding.evaluation.schema import (
     STRUCTURAL_V2_RESIDUE_COLUMNS,
     validate_dataframe,
 )
-from inverse_folding.evaluation.refold import CACHE_READ_BACKENDS, load_refold_model, refold
 from scripts.run_if_phase_c0 import _fmt_hms
-
 
 CANONICAL_AA = frozenset("ACDEFGHIKLMNPQRSTVWY")
 _NMP_WEAK_BINDER_THRESHOLD = 10.0
@@ -226,7 +227,7 @@ def build_run_id(args: argparse.Namespace) -> str:
         return str(args.run_id)
     from inverse_folding.reference_flow.runtime import safe_allele_tag
 
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     refold_tag = args.refold_model if args.mode in {"struct", "all"} else "na"
     return f"eval_{args.mode}_{refold_tag}_{safe_allele_tag(args.allele)}_{args.tag}_{stamp}"
 
@@ -263,15 +264,15 @@ def _validate_selection_authority(df: pd.DataFrame) -> None:
             f"{sorted(missing)}"
         )
     for row in df.itertuples(index=False):
-        status = getattr(row, "selection_status")
+        status = row.selection_status
         if not isinstance(status, str) or status not in _SELECTION_STATUSES:
             raise ValueError(f"invalid selection_status {status!r}")
-        terminal = getattr(row, "terminal_validated")
-        feasible = getattr(row, "structure_feasible")
+        terminal = row.terminal_validated
+        feasible = row.structure_feasible
         if not isinstance(terminal, (bool, np.bool_)):
-            raise ValueError("terminal_validated must be boolean selection authority")
+            raise ValueError("terminal_validated must be boolean selection authority")  # noqa: TRY004
         if not isinstance(feasible, (bool, np.bool_)):
-            raise ValueError("structure_feasible must be boolean selection authority")
+            raise ValueError("structure_feasible must be boolean selection authority")  # noqa: TRY004
         if status.endswith("feasible_immune_pareto") and not (terminal and feasible):
             raise ValueError(
                 "feasible_immune_pareto requires terminal_validated=true and "
@@ -282,7 +283,7 @@ def _validate_selection_authority(df: pd.DataFrame) -> None:
                 "structure_rejected_fallback requires terminal_validated=false and "
                 "structure_feasible=false"
             )
-        digest = getattr(row, "selection_provenance_digest")
+        digest = row.selection_provenance_digest
         if (
             not isinstance(digest, str)
             or len(digest) != 64
@@ -952,8 +953,8 @@ def build_manifest(
             else None
         ),
         "git_sha": git_sha(PROJECT_ROOT),
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "n_input_designs": int(len(generated_df)),
+        "timestamp": datetime.now(UTC).isoformat(),
+        "n_input_designs": len(generated_df),
         "n_rows_per_mode": rows_per_mode,
         "wall_seconds_per_mode": wall_seconds_per_mode,
     }
@@ -977,8 +978,9 @@ def probe_nmp_version(binary_path: str | Path | None) -> str | None:
             capture_output=True,
             text=True,
             timeout=10,
+            check=False,
         )
-        text = "\n".join([result.stdout.strip(), result.stderr.strip()]).strip()
+        text = f"{result.stdout.strip()}\n{result.stderr.strip()}".strip()
         for line in text.splitlines():
             candidate = line.strip()
             lowered = candidate.lower()
@@ -1335,7 +1337,7 @@ def _log_evaluation_distributions(wandb_run: Any, paths: dict[str, Path]) -> Non
             continue
         try:
             df = pd.read_parquet(parquet_path)
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001, S112
             continue
         for col in columns:
             if col not in df.columns:
@@ -1347,7 +1349,7 @@ def _log_evaluation_distributions(wandb_run: Any, paths: dict[str, Path]) -> Non
                 payload[f"distribution/{mode}/{col}"] = _wandb.Histogram(
                     series.to_numpy()
                 )
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001, S112
                 continue
             payload[f"summary/{mode}/{col}_mean"] = float(series.mean())
             payload[f"summary/{mode}/{col}_median"] = float(series.median())
@@ -1431,7 +1433,7 @@ def main(argv: list[str] | None = None) -> int:
             "test_set_parquet": str(Path(args.test_set_parquet).resolve()),
             "epitope_ckpt": str(Path(args.epitope_ckpt).resolve()) if args.epitope_ckpt else None,
             "epitope_variant_id": args.epitope_variant_id,
-            "n_input_designs": int(len(generated_df)),
+            "n_input_designs": len(generated_df),
             "fail_pct_threshold": args.fail_pct_threshold,
             "hotspot_threshold": args.hotspot_threshold,
             "strong_binder_threshold_pct": args.strong_binder_threshold,

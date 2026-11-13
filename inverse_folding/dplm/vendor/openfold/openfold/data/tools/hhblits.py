@@ -18,10 +18,10 @@ import glob
 import logging
 import os
 import subprocess
-from typing import Any, Mapping, Optional, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from openfold.data.tools import utils
-
 
 _HHBLITS_DEFAULT_P = 20
 _HHBLITS_DEFAULT_Z = 500
@@ -43,7 +43,7 @@ class HHBlits:
         maxfilt: int = 100_000,
         min_prefilter_hits: int = 1000,
         all_seqs: bool = False,
-        alt: Optional[int] = None,
+        alt: int | None = None,
         p: int = _HHBLITS_DEFAULT_P,
         z: int = _HHBLITS_DEFAULT_Z,
     ):
@@ -80,7 +80,7 @@ class HHBlits:
 
         for database_path in self.databases:
             if not glob.glob(database_path + "_*"):
-                logging.error(
+                logging.error(  # noqa: LOG015
                     "Could not find HHBlits database %s", database_path
                 )
                 raise ValueError(
@@ -141,7 +141,7 @@ class HHBlits:
                 cmd += ["-Z", str(self.z)]
             cmd += db_cmd
 
-            logging.info('Launching subprocess "%s"', " ".join(cmd))
+            logging.info('Launching subprocess "%s"', " ".join(cmd))  # noqa: LOG015
             process = subprocess.Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
@@ -152,24 +152,23 @@ class HHBlits:
 
             if retcode:
                 # Logs have a 15k character limit, so log HHblits error line by line.
-                logging.error("HHblits failed. HHblits stderr begin:")
+                logging.error("HHblits failed. HHblits stderr begin:")  # noqa: LOG015
                 for error_line in stderr.decode("utf-8").splitlines():
                     if error_line.strip():
-                        logging.error(error_line.strip())
-                logging.error("HHblits stderr end")
+                        logging.error(error_line.strip())  # noqa: LOG015
+                logging.error("HHblits stderr end")  # noqa: LOG015
                 raise RuntimeError(
-                    "HHblits failed\nstdout:\n%s\n\nstderr:\n%s\n"
-                    % (stdout.decode("utf-8"), stderr[:500_000].decode("utf-8"))
+                    "HHblits failed\nstdout:\n{}\n\nstderr:\n{}\n".format(stdout.decode("utf-8"), stderr[:500_000].decode("utf-8"))
                 )
 
             with open(a3m_path) as f:
                 a3m = f.read()
 
-        raw_output = dict(
-            a3m=a3m,
-            output=stdout,
-            stderr=stderr,
-            n_iter=self.n_iter,
-            e_value=self.e_value,
-        )
+        raw_output = {
+            "a3m": a3m,
+            "output": stdout,
+            "stderr": stderr,
+            "n_iter": self.n_iter,
+            "e_value": self.e_value,
+        }
         return raw_output

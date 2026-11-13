@@ -43,15 +43,15 @@ from .errors import V2Error
 from .identity import HeadEvaluatorIdentity, canonical_digest
 
 __all__ = [
-    "V2EvidenceError",
-    "EvidenceIdentityMismatch",
-    "EvidenceGridMismatch",
-    "EmptyEvidenceGrid",
-    "NonFiniteEvidence",
-    "WindowDelta",
     "AlignedWindowEvidence",
-    "build_window_evidence",
+    "EmptyEvidenceGrid",
+    "EvidenceGridMismatch",
+    "EvidenceIdentityMismatch",
     "LeaveOneOutContribution",
+    "NonFiniteEvidence",
+    "V2EvidenceError",
+    "WindowDelta",
+    "build_window_evidence",
     "counterfactual_sequence",
     "score_leave_one_out",
 ]

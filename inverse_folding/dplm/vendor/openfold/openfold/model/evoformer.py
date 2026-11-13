@@ -12,33 +12,31 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import math
 import sys
-import torch
-import torch.nn as nn
-from typing import Tuple, Sequence, Optional
+from collections.abc import Sequence
 from functools import partial
 
-from openfold.model.primitives import Linear, LayerNorm
-from openfold.model.dropout import DropoutRowwise, DropoutColumnwise
+import torch
+from torch import nn
+
+from openfold.model.dropout import DropoutRowwise
 from openfold.model.msa import (
-    MSARowAttentionWithPairBias,
     MSAColumnAttention,
     MSAColumnGlobalAttention,
+    MSARowAttentionWithPairBias,
 )
 from openfold.model.outer_product_mean import OuterProductMean
 from openfold.model.pair_transition import PairTransition
+from openfold.model.primitives import LayerNorm, Linear
 from openfold.model.triangular_attention import (
     TriangleAttention,
-    TriangleAttentionStartingNode,
-    TriangleAttentionEndingNode,
 )
 from openfold.model.triangular_multiplicative_update import (
-    TriangleMultiplicationOutgoing,
     TriangleMultiplicationIncoming,
+    TriangleMultiplicationOutgoing,
 )
 from openfold.utils.checkpointing import checkpoint_blocks, get_checkpoint_fn
-from openfold.utils.chunk_utils import chunk_layer, ChunkSizeTuner
+from openfold.utils.chunk_utils import ChunkSizeTuner, chunk_layer
 from openfold.utils.tensor_utils import add
 
 
@@ -57,7 +55,7 @@ class MSATransition(nn.Module):
                 Factor multiplied to c_m to obtain the hidden channel
                 dimension
         """
-        super(MSATransition, self).__init__()
+        super().__init__()
 
         self.c_m = c_m
         self.n = n
@@ -91,8 +89,8 @@ class MSATransition(nn.Module):
     def forward(
         self,
         m: torch.Tensor,
-        mask: Optional[torch.Tensor] = None,
-        chunk_size: Optional[int] = None,
+        mask: torch.Tensor | None = None,
+        chunk_size: int | None = None,
     ) -> torch.Tensor:
         """
         Args:
@@ -134,7 +132,7 @@ class EvoformerBlockCore(nn.Module):
         eps: float,
         _is_extra_msa_stack: bool = False,
     ):
-        super(EvoformerBlockCore, self).__init__()
+        super().__init__()
 
         self.msa_transition = MSATransition(
             c_m=c_m,
@@ -180,13 +178,13 @@ class EvoformerBlockCore(nn.Module):
         input_tensors: Sequence[torch.Tensor],
         msa_mask: torch.Tensor,
         pair_mask: torch.Tensor,
-        chunk_size: Optional[int] = None,
+        chunk_size: int | None = None,
         use_lma: bool = False,
         inplace_safe: bool = False,
         _mask_trans: bool = True,
-        _attn_chunk_size: Optional[int] = None,
+        _attn_chunk_size: int | None = None,
         _offload_inference: bool = False,
-    ) -> Tuple[torch.Tensor, torch.Tensor]: 
+    ) -> tuple[torch.Tensor, torch.Tensor]: 
         # DeepMind doesn't mask these transitions in the source, so _mask_trans
         # should be disabled to better approximate the exact activations of
         # the original.
@@ -327,7 +325,7 @@ class EvoformerBlock(nn.Module):
         inf: float,
         eps: float,
     ):
-        super(EvoformerBlock, self).__init__()
+        super().__init__()
 
         self.msa_att_row = MSARowAttentionWithPairBias(
             c_m=c_m,
@@ -364,19 +362,19 @@ class EvoformerBlock(nn.Module):
         )
 
     def forward(self,
-        m: Optional[torch.Tensor],
-        z: Optional[torch.Tensor],
+        m: torch.Tensor | None,
+        z: torch.Tensor | None,
         msa_mask: torch.Tensor,
         pair_mask: torch.Tensor,
-        chunk_size: Optional[int] = None,
+        chunk_size: int | None = None,
         use_lma: bool = False,
         use_flash: bool = False,
         inplace_safe: bool = False,
         _mask_trans: bool = True,
-        _attn_chunk_size: Optional[int] = None,
+        _attn_chunk_size: int | None = None,
         _offload_inference: bool = False,
-        _offloadable_inputs: Optional[Sequence[torch.Tensor]] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        _offloadable_inputs: Sequence[torch.Tensor] | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         if(_attn_chunk_size is None):
             _attn_chunk_size = chunk_size
 
@@ -458,7 +456,7 @@ class ExtraMSABlock(nn.Module):
         eps: float,
         ckpt: bool,
     ):
-        super(ExtraMSABlock, self).__init__()
+        super().__init__()
         
         self.ckpt = ckpt
 
@@ -495,18 +493,18 @@ class ExtraMSABlock(nn.Module):
         )
 
     def forward(self,
-        m: Optional[torch.Tensor],
-        z: Optional[torch.Tensor],
+        m: torch.Tensor | None,
+        z: torch.Tensor | None,
         msa_mask: torch.Tensor,
         pair_mask: torch.Tensor,
-        chunk_size: Optional[int] = None,
+        chunk_size: int | None = None,
         use_lma: bool = False,
         inplace_safe: bool = False,
         _mask_trans: bool = True,
-        _attn_chunk_size: Optional[int] = None,
+        _attn_chunk_size: int | None = None,
         _offload_inference: bool = False,
-        _offloadable_inputs: Optional[Sequence[torch.Tensor]] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:  
+        _offloadable_inputs: Sequence[torch.Tensor] | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:  
         if(_attn_chunk_size is None):
             _attn_chunk_size = chunk_size
        
@@ -648,7 +646,7 @@ class EvoformerStack(nn.Module):
             tune_chunk_size:
                 Whether to dynamically tune the module's chunk size
         """
-        super(EvoformerStack, self).__init__()
+        super().__init__()
 
         self.blocks_per_ckpt = blocks_per_ckpt
         self.clear_cache_between_blocks = clear_cache_between_blocks
@@ -687,8 +685,8 @@ class EvoformerStack(nn.Module):
         chunk_size: int,
         use_lma: bool,
         use_flash: bool,
-        msa_mask: Optional[torch.Tensor],
-        pair_mask: Optional[torch.Tensor],
+        msa_mask: torch.Tensor | None,
+        pair_mask: torch.Tensor | None,
         inplace_safe: bool,
         _mask_trans: bool,
     ):
@@ -740,7 +738,7 @@ class EvoformerStack(nn.Module):
         use_lma: bool = False,
         use_flash: bool = False,
         _mask_trans: bool = True,
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         assert(not (self.training or torch.is_grad_enabled()))
         blocks = self._prep_blocks(
             # We are very careful not to create references to these tensors in
@@ -783,7 +781,7 @@ class EvoformerStack(nn.Module):
         use_flash: bool = False,
         inplace_safe: bool = False,
         _mask_trans: bool = True,
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Args:
             m:
@@ -860,7 +858,7 @@ class ExtraMSAStack(nn.Module):
         tune_chunk_size: bool = False,
         **kwargs,
     ):
-        super(ExtraMSAStack, self).__init__()
+        super().__init__()
  
         self.ckpt = ckpt
         self.clear_cache_between_blocks = clear_cache_between_blocks
@@ -894,8 +892,8 @@ class ExtraMSAStack(nn.Module):
         z: torch.Tensor, 
         chunk_size: int,
         use_lma: bool,
-        msa_mask: Optional[torch.Tensor],
-        pair_mask: Optional[torch.Tensor],
+        msa_mask: torch.Tensor | None,
+        pair_mask: torch.Tensor | None,
         inplace_safe: bool,
         _mask_trans: bool,
     ):
@@ -942,8 +940,8 @@ class ExtraMSAStack(nn.Module):
         input_tensors: Sequence[torch.Tensor],
         chunk_size: int,
         use_lma: bool = False,
-        msa_mask: Optional[torch.Tensor] = None,
-        pair_mask: Optional[torch.Tensor] = None,
+        msa_mask: torch.Tensor | None = None,
+        pair_mask: torch.Tensor | None = None,
         _mask_trans: bool = True,
     ) -> torch.Tensor:
         assert(not (self.training or torch.is_grad_enabled()))
@@ -976,8 +974,8 @@ class ExtraMSAStack(nn.Module):
     def forward(self,
         m: torch.Tensor,
         z: torch.Tensor,
-        msa_mask: Optional[torch.Tensor],
-        pair_mask: Optional[torch.Tensor],
+        msa_mask: torch.Tensor | None,
+        pair_mask: torch.Tensor | None,
         chunk_size: int,
         use_lma: bool = False,
         inplace_safe: bool = False,

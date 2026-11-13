@@ -274,8 +274,8 @@ def mmseqs_clusters(mmseqs: str, sequences: dict[str, str]) -> dict[str, str]:
     §7.0 forbids falling back to exact-sequence dedup for the load-bearing holdout, because that
     would silently admit 30-99%-identity homologs as independent statistical units.
     """
-    import tempfile
     import subprocess
+    import tempfile
 
     with tempfile.TemporaryDirectory(prefix="mmseqs_cohort_") as tmp:
         tmp = Path(tmp)
@@ -285,7 +285,7 @@ def mmseqs_clusters(mmseqs: str, sequences: dict[str, str]) -> dict[str, str]:
         cmd = [str(mmseqs), "easy-cluster", str(fasta), str(prefix), str(tmp / "work"),
                "--min-seq-id", str(MMSEQS_MIN_SEQ_ID), "-c", str(MMSEQS_COVERAGE),
                "--cov-mode", "0", "-v", "1"]
-        proc = subprocess.run(cmd, capture_output=True, text=True)
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
         tsv = Path(f"{prefix}_cluster.tsv")
         if proc.returncode != 0 or not tsv.is_file():
             raise SystemExit(

@@ -44,6 +44,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import re
 import subprocess
@@ -58,14 +59,14 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from inverse_folding.evaluation.ligand_pocket import (
-    CrystalPocketReference,
-    ligand_site_metrics,
-)
 from inverse_folding.evaluation.complex_interfaces import (
     interface_pair_metrics,
     run_rosetta_interface_analyzer,
     summarize_interface_pairs,
+)
+from inverse_folding.evaluation.ligand_pocket import (
+    CrystalPocketReference,
+    ligand_site_metrics,
 )
 
 # Q00511 catalytic core (same-chain) + cross-protomer W1, as manifest index_0b (== predicted res_id).
@@ -131,7 +132,7 @@ def resolve_catalytic_residues(
 
 def find_pred_samples(pred_root: Path, name: str):
     """Return list of (sample_idx, cif_path, summary_json_path) for a variant, or []."""
-    hits = sorted((pred_root / name).glob(f"*/seed_*/predictions"))
+    hits = sorted((pred_root / name).glob("*/seed_*/predictions"))
     out = []
     for pdir in hits:
         for cif in sorted(pdir.glob(f"{name}_sample_*.cif")):
@@ -162,13 +163,13 @@ def tier1_from_summary(j: dict, n_protein: int = 4) -> dict:
     min_cpi = float(min(cpi[i, k] for i, k in prot_pairs)) if cpi.size else np.nan
     mean_cpg = float(np.mean([cpg[i, k] for i, k in prot_pairs])) if cpg.size else np.nan
     min_cpl = float(np.min(cpl[pp])) if cpl.size else np.nan
-    return dict(
-        iptm=float(j.get("iptm", np.nan)), ptm=float(j.get("ptm", np.nan)),
-        plddt=float(j.get("plddt", np.nan)), ranking_score=float(j.get("ranking_score", np.nan)),
-        has_clash=bool(j.get("has_clash", False)),
-        min_pp_chain_pair_iptm=min_cpi, mean_pp_chain_pair_gpde=mean_cpg,
-        min_prot_chain_plddt=min_cpl,
-    )
+    return {
+        "iptm": float(j.get("iptm", np.nan)), "ptm": float(j.get("ptm", np.nan)),
+        "plddt": float(j.get("plddt", np.nan)), "ranking_score": float(j.get("ranking_score", np.nan)),
+        "has_clash": bool(j.get("has_clash", False)),
+        "min_pp_chain_pair_iptm": min_cpi, "mean_pp_chain_pair_gpde": mean_cpg,
+        "min_prot_chain_plddt": min_cpl,
+    }
 
 
 def pae_metrics_from_summary(j: dict, n_protein: int = 4) -> dict:
@@ -225,8 +226,8 @@ def best_sample(samples) -> tuple:
         j = json.loads(js.read_text())
         t1 = tier1_from_summary(j)
         score = t1["ranking_score"]
-        if best is None or (score == score and score > best[4]):  # score==score guards NaN
-            best = (k, cif, js, t1, (score if score == score else -1.0))
+        if best is None or (not math.isnan(score) and score > best[4]):
+            best = (k, cif, js, t1, (score if not math.isnan(score) else -1.0))
     return best[:4] if best else None
 
 
@@ -251,14 +252,14 @@ def tier1_from_esmfold2(j: dict) -> dict:
     prot_pairs = [(i, k) for i in pp for k in pp if i < k]
     min_cpi = (float(min(pc[i, k] for i, k in prot_pairs))
                if pc.ndim == 2 and pc.shape[0] >= n else np.nan)
-    return dict(
-        iptm=float(j.get("iptm") if j.get("iptm") is not None else np.nan),
-        ptm=float(j.get("ptm") if j.get("ptm") is not None else np.nan),
-        plddt=float(j.get("plddt_mean") if j.get("plddt_mean") is not None else np.nan),
-        ranking_score=np.nan, has_clash=False,
-        min_pp_chain_pair_iptm=min_cpi, mean_pp_chain_pair_gpde=np.nan,
-        min_prot_chain_plddt=np.nan,
-    )
+    return {
+        "iptm": float(j.get("iptm") if j.get("iptm") is not None else np.nan),
+        "ptm": float(j.get("ptm") if j.get("ptm") is not None else np.nan),
+        "plddt": float(j.get("plddt_mean") if j.get("plddt_mean") is not None else np.nan),
+        "ranking_score": np.nan, "has_clash": False,
+        "min_pp_chain_pair_iptm": min_cpi, "mean_pp_chain_pair_gpde": np.nan,
+        "min_prot_chain_plddt": np.nan,
+    }
 
 
 # ---------- geometry ----------
@@ -287,8 +288,8 @@ def usalign_complex_tm(usalign: str, mobile: Path, ref: Path) -> float:
     """Symmetry-aware complex TM-score normalized by the REFERENCE (Structure_2 = ref)."""
     try:
         r = subprocess.run([usalign, str(mobile), str(ref), "-mm", "1", "-ter", "1"],
-                           capture_output=True, text=True, timeout=600)
-    except Exception:
+                           capture_output=True, text=True, timeout=600, check=False)
+    except Exception:  # noqa: BLE001
         return np.nan
     for ln in r.stdout.splitlines():
         if "normalized by length of Structure_2" in ln:
@@ -585,7 +586,7 @@ def main() -> None:
             print(f"[eval] crystal pocket shell ({args.pocket_shell_radius} A): "
                   f"{ {k: len(v) for k, v in crystal_ref.sites.items()} }, "
                   f"offset={args.crystal_offset}")
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             print(f"[eval] WARNING: crystal pocket reference unavailable: {exc}")
 
     rows = []
@@ -593,19 +594,19 @@ def main() -> None:
     ligand_frames = []
     for manifest_row_index, (_, row) in enumerate(man.iterrows()):
         name, parent, kind = row["name"], row["parent"], row.get("kind")
-        rec = dict(
-            manifest_row_index=manifest_row_index,
-            id=row["id"],
-            name=name,
-            parent=parent,
-            kind=kind,
-            allele=row.get("allele"),
-            predicted=name in best,
-            interface_metrics_ok=False,
-            interface_metrics_error=(None if name in best else "prediction_missing"),
-            rosetta_interface_requested=bool(args.rosetta_interface_analyzer),
-            rosetta_interface_metrics_ok=False,
-        )
+        rec = {
+            "manifest_row_index": manifest_row_index,
+            "id": row["id"],
+            "name": name,
+            "parent": parent,
+            "kind": kind,
+            "allele": row.get("allele"),
+            "predicted": name in best,
+            "interface_metrics_ok": False,
+            "interface_metrics_error": (None if name in best else "prediction_missing"),
+            "rosetta_interface_requested": bool(args.rosetta_interface_analyzer),
+            "rosetta_interface_metrics_ok": False,
+        }
         if name in best:
             k, cif, js, t1 = best[name]
             rec.update(sample=k, **t1)
@@ -667,7 +668,7 @@ def main() -> None:
                 try:
                     rec.update(pae_metrics_from_summary(json.loads(js.read_text()),
                                                         n_protein=len(pchains) or 4))
-                except Exception as exc:  # confidence JSON shape drift must not kill the run
+                except Exception as exc:  # confidence JSON shape drift must not kill the run  # noqa: BLE001
                     rec["pae_metrics_error"] = str(exc)[:200]
             # ligand pocket geometry (prediction-intrinsic) + crystal-referenced pocket RMSD
             if not args.no_ligand_metrics:
@@ -685,7 +686,7 @@ def main() -> None:
                                           for k, v in cat_partner.items()},
                         contact_cutoff=args.ligand_contact_cutoff,
                     )
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001
                     sites = pd.DataFrame()
                     rec["ligand_metrics_error"] = str(exc)[:200]
                 if len(sites):
@@ -693,9 +694,9 @@ def main() -> None:
                         try:
                             rec.update(crystal_ref.evaluate(arr, pchains,
                                                             offset=args.crystal_offset))
-                        except Exception as exc:
+                        except Exception as exc:  # noqa: BLE001
                             rec["crystal_pocket_error"] = str(exc)[:200]
-                    rec["n_ligand_sites"] = int(len(sites))
+                    rec["n_ligand_sites"] = len(sites)
                     for col in [c for c in sites.columns
                                 if c.startswith(("lig_min_dist_", "n_pocket_contacts",
                                                  "lig_centroid_to_core"))]:
@@ -770,7 +771,13 @@ def main() -> None:
             wtval = {p: df[(df.parent == p) & (df.kind.astype(str).str.upper() == "WT")][col].median()
                      for p in df.parent.unique()}
             df[f"xprot_{lab}_dev"] = df.apply(
-                lambda r: (r[col] - wtval.get(r.parent, np.nan)) if pd.notna(r.get(col)) else np.nan, axis=1)
+                lambda r, _col=col, _wtval=wtval: (
+                    (r[_col] - _wtval.get(r.parent, np.nan))
+                    if pd.notna(r.get(_col))
+                    else np.nan
+                ),
+                axis=1,
+            )
 
     if args.extra_table:
         extra = pd.read_parquet(args.extra_table)

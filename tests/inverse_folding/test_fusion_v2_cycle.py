@@ -237,7 +237,10 @@ def _module_meter():
     """
     import tempfile
 
-    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import AttemptJournal, CostMeter
+    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (
+        AttemptJournal,
+        CostMeter,
+    )
 
     return CostMeter(
         journal=AttemptJournal(pathlib.Path(tempfile.mkdtemp()) / "attempts.jsonl"),
@@ -247,29 +250,29 @@ def _module_meter():
 
 def _run_kwargs(**over):
     table = _wide_band_table()
-    kw = dict(
-        sampler=PositionDependentDFMSampler(mask_token_id=F.MASK, vocab_size=VOCAB),
-        denoiser=_denoiser, config=_cfg(), sequence_length=F.L,
-        h_values=np.zeros(F.L, dtype=np.float32), residue_token_ids=F.AA,
-        alphabet=ALPHABET, fixed_tokens={0: 10},
-        lineage=F.lineage(), mask_token_id=F.MASK, aa_token_ids=F.AA,
-        conditioning=F.conditioning(
+    kw = {
+        "sampler": PositionDependentDFMSampler(mask_token_id=F.MASK, vocab_size=VOCAB),
+        "denoiser": _denoiser, "config": _cfg(), "sequence_length": F.L,
+        "h_values": np.zeros(F.L, dtype=np.float32), "residue_token_ids": F.AA,
+        "alphabet": ALPHABET, "fixed_tokens": {0: 10},
+        "lineage": F.lineage(), "mask_token_id": F.MASK, "aa_token_ids": F.AA,
+        "conditioning": F.conditioning(
             # The kernel refuses a band table the run's own frozen provenance does not
             # name, so the fixture binds the two instead of leaving them unrelated.
-            schedule_band_calibration=table.provenance.calibration_content_digest), safety_reference=F.safety_reference(),
-        c_source_step=C0, r_step=R1, c_next_step=C1,
-        source_fork_seeds=(5001, 5002, 5003), descendant_fork_seeds=(6001, 6002),
-        descendant_propagation_seed=9001,
-        head_oracle=_FakeHeadOracle(), structure_oracle=_structure_oracle,
-        support_policy=_support_policy,
-        band_table=table, stratum_key=F.STRATUM, declared_band_id=F.BAND_ID,
-        declared_band_digest=table.provenance.calibration_content_digest,
-        origin_transition_id=F.TXN,
-        safety_gate=F.safety_gate(),
-        declared_policy=F.declared_policy(),
-        feedback_enabled=True,
-        cost_meter=_module_meter(),
-    )
+            schedule_band_calibration=table.provenance.calibration_content_digest), "safety_reference": F.safety_reference(),
+        "c_source_step": C0, "r_step": R1, "c_next_step": C1,
+        "source_fork_seeds": (5001, 5002, 5003), "descendant_fork_seeds": (6001, 6002),
+        "descendant_propagation_seed": 9001,
+        "head_oracle": _FakeHeadOracle(), "structure_oracle": _structure_oracle,
+        "support_policy": _support_policy,
+        "band_table": table, "stratum_key": F.STRATUM, "declared_band_id": F.BAND_ID,
+        "declared_band_digest": table.provenance.calibration_content_digest,
+        "origin_transition_id": F.TXN,
+        "safety_gate": F.safety_gate(),
+        "declared_policy": F.declared_policy(),
+        "feedback_enabled": True,
+        "cost_meter": _module_meter(),
+    }
     kw.update(over)
     return kw
 
@@ -754,16 +757,21 @@ def test_the_cycle_refuses_to_default_the_feedback_flag():
 
 
 def _meter(tmp_path, **over):
-    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import AttemptJournal, CostMeter
+    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (
+        AttemptJournal,
+        CostMeter,
+    )
 
-    kw = dict(journal=AttemptJournal(tmp_path / "attempts.jsonl"), protein_id="5ZHV_B",
-              arm="v2", gpu_clock=lambda: 0.0)
+    kw = {"journal": AttemptJournal(tmp_path / "attempts.jsonl"), "protein_id": "5ZHV_B",
+              "arm": "v2", "gpu_clock": lambda: 0.0}
     kw.update(over)
     return CostMeter(**kw)
 
 
 def _events(tmp_path):
-    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import events_from_journal
+    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (
+        events_from_journal,
+    )
 
     return events_from_journal(tmp_path / "attempts.jsonl")
 
@@ -788,7 +796,9 @@ def test_every_oracle_stage_of_a_cycle_reaches_the_journal(tmp_path):
 def test_the_journaled_logical_dfe_is_the_cycles_own_cost_report(tmp_path):
     """Two accounts of the same run that disagree are worse than one: the ledger is what a
     matched-compute claim is judged on, and the cost report is what the ladder sums."""
-    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import aggregate_v2_ledger
+    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (
+        aggregate_v2_ledger,
+    )
 
     outcome = _run(cost_meter=_meter(tmp_path))
     totals = aggregate_v2_ledger(_events(tmp_path))
@@ -797,7 +807,9 @@ def test_the_journaled_logical_dfe_is_the_cycles_own_cost_report(tmp_path):
 
 def test_a_head_that_dies_leaves_unknown_after_start_on_the_record(tmp_path):
     """PLAN §5.4: persist ``unknown_after_start`` "rather than zero or a guessed value"."""
-    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import UNKNOWN_AFTER_START
+    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (
+        UNKNOWN_AFTER_START,
+    )
 
     class _Dies:
         def score(self, requests):
@@ -856,7 +868,7 @@ def test_the_cycle_reports_the_policy_identity_that_actually_answered():
 def test_a_refused_projection_still_names_the_policy_that_refused():
     """A null event is a result (PLAN §4.5).  One that could not say which policy declined would
     leave the refusal unattributable."""
-    rejecting = lambda source, endpoint, coordinates: pol.PolicyRejection(  # noqa: E731
+    rejecting = lambda source, endpoint, coordinates: pol.PolicyRejection(
         reason="declines by construction", policy=_policy_identity())
     outcome = _run(support_policy=rejecting)
     assert outcome.outcome is st.TransitionOutcome.NULL_INVALID_POLICY_RESULT

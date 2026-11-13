@@ -14,13 +14,16 @@
 # limitations under the License.
 
 """Amber relaxation."""
-from typing import Any, Dict, Sequence, Tuple
-from openfold.np import protein
-from openfold.np.relax import amber_minimize, utils
+from collections.abc import Sequence
+from typing import Any
+
 import numpy as np
 
+from openfold.np import protein
+from openfold.np.relax import amber_minimize, utils
 
-class AmberRelaxation(object):
+
+class AmberRelaxation:
     """Amber relaxation."""
     def __init__(
         self,
@@ -58,7 +61,7 @@ class AmberRelaxation(object):
 
     def process(
         self, *, prot: protein.Protein, cif_output: bool = False
-    ) -> Tuple[str, Dict[str, Any], np.ndarray]:
+    ) -> tuple[str, dict[str, Any], np.ndarray]:
         """Runs Amber relax on a prediction, adds hydrogens, returns PDB string."""
         out = amber_minimize.run_pipeline(
             prot=prot,

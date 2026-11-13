@@ -1,7 +1,7 @@
-import importlib
 import math
 import os
-from typing import Iterable, Sequence, TypeVar
+from collections.abc import Iterable, Sequence
+from typing import TypeVar
 
 import datasets
 import numpy as np
@@ -112,9 +112,7 @@ class SortishSampler(Sampler):
             rank = dist.get_rank()
         self.data = np.argsort(sequence_lengths)
         self.num_replicas = num_replicas
-        self.num_samples = int(
-            math.ceil(len(self.data) * 1.0 / self.num_replicas)
-        )
+        self.num_samples = math.ceil(len(self.data) * 1.0 / self.num_replicas)
         self.bucket_size = bucket_size
         n_buckets = int(np.ceil(len(self.data) / self.bucket_size))
         self.data = [
@@ -236,8 +234,7 @@ class ApproxBatchSampler(BatchSampler):
         return len(self.batches)
 
     def __iter__(self):
-        for batch in self.batches:
-            yield batch
+        yield from self.batches
 
 
 class TokenizedProteinDataset(Dataset):
@@ -264,7 +261,7 @@ class TokenizedProteinDataset(Dataset):
         data_path = os.path.join(self.data_dir, csv_file.replace(".csv", ""))
         try:
             self.data = load_dataset_from_hf(data_path, split)
-        except:
+        except:  # noqa: E722
             self.data = preprocess_dataset(
                 csv_path, data_path, self.split, struct_vocab_size
             )
@@ -346,7 +343,7 @@ class Subset(Dataset[T_co]):
 
 
 class DPLM2Tokenizer(EsmTokenizer):
-    SPECIAL_TOKENS_ATTRIBUTES = [
+    SPECIAL_TOKENS_ATTRIBUTES = [  # noqa: RUF012
         "aa_cls_token",
         "aa_eos_token",
         "aa_unk_token",
@@ -558,7 +555,7 @@ class DPLM2Tokenizer(EsmTokenizer):
         self._struct_mask_token = value
 
 
-class DPLM2Collater(object):
+class DPLM2Collater:
     def __init__(self, tokenizer):
         self.tokenizer = (
             tokenizer  # DPLM2Tokenizer.from_pretrained(vocab_file)

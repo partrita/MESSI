@@ -8,7 +8,6 @@ Implements PLAN.md Module J (J1+):
 
 from __future__ import annotations
 
-import csv
 import logging
 import os
 import signal
@@ -18,6 +17,7 @@ from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
+from typing import ClassVar
 
 logger = logging.getLogger(__name__)
 
@@ -191,8 +191,6 @@ class StandaloneRunner(NetMHCIIpanRunner):
                 orig_id = short_to_orig.get(short_id, short_id)
                 remapped[orig_id] = by_len
             return remapped
-        except subprocess.TimeoutExpired:
-            raise
         finally:
             Path(fasta_path).unlink(missing_ok=True)
 
@@ -375,7 +373,7 @@ class StandaloneRunner(NetMHCIIpanRunner):
                 continue
 
             # Skip separators, comments, summary lines
-            if stripped.startswith("---") or stripped.startswith("#"):
+            if stripped.startswith(("---", "#")):
                 continue
             if "Number of" in stripped:
                 continue
@@ -430,7 +428,7 @@ class StandaloneRunner(NetMHCIIpanRunner):
 
         for line in stdout.splitlines():
             stripped = line.strip()
-            if not stripped or stripped.startswith("---") or stripped.startswith("#"):
+            if not stripped or stripped.startswith(("---", "#")):
                 continue
             if "Number of" in stripped:
                 continue
@@ -472,7 +470,7 @@ class MockRunner(NetMHCIIpanRunner):
     - Mutations at hydrophobic anchor positions tend to increase rank
     """
 
-    HYDROPHOBIC = set("AILMFWVP")
+    HYDROPHOBIC: ClassVar[set[str]] = set("AILMFWVP")
 
     def __init__(self, seed: int = 42):
         import numpy as np

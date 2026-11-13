@@ -11,13 +11,22 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from inverse_folding.reference_flow.fusion_v2.identity import HeadEvaluatorIdentity  # noqa: E402
-from inverse_folding.reference_flow.fusion_v2.joint_objective import (  # noqa: E402
-    AlleleCoordinate, AlleleRole, DualCalibration, DualObjectiveLaw, DualObjective, ObjectiveMode,
-    PanelBinding, QuantityCoordinates,
+from inverse_folding.reference_flow.fusion_v2.identity import HeadEvaluatorIdentity
+from inverse_folding.reference_flow.fusion_v2.joint_objective import (
+    AlleleCoordinate,
+    AlleleRole,
+    DualCalibration,
+    DualObjective,
+    DualObjectiveLaw,
+    ObjectiveMode,
+    PanelBinding,
+    QuantityCoordinates,
 )
-from scripts.score_sequences_dual_heads import (  # noqa: E402
-    DualScoringError, assert_overlay_binds, read_sequences, score_table,
+from scripts.score_sequences_dual_heads import (
+    DualScoringError,
+    assert_overlay_binds,
+    read_sequences,
+    score_table,
 )
 
 TAU = 0.10 / 0.6931471805599453
@@ -107,8 +116,14 @@ def test_an_overlay_calibrated_on_other_checkpoints_is_refused():
 
 def test_an_overlay_that_binds_these_exact_heads_is_accepted():
     overlay = _Overlay(_calibration())
-    assert_overlay_binds(overlay, evaluator_a=_evaluator("DRB1_0701", "a" * 64),
-                         evaluator_b=_evaluator("DRB1_0401", "b" * 64)) is None
+    assert (
+        assert_overlay_binds(
+            overlay,
+            evaluator_a=_evaluator("DRB1_0701", "a" * 64),
+            evaluator_b=_evaluator("DRB1_0401", "b" * 64),
+        )
+        is None
+    )
 
 
 def test_a_changed_window_grid_is_refused_even_with_the_right_checkpoint():

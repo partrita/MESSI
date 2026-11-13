@@ -13,18 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from functools import partialmethod, partial
-import math
-from typing import Optional, List
+from functools import partial, partialmethod
 
 import torch
-import torch.nn as nn
+from torch import nn
 
-from openfold.model.primitives import Linear, LayerNorm, Attention
+from openfold.model.primitives import Attention, LayerNorm, Linear
 from openfold.utils.chunk_utils import chunk_layer
 from openfold.utils.tensor_utils import (
     permute_final_dims,
-    flatten_final_dims,
 )
 
 
@@ -41,7 +38,7 @@ class TriangleAttention(nn.Module):
             no_heads:
                 Number of attention heads
         """
-        super(TriangleAttention, self).__init__()
+        super().__init__()
 
         self.c_in = c_in
         self.c_hidden = c_hidden
@@ -60,7 +57,7 @@ class TriangleAttention(nn.Module):
     @torch.jit.ignore
     def _chunk(self,
         x: torch.Tensor,
-        biases: List[torch.Tensor],
+        biases: list[torch.Tensor],
         chunk_size: int,
         use_memory_efficient_kernel: bool = False,
         use_lma: bool = False,
@@ -87,8 +84,8 @@ class TriangleAttention(nn.Module):
 
     def forward(self, 
         x: torch.Tensor, 
-        mask: Optional[torch.Tensor] = None,
-        chunk_size: Optional[int] = None,
+        mask: torch.Tensor | None = None,
+        chunk_size: int | None = None,
         use_memory_efficient_kernel: bool = False,
         use_lma: bool = False,
         inplace_safe: bool = False,

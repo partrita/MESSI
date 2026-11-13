@@ -9,10 +9,13 @@ import pytest
 from inverse_folding.reference_flow.fusion_v2 import dual_evidence as de
 from inverse_folding.reference_flow.fusion_v2 import identity as ident
 from inverse_folding.reference_flow.fusion_v2 import joint_objective as jo
-from inverse_folding.reference_flow.fusion_v2 import state as st
 from inverse_folding.reference_flow.fusion_v2 import schedule as sch
+from inverse_folding.reference_flow.fusion_v2 import state as st
 from inverse_folding.reference_flow.fusion_v2_runtime import dual_lookahead as dl
-from inverse_folding.reference_flow.fusion_v2_runtime.lookahead import RawCompletion, bind_head_scores
+from inverse_folding.reference_flow.fusion_v2_runtime.lookahead import (
+    RawCompletion,
+    bind_head_scores,
+)
 
 from . import _v2_fixtures as fx
 from .test_fusion_v2_dual_evidence import EVAL_A, EVAL_B, calibration, objective
@@ -70,10 +73,10 @@ def results(comps, evaluator, *, base=-9.0):
 
 def bind(**over):
     comps = over.pop("completions", None) or completions()
-    kw = dict(completions=comps, results_a=results(comps, EVAL_A),
-              results_b=results(comps, EVAL_B, base=-4.0),
-              evaluator_a=EVAL_A, evaluator_b=EVAL_B, window_grid_digest=GRID,
-              objective=objective())
+    kw = {"completions": comps, "results_a": results(comps, EVAL_A),
+              "results_b": results(comps, EVAL_B, base=-4.0),
+              "evaluator_a": EVAL_A, "evaluator_b": EVAL_B, "window_grid_digest": GRID,
+              "objective": objective()}
     kw.update(over)
     return dl.bind_paired_head_scores(**kw)
 

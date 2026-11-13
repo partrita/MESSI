@@ -32,14 +32,14 @@ def _read_macro(path: Path):
     """
     try:
         out = subprocess.run(["jq", "-c", ".macro", str(path)],
-                             capture_output=True, text=True, timeout=120)
-    except Exception:
+                             capture_output=True, text=True, timeout=120, check=False)
+    except Exception:  # noqa: BLE001
         return None
     if out.returncode != 0 or not out.stdout.strip():
         return None
     try:
         return json.loads(out.stdout)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
 
 FN = re.compile(r"^bench_cvf(\d+)_(val|test)_([a-z0-9]+)_(e\d+|best)\.json$")
@@ -134,7 +134,7 @@ def main() -> None:
             ep = select_epoch(d.get("val", {}), args.exact_floor_frac)
             te = d.get("test", {}).get(ep) if ep else None
             if not te:
-                print(f"{arm:16} {k}    {str(ep):6} | (missing test eval)")
+                print(f"{arm:16} {k}    {ep!s:6} | (missing test eval)")
                 continue
             for m in HEAD_METRICS:
                 if te.get(m) is not None:
@@ -143,7 +143,7 @@ def main() -> None:
             for m in NMP_METRICS:
                 if nt.get(m) is not None:
                     nmp_test[m].append(nt[m])
-            g = lambda m: (te.get(m) if te.get(m) is not None else 0.0)
+            g = lambda m, _te=te: (_te.get(m) if _te.get(m) is not None else 0.0)
             print(f"{arm:16} {k}    {ep:6} | {g('iou50'):.3f} {g('iou70'):.3f} "
                   f"{g('exap'):.3f} | {g('pears'):.3f} {g('spear'):.3f} "
                   f"{g('rauc'):.3f} {g('rap'):.3f}")
@@ -157,7 +157,7 @@ def main() -> None:
         t = per_arm_test[arm]
         row = {m: ms(t[m]) for m in HEAD_METRICS}
         summary["arms"][arm] = row
-        def c(m): mu, sd, n = row[m]; return f"{mu:.3f}±{sd:.3f}" if mu is not None else "—"
+        def c(m, _row=row): mu, sd, _n = _row[m]; return f"{mu:.3f}±{sd:.3f}" if mu is not None else "—"
         print(f"{arm:18} {c('iou50'):>13} {c('iou70'):>13} {c('exap'):>13} | "
               f"{c('pears'):>13} {c('rauc'):>13} {c('rap'):>13}")
     summary["nmp_reference"] = {m: ms(nmp_test[m]) for m in NMP_METRICS}

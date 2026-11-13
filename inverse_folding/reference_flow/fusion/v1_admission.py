@@ -66,7 +66,7 @@ class StructureOutcome:
                 raise ValueError("a deferred structure outcome cannot report a model execution")
 
     @classmethod
-    def deferred(cls, reason: str, *, walltime_s: float = 0.0) -> "StructureOutcome":
+    def deferred(cls, reason: str, *, walltime_s: float = 0.0) -> StructureOutcome:
         """The entry stage did not evaluate structure; v0 admission will."""
         return cls(
             feasible=None, cache_status="deferred", model_executed=False,

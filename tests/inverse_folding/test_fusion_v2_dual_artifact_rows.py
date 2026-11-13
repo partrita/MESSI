@@ -110,7 +110,12 @@ def _real_decision():
     """A decision from the REAL head-directed policy under a Dual authority."""
     from .test_fusion_v2_dual_select import _authority
     from .test_fusion_v2_head_directed_policy import (
-        SOURCE_SEQ, _calibration, _coords, _donor, _policy, _source,
+        SOURCE_SEQ,
+        _calibration,
+        _coords,
+        _donor,
+        _policy,
+        _source,
     )
 
     source = _source(SOURCE_SEQ)
@@ -164,7 +169,12 @@ def test_the_union_reopen_records_which_allele_demanded_the_position():
 
 def test_a_legacy_decision_contributes_no_feedback_rows():
     from .test_fusion_v2_head_directed_policy import (
-        SOURCE_SEQ, _calibration, _coords, _donor, _policy, _source,
+        SOURCE_SEQ,
+        _calibration,
+        _coords,
+        _donor,
+        _policy,
+        _source,
     )
 
     source = _source(SOURCE_SEQ)

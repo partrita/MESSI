@@ -1,20 +1,18 @@
 import argparse
-from functools import partial
 import json
 import logging
 import os
+import tempfile
 import threading
+from functools import partial
 from multiprocessing import cpu_count
 from shutil import copyfile
-import tempfile
 
-import openfold.data.mmcif_parsing as mmcif_parsing
+from openfold.data import mmcif_parsing
 from openfold.data.data_pipeline import AlignmentRunner
 from openfold.data.parsers import parse_fasta
 from openfold.np import protein, residue_constants
-
 from utils import add_data_args
-
 
 logging.basicConfig(level=logging.WARNING)
 
@@ -27,8 +25,8 @@ def run_seq_group_alignments(seq_groups, alignment_runner, args):
         
         try:
             os.makedirs(alignment_dir)
-        except Exception as e:
-            logging.warning(f"Failed to create directory for {first_name} with exception {e}...")
+        except Exception as e:  # noqa: BLE001
+            logging.warning(f"Failed to create directory for {first_name} with exception {e}...")  # noqa: LOG015
             continue
 
         fd, fasta_path = tempfile.mkstemp(suffix=".fasta")
@@ -39,8 +37,8 @@ def run_seq_group_alignments(seq_groups, alignment_runner, args):
             alignment_runner.run(
                 fasta_path, alignment_dir
             )
-        except:
-            logging.warning(f"Failed to run alignments for {first_name}. Skipping...")
+        except:  # noqa: E722
+            logging.warning(f"Failed to run alignments for {first_name}. Skipping...")  # noqa: LOG015
             os.remove(fasta_path)
             os.rmdir(alignment_dir)
             continue
@@ -49,7 +47,7 @@ def run_seq_group_alignments(seq_groups, alignment_runner, args):
 
         for name in names[1:]:
             if(name in dirs):
-                logging.warning(
+                logging.warning(  # noqa: LOG015
                     f'{name} has already been processed. Skipping...'
                 )
                 continue
@@ -73,17 +71,17 @@ def parse_and_align(files, alignment_runner, args):
                 file_id=file_id, mmcif_string=mmcif_str
             )
             if(mmcif.mmcif_object is None):
-                logging.warning(f'Failed to parse {f}...')
+                logging.warning(f'Failed to parse {f}...')  # noqa: LOG015
                 if(args.raise_errors):
-                    raise list(mmcif.errors.values())[0]
+                    raise next(iter(mmcif.errors.values()))
                 else:
                     continue
             mmcif = mmcif.mmcif_object
             for chain_letter, seq in mmcif.chain_to_seqres.items():
-                chain_id = '_'.join([file_id, chain_letter])
+                chain_id = f"{file_id}_{chain_letter}"
                 l = seq_group_dict.setdefault(seq, [])
                 l.append(chain_id)
-        elif(f.endswith('.fasta') or f.endswith('.fa')):
+        elif(f.endswith(('.fasta', '.fa'))):
             with open(path, 'r') as fp:
                 fasta_str = fp.read()
             input_seqs, _ = parse_fasta(fasta_str)
@@ -92,7 +90,7 @@ def parse_and_align(files, alignment_runner, args):
                 if(args.raise_errors):
                     raise ValueError(msg)
                 else:
-                    logging.warning(msg)
+                    logging.warning(msg)  # noqa: LOG015
             input_sequence = input_seqs[0]
             seq_group_dict[input_sequence] = [file_id]
         elif(f.endswith('.core')):
@@ -156,12 +154,12 @@ def main(args):
 
     def split_up_arglist(arglist):
         # Split up the survivors
-        if(os.environ.get("SLURM_JOB_NUM_NODES", 0)):
+        if(os.environ.get("SLURM_JOB_NUM_NODES", 0)):  # noqa: PLW1508
             num_nodes = int(os.environ["SLURM_JOB_NUM_NODES"])
             if(num_nodes > 1):
                 node_id = int(os.environ["SLURM_NODEID"])
-                logging.warning(f"Num nodes: {num_nodes}")
-                logging.warning(f"Node ID: {node_id}")
+                logging.warning(f"Num nodes: {num_nodes}")  # noqa: LOG015
+                logging.warning(f"Node ID: {node_id}")  # noqa: LOG015
                 arglist = arglist[node_id::num_nodes]
 
         t_arglist = []

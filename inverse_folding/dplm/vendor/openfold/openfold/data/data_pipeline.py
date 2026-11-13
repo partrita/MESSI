@@ -13,20 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import functools
+import operator
 import os
-import datetime
+from collections.abc import Mapping, Sequence
 from multiprocessing import cpu_count
-from typing import Mapping, Optional, Sequence, Any
+from typing import Any
 
 import numpy as np
 import torch
 
-from openfold.data import templates, parsers, mmcif_parsing
+from openfold.data import mmcif_parsing, parsers, templates
 from openfold.data.templates import get_custom_template_features
-from openfold.data.tools import jackhmmer, hhblits, hhsearch
-from openfold.data.tools.utils import to_date 
-from openfold.np import residue_constants, protein
-
+from openfold.data.tools import hhblits, hhsearch, jackhmmer
+from openfold.data.tools.utils import to_date
+from openfold.np import protein, residue_constants
 
 FeatureDict = Mapping[str, np.ndarray]
 
@@ -44,10 +45,10 @@ def make_template_features(
     input_sequence: str,
     hits: Sequence[Any],
     template_featurizer: Any,
-    query_pdb_code: Optional[str] = None,
-    query_release_date: Optional[str] = None,
+    query_pdb_code: str | None = None,
+    query_release_date: str | None = None,
 ) -> FeatureDict:
-    hits_cat = sum(hits.values(), [])
+    hits_cat = functools.reduce(operator.iadd, hits.values(), [])
     if(len(hits_cat) == 0 or template_featurizer is None):
         template_features = empty_template_feats(len(input_sequence))
     else:
@@ -138,7 +139,7 @@ def make_mmcif_features(
     mmcif_object: mmcif_parsing.MmcifObject, chain_id: str
 ) -> FeatureDict:
     input_sequence = mmcif_object.chain_to_seqres[chain_id]
-    description = "_".join([mmcif_object.file_id, chain_id])
+    description = f"{mmcif_object.file_id}_{chain_id}"
     num_res = len(input_sequence)
 
     mmcif_feats = {}
@@ -312,16 +313,16 @@ class AlignmentRunner:
     """Runs alignment tools and saves the results"""
     def __init__(
         self,
-        jackhmmer_binary_path: Optional[str] = None,
-        hhblits_binary_path: Optional[str] = None,
-        hhsearch_binary_path: Optional[str] = None,
-        uniref90_database_path: Optional[str] = None,
-        mgnify_database_path: Optional[str] = None,
-        bfd_database_path: Optional[str] = None,
-        uniclust30_database_path: Optional[str] = None,
-        pdb70_database_path: Optional[str] = None,
-        use_small_bfd: Optional[bool] = None,
-        no_cpus: Optional[int] = None,
+        jackhmmer_binary_path: str | None = None,
+        hhblits_binary_path: str | None = None,
+        hhsearch_binary_path: str | None = None,
+        uniref90_database_path: str | None = None,
+        mgnify_database_path: str | None = None,
+        bfd_database_path: str | None = None,
+        uniclust30_database_path: str | None = None,
+        pdb70_database_path: str | None = None,
+        use_small_bfd: bool | None = None,
+        no_cpus: int | None = None,
         uniref_max_hits: int = 10000,
         mgnify_max_hits: int = 5000,
     ):
@@ -384,12 +385,12 @@ class AlignmentRunner:
 
         for name, dic in db_map.items():
             binary, dbs = dic["binary"], dic["dbs"]
-            if(binary is None and not all([x is None for x in dbs])):
+            if(binary is None and not all(x is None for x in dbs)):
                 raise ValueError(
                     f"{name} DBs provided but {name} binary is None"
                 )
 
-        if(not all([x is None for x in db_map["hhsearch"]["dbs"]])
+        if(not all(x is None for x in db_map["hhsearch"]["dbs"])
             and uniref90_database_path is None):
             raise ValueError(
                 """uniref90_database_path must be specified in order to perform
@@ -507,18 +508,18 @@ class DataPipeline:
     """Assembles input features."""
     def __init__(
         self,
-        template_featurizer: Optional[templates.TemplateHitFeaturizer],
+        template_featurizer: templates.TemplateHitFeaturizer | None,
     ):
         self.template_featurizer = template_featurizer
 
     def _parse_msa_data(
         self,
         alignment_dir: str,
-        alignment_index: Optional[Any] = None,
+        alignment_index: Any | None = None,
     ) -> Mapping[str, Any]:
         msa_data = {} 
         if(alignment_index is not None):
-            fp = open(os.path.join(alignment_dir, alignment_index["db"]), "rb")
+            fp = open(os.path.join(alignment_dir, alignment_index["db"]), "rb")  # noqa: SIM115
 
             def read_msa(start, size):
                 fp.seek(start)
@@ -569,11 +570,11 @@ class DataPipeline:
     def _parse_template_hits(
         self,
         alignment_dir: str,
-        alignment_index: Optional[Any] = None
+        alignment_index: Any | None = None
     ) -> Mapping[str, Any]:
         all_hits = {}
         if(alignment_index is not None):
-            fp = open(os.path.join(alignment_dir, alignment_index["db"]), 'rb')
+            fp = open(os.path.join(alignment_dir, alignment_index["db"]), 'rb')  # noqa: SIM115
 
             def read_template(start, size):
                 fp.seek(start)
@@ -601,8 +602,8 @@ class DataPipeline:
 
     def _get_msas(self,
         alignment_dir: str,
-        input_sequence: Optional[str] = None,
-        alignment_index: Optional[str] = None,
+        input_sequence: str | None = None,
+        alignment_index: str | None = None,
     ):
         msa_data = self._parse_msa_data(alignment_dir, alignment_index)
         if(len(msa_data) == 0):
@@ -627,8 +628,8 @@ class DataPipeline:
     def _process_msa_feats(
         self,
         alignment_dir: str,
-        input_sequence: Optional[str] = None,
-        alignment_index: Optional[str] = None
+        input_sequence: str | None = None,
+        alignment_index: str | None = None
     ) -> Mapping[str, Any]:
         msas, deletion_matrices = self._get_msas(
             alignment_dir, input_sequence, alignment_index
@@ -660,7 +661,7 @@ class DataPipeline:
         self,
         fasta_path: str,
         alignment_dir: str,
-        alignment_index: Optional[str] = None,
+        alignment_index: str | None = None,
         seqemb_mode: bool = False,
     ) -> FeatureDict:
         """Assembles features for a single sequence in a FASTA file""" 
@@ -707,8 +708,8 @@ class DataPipeline:
         self,
         mmcif: mmcif_parsing.MmcifObject,  # parsing is expensive, so no path
         alignment_dir: str,
-        chain_id: Optional[str] = None,
-        alignment_index: Optional[str] = None,
+        chain_id: str | None = None,
+        alignment_index: str | None = None,
         seqemb_mode: bool = False,
     ) -> FeatureDict:
         """
@@ -750,9 +751,9 @@ class DataPipeline:
         pdb_path: str,
         alignment_dir: str,
         is_distillation: bool = True,
-        chain_id: Optional[str] = None,
-        _structure_index: Optional[str] = None,
-        alignment_index: Optional[str] = None,
+        chain_id: str | None = None,
+        _structure_index: str | None = None,
+        alignment_index: str | None = None,
         seqemb_mode: bool = False,
     ) -> FeatureDict:
         """
@@ -762,7 +763,7 @@ class DataPipeline:
             db_dir = os.path.dirname(pdb_path)
             db = _structure_index["db"]
             db_path = os.path.join(db_dir, db)
-            fp = open(db_path, "rb")
+            fp = open(db_path, "rb")  # noqa: SIM115
             _, offset, length = _structure_index["files"][0]
             fp.seek(offset)
             pdb_str = fp.read(length).decode("utf-8")
@@ -801,7 +802,7 @@ class DataPipeline:
         self,
         core_path: str,
         alignment_dir: str,
-        alignment_index: Optional[str] = None,
+        alignment_index: str | None = None,
         seqemb_mode: bool = False,
     ) -> FeatureDict:
         """

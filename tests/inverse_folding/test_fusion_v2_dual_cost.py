@@ -21,14 +21,18 @@ Dual-off ledger must stay byte-identical.
 
 from __future__ import annotations
 
-import pytest
-
 from inverse_folding.reference_flow.fusion_v2 import policy as pol
 from inverse_folding.reference_flow.fusion_v2_runtime import ledger as lg
 
 from .test_fusion_v2_dual_select import _authority
 from .test_fusion_v2_head_directed_policy import (
-    MASKED, SOURCE_SEQ, _calibration, _coords, _donor, _policy, _source,
+    MASKED,
+    SOURCE_SEQ,
+    _calibration,
+    _coords,
+    _donor,
+    _policy,
+    _source,
 )
 
 PREFIX = "5ZHV_B:d0:sel"

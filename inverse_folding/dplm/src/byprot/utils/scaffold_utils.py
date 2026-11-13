@@ -220,7 +220,7 @@ def get_motif_dplm(pdb, ori_pdb):
     chain = chain_dict[pdb]
     chain_ids = [chain]
     structure = esm.inverse_folding.util.load_structure(pdb_clean_path, chain_ids)
-    coords, native_seqs = (
+    _coords, native_seqs = (
         esm.inverse_folding.multichain_util.extract_coords_from_complex(structure)
     )
     sequence = native_seqs[chain_ids[0]]
@@ -288,7 +288,7 @@ def prepare_data(pdb_path, alphabet, collator, num_seqs, device):
 
     structure = PDBDataProcessor().parse_PDB(pdb_path)
     batch = collator([deepcopy(structure) for idx in range(num_seqs)])
-    prev_tokens, prev_token_mask = _full_mask(
+    prev_tokens, _prev_token_mask = _full_mask(
         batch["tokens"], batch["coord_mask"], alphabet
     )
     batch["prev_tokens"] = prev_tokens

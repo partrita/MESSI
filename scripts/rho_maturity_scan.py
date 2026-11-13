@@ -10,9 +10,13 @@ import json
 import math
 import re
 import statistics
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
-from inverse_folding.reference_flow.fusion.v1_seeds import assert_no_seed_collisions, derive_seed
+from inverse_folding.reference_flow.fusion.v1_seeds import (
+    assert_no_seed_collisions,
+    derive_seed,
+)
 
 # FROZEN diagnostic inputs (the scientific basis; do NOT tune these to move the grid).
 PROTEINS = ("2O4T_A", "5YAA_B", "3O1Q_C", "7V2T_A")  # length-stratified: 90/150/210/280 aa
@@ -58,7 +62,7 @@ def prepared_backbone_digest(prepared: Any) -> str:
     """Digest the actual featurized coordinate tensor consumed by the denoiser."""
     batch = getattr(prepared, "batch", None)
     if not isinstance(batch, Mapping):
-        raise ValueError("prepared backbone must expose a mapping-valued batch")
+        raise ValueError("prepared backbone must expose a mapping-valued batch")  # noqa: TRY004
     return _canonical_digest({
         "schema": "prepared-backbone-coordinates/1",
         "sequence_length": int(prepared.sequence_length),
@@ -192,7 +196,7 @@ def summarize_step_cell(
         "n_attempts": n_attempts,
         "n_captured": len(captured),
         "rho_quantiles": rho,
-        "unresolved_quantiles": tuple(int(round(v)) for v in unresolved),
+        "unresolved_quantiles": tuple(round(v) for v in unresolved),
         "n_editable_min": int(min(editables)),
         "n_editable_max": int(max(editables)),
     }
@@ -262,17 +266,29 @@ def main():
     import pandas as pd
 
     from inverse_folding.reference_flow.config import load_reference_flow_config
-    from inverse_folding.reference_flow.fusion.v1_records import ConditioningDigest, make_root_id
+    from inverse_folding.reference_flow.fusion.v1_records import (
+        ConditioningDigest,
+        make_root_id,
+    )
     from inverse_folding.reference_flow.runtime import (
-        build_dplm_denoiser_context, load_if_task, make_dplm_denoiser, prepare_backbone,
+        build_dplm_denoiser_context,
+        load_if_task,
+        make_dplm_denoiser,
+        prepare_backbone,
     )
     from inverse_folding.reference_flow.sampler import (
-        ContinuationRequest, InvalidPreterminalRootError, MaturityNotReachedError,
+        ContinuationRequest,
+        InvalidPreterminalRootError,
+        MaturityNotReachedError,
         PositionDependentDFMSampler,
     )
     from scripts.rf_fusion_model_factory import (
-        _canonical_id_to_aa, assert_null_amplification, decode_tokens_to_aa, null_h_values,
-        payload_from_checkpoint, resume_from_payload,
+        _canonical_id_to_aa,
+        assert_null_amplification,
+        decode_tokens_to_aa,
+        null_h_values,
+        payload_from_checkpoint,
+        resume_from_payload,
     )
 
     task = load_if_task(args.checkpoint, device="cuda")
@@ -345,8 +361,8 @@ def main():
                 if len(seqs) >= 2:
                     divs.append(_hamming_editable(seqs, list(p.editable_positions)))
             if not roots:
-                records.append(dict(protein_id=pid, length=L, rho=rho, crossed=0, B=B, n_unique=0,
-                                    rho_actual=None, step=None, unresolved=None, unresolved_frac=None, fork_diversity=None))
+                records.append({"protein_id": pid, "length": L, "rho": rho, "crossed": 0, "B": B, "n_unique": 0,
+                                    "rho_actual": None, "step": None, "unresolved": None, "unresolved_frac": None, "fork_diversity": None})
                 print(f"{pid:9}{L:>5}{rho:>6.2f}{'0/'+str(B):>9}{'--':>5}{'no-cross':>8}")
                 continue
             nedit = len(roots[0][1].editable_positions)
@@ -354,8 +370,8 @@ def main():
             st = float(np.mean([p.step for _, p in roots]))
             un = float(np.mean([p.n_unresolved_editable for _, p in roots]))
             fd = statistics.mean(divs) if divs else float("nan")
-            records.append(dict(protein_id=pid, length=L, rho=rho, crossed=crossed, B=B, n_unique=len(uniq),
-                                rho_actual=ra, step=st, unresolved=un, unresolved_frac=un / max(1, nedit), fork_diversity=fd))
+            records.append({"protein_id": pid, "length": L, "rho": rho, "crossed": crossed, "B": B, "n_unique": len(uniq),
+                                "rho_actual": ra, "step": st, "unresolved": un, "unresolved_frac": un / max(1, nedit), "fork_diversity": fd})
             print(f"{pid:9}{L:>5}{rho:>6.2f}{str(crossed)+'/'+str(B):>9}{len(uniq):>5}{ra:>8.3f}{st:>7.1f}{un:>7.1f}{100*un/max(1,nedit):>7.1f}%{fd:>9.3f}")
 
     import os
@@ -384,8 +400,14 @@ def _run_step_mode(*, args, sampler, rf, task, aa_ids, mask_id, rows, cfg, np, p
     import sys
 
     from inverse_folding.reference_flow.fusion_v2.schedule import (
-        SCHEDULE_BAND_SCHEMA_VERSION, SCHEDULE_BAND_SCOPE, BandInterval, BandProvenance,
-        QuantileLevels, band_table_payload, bind_band_table, make_band,
+        SCHEDULE_BAND_SCHEMA_VERSION,
+        SCHEDULE_BAND_SCOPE,
+        BandInterval,
+        BandProvenance,
+        QuantileLevels,
+        band_table_payload,
+        bind_band_table,
+        make_band,
     )
     from scripts.rf_fusion_model_factory import coordinate_mask_digest, tokenizer_digest
 
@@ -440,7 +462,7 @@ def _run_step_mode(*, args, sampler, rf, task, aa_ids, mask_id, rows, cfg, np, p
         denoiser = make_dplm_denoiser(build_dplm_denoiser_context(
             task=task, prepared=prepared, use_draft_seq_override=False))
         L = prepared.sequence_length
-        for step in sorted(set(int(v) for v in args.steps)):
+        for step in sorted({int(v) for v in args.steps}):
             cell = f"step{step:04d}"
             for i in range(attempts_per_cell):
                 seed = scan_seed(protein_id=pid, cell_id=cell, attempt_index=i)
@@ -481,11 +503,11 @@ def _run_step_mode(*, args, sampler, rf, task, aa_ids, mask_id, rows, cfg, np, p
 
     thin = []
     bands = []
-    for step in sorted(set(int(v) for v in args.steps)):
+    for step in sorted({int(v) for v in args.steps}):
         cell_rows = [r for r in raw if r["step"] == step]
         summary = summarize_step_cell(cell_rows, levels=levels)
         print(f"  step {step:>4}  captured {summary['n_captured']}/{summary['n_attempts']}"
-              f"  rho_q {['%.3f' % v for v in summary['rho_quantiles']]}"
+              f"  rho_q {[f'{v:.3f}' for v in summary['rho_quantiles']]}"
               f"  unresolved_q {list(summary['unresolved_quantiles'])}")
         if summary["n_captured"] < int(args.min_captures_per_cell):
             thin.append((step, summary["n_captured"]))

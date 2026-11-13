@@ -11,13 +11,11 @@ Two-layer isolation:
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import subprocess
 import tempfile
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -75,8 +73,7 @@ def run_mmseqs_cluster(
         # Write representative FASTA (keyed by seq_hash)
         fasta_path = tmpdir / "reps.fasta"
         with open(fasta_path, "w") as f:
-            for sh in sorted(hash_to_seq.keys()):
-                f.write(f">{sh}\n{hash_to_seq[sh]}\n")
+            f.writelines(f">{sh}\n{hash_to_seq[sh]}\n" for sh in sorted(hash_to_seq.keys()))
 
         db_path = tmpdir / "seqDB"
         cluster_db = tmpdir / "clusterDB"
@@ -179,7 +176,6 @@ def weighted_cluster_split(
     total_weight = sum(cluster_weights.values())
     target_weights = [r * total_weight for r in ratios]
     current_weights = [0.0, 0.0, 0.0]
-    split_names = ["train", "val", "test"]
     assignments = {c: None for c in sorted_clusters}
 
     for cluster_rep in sorted_clusters:
@@ -265,8 +261,7 @@ def write_id_file(ids: list[str], path: Path) -> None:
     """Write sorted IDs to a text file, one per line."""
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as f:
-        for pid in sorted(ids):
-            f.write(pid + "\n")
+        f.writelines(pid + "\n" for pid in sorted(ids))
 
 
 def read_id_file(path: Path) -> list[str]:

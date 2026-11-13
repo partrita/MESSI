@@ -18,7 +18,6 @@ from inverse_folding.reference_flow.fusion_v2 import joint_objective as jo
 
 from . import _v2_fixtures as fx
 
-
 # ------------------------------------------------------------------------------------------
 # fixtures: one toy world, two distinguishable Heads on one window grid
 # ------------------------------------------------------------------------------------------
@@ -73,11 +72,11 @@ def endpoint(**over):
 
 def score_b(ep, *, risk=-4.0, density=None, **over):
     """A role-B Head result describing the SAME exact sequence as ``ep``."""
-    fields = dict(
-        protein_id=ep.protein_id, sequence_md5=ep.sequence_md5,
-        sequence_length=ep.sequence_length, allele=EVAL_B.allele,
-        score_scale=EVAL_B.score_scale, windows=ep.head_score.windows,
-        residue_hotspot=ep.head_score.residue_hotspot, global_risk=risk)
+    fields = {
+        "protein_id": ep.protein_id, "sequence_md5": ep.sequence_md5,
+        "sequence_length": ep.sequence_length, "allele": EVAL_B.allele,
+        "score_scale": EVAL_B.score_scale, "windows": ep.head_score.windows,
+        "residue_hotspot": ep.head_score.residue_hotspot, "global_risk": risk}
     fields.update(over)
     score = fx.EndpointHeadScore(**fields)
     binding = ident.HeadScoreBinding(
@@ -259,7 +258,7 @@ def test_a_duplicate_result_for_one_sequence_within_one_allele_is_refused():
 
 
 def test_an_unexpected_result_not_corresponding_to_any_endpoint_is_refused():
-    first, second = two_endpoints()
+    first, _second = two_endpoints()
     stray = endpoint(tokens=(12, 20, 12, 13, 14, 15))
     with pytest.raises(de.V2DualEvidenceError):
         de.bind_dual_evidence_batch(
@@ -314,7 +313,7 @@ def test_the_evidence_records_which_allele_is_the_active_worst():
 
 
 def test_the_module_is_pure():
-    text = open(de.__file__, encoding="utf-8").read()
+    text = open(de.__file__, encoding="utf-8").read()  # noqa: SIM115
     for banned in ("import torch", "import numpy", "from .config", "json.load"):
         assert banned not in text, banned
 
@@ -373,7 +372,8 @@ def test_the_telemetry_is_carried_on_the_evidence_and_gates_nothing():
 def test_measuring_role_B_drift_does_not_make_it_an_admission_input():
     """Structural: nothing in the Dual layer reads hotspot_b as a threshold."""
     import inspect
-    from inverse_folding.reference_flow.fusion_v2 import dual_policy, dual_evidence
+
+    from inverse_folding.reference_flow.fusion_v2 import dual_evidence, dual_policy
     from inverse_folding.reference_flow.fusion_v2_runtime import dual_selection
     for module in (dual_policy, dual_evidence, dual_selection):
         src = inspect.getsource(module)

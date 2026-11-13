@@ -56,8 +56,9 @@ import json
 import math
 import random
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:                       # pragma: no cover - entry-point plumbing
@@ -301,7 +302,9 @@ def score_panel_twice(records: Sequence[dict[str, Any]], *, head_oracle: Any, sh
 
 
 def positive_mass_density_of(score: Any) -> float:
-    from inverse_folding.reference_flow.fusion_v2.dual_evidence import positive_mass_density
+    from inverse_folding.reference_flow.fusion_v2.dual_evidence import (
+        positive_mass_density,
+    )
 
     return positive_mass_density(score.residue_hotspot, int(score.sequence_length))
 
@@ -322,7 +325,9 @@ def repeat_drift(first: dict[str, Any], second: dict[str, Any], attribute: str) 
 
 def _coordinate(role: Any, *, quantity: str, values: Sequence[float], protein_ids: Sequence[str],
                 raw_noise_floor: float, evaluator: Any, source_ref: str) -> Any:
-    from inverse_folding.reference_flow.fusion_v2.joint_objective import AlleleCoordinate
+    from inverse_folding.reference_flow.fusion_v2.joint_objective import (
+        AlleleCoordinate,
+    )
 
     location, scale = location_and_scale(values, protein_ids)
     if scale <= 0.0:
@@ -351,7 +356,11 @@ def build_dual_calibration(
     """The whole measured calibration, ready to be signed."""
     from inverse_folding.reference_flow.fusion_v2.identity import canonical_digest
     from inverse_folding.reference_flow.fusion_v2.joint_objective import (
-        AlleleRole, DualCalibration, DualObjectiveLaw, ObjectiveMode, PanelBinding,
+        AlleleRole,
+        DualCalibration,
+        DualObjectiveLaw,
+        ObjectiveMode,
+        PanelBinding,
         QuantityCoordinates,
     )
 
@@ -695,7 +704,8 @@ def sign_overlay(calibration: Any, *, args: argparse.Namespace, head_b_runtime: 
                  rows_path: Path) -> Any:
     """Turn a measured calibration into one signed overlay. No model, no scoring."""
     from inverse_folding.reference_flow.fusion_v2.dual_config import (
-        DUAL_OVERLAY_SCHEMA_VERSION, DualOverlay,
+        DUAL_OVERLAY_SCHEMA_VERSION,
+        DualOverlay,
     )
 
     return DualOverlay(
@@ -727,7 +737,8 @@ def head_b_runtime_from_args(args: argparse.Namespace, evaluator_b: Any) -> Any:
 def _resign(args: argparse.Namespace) -> int:
     """Re-sign an overlay from a measured calibration: a different C, a schema fix, a new bundle."""
     from inverse_folding.reference_flow.fusion_v2.dual_config import (
-        dual_overlay_payload, load_dual_overlay,
+        dual_overlay_payload,
+        load_dual_overlay,
     )
     node = json.loads(Path(args.resign_from).read_text())
     # Round-tripped through the overlay's own strict loader so a hand-edited calibration is refused
@@ -799,7 +810,9 @@ def _resign(args: argparse.Namespace) -> int:
 
 def _typed_overlay(node: dict[str, Any]) -> dict[str, Any]:
     """Adapt a stored overlay JSON into the typed-object loader's shape."""
-    from inverse_folding.reference_flow.fusion_v2.dual_config import dual_overlay_from_mapping
+    from inverse_folding.reference_flow.fusion_v2.dual_config import (
+        dual_overlay_from_mapping,
+    )
 
     built = dual_overlay_from_mapping(node)
     return {
@@ -958,7 +971,9 @@ def main(argv=None) -> int:
         panel_id=args.panel_id, panel_content_digest=digest, objective_spec=spec,
         bootstrap_resamples=args.bootstrap_resamples, bootstrap_seed=args.bootstrap_seed)
 
-    from inverse_folding.reference_flow.fusion_v2.dual_config import dual_overlay_payload
+    from inverse_folding.reference_flow.fusion_v2.dual_config import (
+        dual_overlay_payload,
+    )
 
     rows_payload = calibration_rows(rows)
     args.out_rows.parent.mkdir(parents=True, exist_ok=True)

@@ -26,18 +26,16 @@ from inverse_folding.reference_flow.config import (
 )
 from inverse_folding.reference_flow.fusion_v2.errors import V2Error
 from inverse_folding.reference_flow.fusion_v2.state import ActiveScoreStatus
+from inverse_folding.reference_flow.fusion_v2_runtime.scoring import token_logprob
 from inverse_folding.reference_flow.fusion_v2_runtime.segment import (
     NEVER_UNMASKED,
-    BackgroundRemaskError,
-    adapt_segment_to_live_state,
-    PendingAssimilationError,
     V2SegmentError,
+    adapt_segment_to_live_state,
     pending_positions,
     run_projected_segment,
     run_projected_segment_batch,
     segment_is_terminal,
 )
-from inverse_folding.reference_flow.fusion_v2_runtime.scoring import token_logprob
 from inverse_folding.reference_flow.sampler import (
     ContinuationResume,
     PositionDependentDFMSampler,
@@ -65,8 +63,8 @@ def _denoiser(x_t: torch.Tensor, t: float, struct) -> torch.Tensor:
 
 def _cfg(**over):
     """The FROZEN V2 substrate: controller-free, h-map-free, constant_one, zero remask."""
-    kw = dict(n_steps=F.N_STEPS, seed=7, temperature=1.0, fraction_scale=0.0,
-              remask_enabled=True, form="constant_one", shuffle=False)
+    kw = {"n_steps": F.N_STEPS, "seed": 7, "temperature": 1.0, "fraction_scale": 0.0,
+              "remask_enabled": True, "form": "constant_one", "shuffle": False}
     kw.update(over)
     return ReferenceFlowConfig(
         sampler=SamplerConfig(
@@ -86,10 +84,10 @@ def _sampler():
 
 
 def _run(**over):
-    kw = dict(
-        projected=F.projected(), sampler=_sampler(), denoiser=_denoiser, config=_cfg(),
-        h_values=np.zeros(F.L, dtype=np.float32), residue_token_ids=F.AA,
-    )
+    kw = {
+        "projected": F.projected(), "sampler": _sampler(), "denoiser": _denoiser, "config": _cfg(),
+        "h_values": np.zeros(F.L, dtype=np.float32), "residue_token_ids": F.AA,
+    }
     kw.update(over)
     return run_projected_segment(**kw)
 
@@ -370,7 +368,7 @@ def test_a_different_descendant_seed_produces_a_different_segment():
 
 def test_a_different_projected_byte_produces_a_different_segment():
     """Positive control on the state: the segment must actually read the tokens handed to it."""
-    other = tuple([*F.ENDPOINT_TOKENS[:1], 21, *F.ENDPOINT_TOKENS[2:]])
+    other = (*F.ENDPOINT_TOKENS[:1], 21, *F.ENDPOINT_TOKENS[2:])
     a = _run()
     b = _run(projected=F.projected(endpoint=F.endpoint(tokens=other), endpoint_tokens=other))
     assert not torch.equal(a.checkpoint.x_t, b.checkpoint.x_t)
@@ -390,7 +388,7 @@ def test_the_v1_sampler_module_is_byte_identical_to_head():
     repo = F.__file__.rsplit("/tests/", 1)[0]
     diff = subprocess.run(
         ["git", "diff", "--numstat", "--", "inverse_folding/reference_flow/sampler.py"],
-        capture_output=True, text=True, cwd=repo,
+        capture_output=True, text=True, cwd=repo, check=False,
     ).stdout.strip()
     assert diff == "", f"sampler.py must stay pristine, got: {diff}"
 
@@ -520,7 +518,7 @@ def test_the_batch_lane_is_byte_identical_to_running_each_lane_scalar():
     """
     lanes = _lanes()
     scalar = [_run(projected=lane) for lane in lanes]
-    batched_denoiser, calls = _batched_denoiser_factory()
+    batched_denoiser, _calls = _batched_denoiser_factory()
     batch = run_projected_segment_batch(
         projected_lanes=lanes, sampler=_sampler(), batched_denoiser=batched_denoiser,
         config=_cfg(), h_values=np.zeros(F.L, dtype=np.float32), residue_token_ids=F.AA,
@@ -565,8 +563,8 @@ def test_the_descendant_states_agree_across_scalar_and_batch():
         assert segment_is_terminal(one, lane) == segment_is_terminal(many, lane)
         if segment_is_terminal(many, lane):
             continue
-        adapt = lambda outcome: adapt_segment_to_live_state(  # noqa: E731
-            projected=lane, outcome=outcome, conditioning=F.conditioning(),
+        adapt = lambda outcome, _lane=lane: adapt_segment_to_live_state(
+            projected=_lane, outcome=outcome, conditioning=F.conditioning(),
             safety_reference=F.safety_reference(), cost_event_ids=("evt:root",))
         assert adapt(one).content_digest == adapt(many).content_digest
         adapted += 1

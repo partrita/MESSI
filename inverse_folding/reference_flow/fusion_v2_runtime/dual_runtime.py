@@ -20,8 +20,9 @@ bound by an earlier rung. Everything else is a value.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Callable, Mapping, Sequence
+from typing import Any
 
 from ..fusion_v2.dual_evidence import DualEndpointEvidence, V2DualEvidenceError
 from ..fusion_v2.errors import V2Error
@@ -29,7 +30,7 @@ from ..fusion_v2.identity import HeadEvaluatorIdentity
 from ..fusion_v2.joint_objective import AlleleRole, DualObjective, build_arm_objective
 from .dual_lookahead import bind_paired_head_scores, dual_stage_event_id
 
-__all__ = ["V2DualRuntimeError", "DualRuntime", "build_dual_runtime"]
+__all__ = ["DualRuntime", "V2DualRuntimeError", "build_dual_runtime"]
 
 
 class V2DualRuntimeError(V2Error):
@@ -203,7 +204,7 @@ class DualRuntime:
         """
         scores: dict[str, Any] = {}
         for endpoint in endpoints:
-            endpoint_id = str(getattr(endpoint, "endpoint_id"))
+            endpoint_id = str(endpoint.endpoint_id)
             score_b = self.score_b_by_endpoint.get(endpoint_id)
             if score_b is None:
                 raise V2DualEvidenceError(

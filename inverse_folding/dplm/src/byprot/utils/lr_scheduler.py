@@ -59,10 +59,10 @@ def get_scheduler(cfg, optimizer):
     elif cfg.type is None:
         return BlackHole()
     else:
-        raise NotImplementedError("Scheduler not supported: %s" % cfg.type)
+        raise NotImplementedError(f"Scheduler not supported: {cfg.type}")
 
 
-class BlackHole(object):
+class BlackHole:
     def __setattr__(self, name, value):
         pass
 

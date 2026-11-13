@@ -7,8 +7,8 @@ from dataclasses import dataclass, field
 
 import numpy as np
 import torch
-import torch.nn as nn
-from omegaconf import OmegaConf, open_dict
+from omegaconf import OmegaConf
+from torch import nn
 from tqdm import tqdm
 
 from byprot import utils
@@ -65,7 +65,7 @@ class DPLMInvFold(nn.Module):
         self.cfg = OmegaConf.merge(self._default_cfg, cfg)
 
     @classmethod
-    def from_pretrained(cls, net_name, cfg_override={}, net_override={}):
+    def from_pretrained(cls, net_name, cfg_override=None, net_override=None):
         # Load model checkpoint from local if you pretrain a structure-condition DPLM with this repo
         # The net_name should be like:
         # ${name}/checkpoints/last.ckpt
@@ -75,6 +75,10 @@ class DPLMInvFold(nn.Module):
 
         from byprot.utils.config import load_yaml_config
 
+        if net_override is None:
+            net_override = {}
+        if cfg_override is None:
+            cfg_override = {}
         cfg_path = Path(net_name).parents[1]
         cfg_path = Path(cfg_path, ".hydra", "config.yaml")
         cfg = load_yaml_config(str(cfg_path)).model
@@ -208,7 +212,7 @@ class DPLMInvFold(nn.Module):
         output_tokens = prev_decoder_out["output_tokens"].clone()
         output_scores = prev_decoder_out["output_scores"].clone()
         step, max_step = prev_decoder_out["step"], prev_decoder_out["max_step"]
-        temperature = prev_decoder_out["temperature"]
+        prev_decoder_out["temperature"]
         history = prev_decoder_out["history"]
 
         output_masks = self.get_non_special_sym_mask(
@@ -263,15 +267,15 @@ class DPLMInvFold(nn.Module):
 
         history.append(output_tokens.clone())
 
-        return dict(
-            output_tokens=output_tokens,
-            output_scores=output_scores,
-            attentions=attentions,  # [B, L, H, T, T]
-            step=step + 1,
-            max_step=max_step,
-            history=history,
-            hidden_states=esm_out["last_hidden_state"],
-        )
+        return {
+            "output_tokens": output_tokens,
+            "output_scores": output_scores,
+            "attentions": attentions,  # [B, L, H, T, T]
+            "step": step + 1,
+            "max_step": max_step,
+            "history": history,
+            "hidden_states": esm_out["last_hidden_state"],
+        }
 
     def initialize_output_tokens(
         self,
@@ -282,7 +286,7 @@ class DPLMInvFold(nn.Module):
         length_beam=1,
         mbr=1,
     ):
-        mask = encoder_out.get("coord_mask", None)
+        encoder_out.get("coord_mask", None)
 
         if use_draft_seq:
             prev_tokens = batch["prev_tokens"]
@@ -441,10 +445,6 @@ class DPLMInvFold(nn.Module):
         use_draft_seq=False,
         logit_processor=None,
     ):
-        tokenizer = tokenizer
-        max_iter = max_iter
-        temperature = temperature
-
         # 0) encoding
         encoder_out = self.forward_encoder(batch, use_draft_seq=use_draft_seq)
         # 1) initialized from all mask tokens
@@ -457,16 +457,16 @@ class DPLMInvFold(nn.Module):
             partial_masks=partial_masks,
             use_draft_seq=use_draft_seq,
         )
-        prev_decoder_out = dict(
-            output_tokens=initial_output_tokens,
-            output_scores=initial_output_scores,
-            output_masks=None,
-            attentions=None,
-            step=0,
-            max_step=max_iter,
-            history=[initial_output_tokens.clone()],
-            temperature=temperature,
-        )
+        prev_decoder_out = {
+            "output_tokens": initial_output_tokens,
+            "output_scores": initial_output_scores,
+            "output_masks": None,
+            "attentions": None,
+            "step": 0,
+            "max_step": max_iter,
+            "history": [initial_output_tokens.clone()],
+            "temperature": temperature,
+        }
 
         prev_decoder_out["output_masks"] = self.get_non_special_sym_mask(
             prev_decoder_out["output_tokens"], partial_masks=partial_masks

@@ -29,8 +29,9 @@ import hashlib
 import json
 import random
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import pandas as pd
 
@@ -38,22 +39,22 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from inverse_folding.reference_flow.fusion.state import sequence_md5  # noqa: E402
-from inverse_folding.reference_flow.fusion_v2.config import (  # noqa: E402
+from inverse_folding.reference_flow.fusion.state import sequence_md5
+from inverse_folding.reference_flow.fusion_v2.config import (
+    V2_POLICY_CALIBRATION_SCHEMA_VERSION,
     PolicyCalibratedScalar,
     PolicyCalibrationArtifact,
-    V2_POLICY_CALIBRATION_SCHEMA_VERSION,
     policy_calibration_source_ref,
 )
-from inverse_folding.reference_flow.fusion_v2.identity import canonical_digest  # noqa: E402
-from inverse_folding.reference_flow.fusion_v2.policy import (  # noqa: E402
+from inverse_folding.reference_flow.fusion_v2.identity import canonical_digest
+from inverse_folding.reference_flow.fusion_v2.policy import (
     HEAD_DIRECTED_CAPPED_POLICY_ID,
     REOPEN_COUNT_LAW,
     REOPEN_PRIORITY_LAW,
     SOURCE_GEOMETRY_CONTROL_POLICY_ID,
     WRITE_WINDOW_RULE,
 )
-from inverse_folding.reference_flow.fusion_v2_runtime.lookahead import OracleRequest  # noqa: E402
+from inverse_folding.reference_flow.fusion_v2_runtime.lookahead import OracleRequest
 
 CALIBRATION_BUNDLE_SCHEMA = "v2-head-policy-calibration-bundle/1"
 STORED_VS_LIVE = "stored_vs_live_global_risk_max_abs"

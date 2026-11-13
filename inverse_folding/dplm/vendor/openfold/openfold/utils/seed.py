@@ -1,6 +1,7 @@
-import os
 import logging
+import os
 import random
+
 import numpy as np
 from pytorch_lightning.utilities.seed import seed_everything
 
@@ -12,7 +13,7 @@ def seed_globally(seed=None):
         if(seed is None):
             seed = random.randint(0, np.iinfo(np.uint32).max)
         os.environ["PL_GLOBAL_SEED"] = str(seed)
-        logging.info(f'os.environ["PL_GLOBAL_SEED"] set to {seed}')
+        logging.info(f'os.environ["PL_GLOBAL_SEED"] set to {seed}')  # noqa: LOG015
 
     # seed_everything is a bit log-happy
     with SuppressLogging(logging.INFO):

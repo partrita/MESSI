@@ -18,7 +18,11 @@ import types
 
 import pytest
 
-from scripts.rf_fusion_model_factory import ModelSeams, PreparedModel, build_model_factory
+from scripts.rf_fusion_model_factory import (
+    ModelSeams,
+    PreparedModel,
+    build_model_factory,
+)
 
 
 class _Alphabet:
@@ -93,9 +97,9 @@ def _seams(calls, *, rf_config=None):
 
 
 def _build(calls, **over):
-    kw = dict(base_if_checkpoint="/ckpt/dplm.pt", rf_sampler_config="/cfg/rf.yaml",
-              test_set_parquet="/data/test.parquet", pdb_root="/data/pdb", device="cpu",
-              seams=_seams(calls))
+    kw = {"base_if_checkpoint": "/ckpt/dplm.pt", "rf_sampler_config": "/cfg/rf.yaml",
+              "test_set_parquet": "/data/test.parquet", "pdb_root": "/data/pdb", "device": "cpu",
+              "seams": _seams(calls)}
     kw.update(over)
     return build_model_factory(**kw)
 
@@ -161,7 +165,7 @@ def test_an_amplified_sampler_config_is_refused_at_construction():
 
     amplified = dataclasses.replace(
         _rf_config(), amplification=AmplificationConfig(form="exp", h_source="h_processed"))
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: B017
         _build([], seams=_seams([], rf_config=amplified))
 
 
@@ -213,9 +217,11 @@ def test_the_factory_is_importable_without_torch():
 
     result = subprocess.run(
         [sys.executable, "-c",
-         "import sys; import scripts.rf_fusion_model_factory as m; m.ModelSeams(); "
-         "print('torch' in sys.modules)"],
-        capture_output=True, text=True, cwd=str(__import__("pathlib").Path(__file__).parents[2]),
+         ("import sys; import scripts.rf_fusion_model_factory as m; m.ModelSeams(); "
+         "print('torch' in sys.modules)")],
+        capture_output=True, text=True,
+        cwd=str(__import__("pathlib").Path(__file__).parents[2]),
+        check=False,
     )
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == "False", "importing the factory pulled in torch"

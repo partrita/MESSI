@@ -6,14 +6,11 @@ import argparse
 import json
 import logging
 import sys
-import time
 from pathlib import Path
-
-import yaml
 
 import numpy as np
 import torch
-import torch.nn as nn
+import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -35,8 +32,8 @@ from epitope_head.training.datamodule import (
     load_augmented_proteins,
     load_split_proteins,
 )
-from epitope_head.training.encoders import AATokenizer, build_encoder
-from epitope_head.training.model import EpitopeScorer, FrozenESMEncoder, ESMTokenizer
+from epitope_head.training.encoders import build_encoder
+from epitope_head.training.model import EpitopeScorer, ESMTokenizer, FrozenESMEncoder
 from epitope_head.training.trainer import Trainer
 
 logger = logging.getLogger(__name__)
@@ -281,7 +278,7 @@ def main() -> dict:
 
     # ── Build chunks ──────────────────────────────────────────────────
     chunking = train_cfg["chunking"]
-    ck_params = dict(context_len=chunking["context_len"], stride=chunking["stride"], margin=chunking["margin"])
+    ck_params = {"context_len": chunking["context_len"], "stride": chunking["stride"], "margin": chunking["margin"]}
     train_chunks = build_chunk_samples(train_entries, **ck_params)
     val_chunks = build_chunk_samples(val_entries, **ck_params)
     logger.info("Chunks: %d train, %d val", len(train_chunks), len(val_chunks))

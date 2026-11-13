@@ -30,7 +30,6 @@ import os
 import sys
 import time
 from collections import Counter
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -171,7 +170,7 @@ def _log(msg: str) -> None:
 
 def _recall_target_key(target: float) -> str:
     """Stable key suffix for recall targets like 0.3 -> '30'."""
-    return str(int(round(target * 100)))
+    return str(round(target * 100))
 
 
 def _compute_precision_at_k(
@@ -574,7 +573,7 @@ def _invert_nmp_wins(
 def _aggregate_residue_scores(
     wins_inv: dict[tuple[int, int], float],
     L: int,
-    k_filter: Optional[int] = None,
+    k_filter: int | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Per-residue max score over windows containing r.
 
@@ -615,7 +614,7 @@ def _build_residue_labels(
     return y_cover, y_density
 
 
-def _pearson_corr(x: np.ndarray, y: np.ndarray) -> Optional[float]:
+def _pearson_corr(x: np.ndarray, y: np.ndarray) -> float | None:
     """Pearson r, None if degenerate."""
     if x.size < 2 or np.std(x) == 0 or np.std(y) == 0:
         return None
@@ -623,7 +622,7 @@ def _pearson_corr(x: np.ndarray, y: np.ndarray) -> Optional[float]:
     return None if np.isnan(r) else r
 
 
-def _spearman_corr(x: np.ndarray, y: np.ndarray) -> Optional[float]:
+def _spearman_corr(x: np.ndarray, y: np.ndarray) -> float | None:
     """Spearman ρ via scipy, None if degenerate."""
     if x.size < 2:
         return None
@@ -637,7 +636,7 @@ def _compute_residue_metrics(
     mask: np.ndarray,
     y_cover: np.ndarray,
     y_density: np.ndarray,
-) -> Optional[dict]:
+) -> dict | None:
     """AUC/AP vs y_cover + Pearson/Spearman vs y_density on covered residues.
 
     Returns None if not evaluable (no coverage, or all-positive/all-negative
@@ -716,7 +715,7 @@ def _iou_greedy_labels(
     return tp, n_gt
 
 
-def _detection_ap(sorted_tp: np.ndarray, n_gt: int) -> Optional[float]:
+def _detection_ap(sorted_tp: np.ndarray, n_gt: int) -> float | None:
     """COCO-style AP: ∑_k (TP_k/k) · I(TP_k) / n_gt."""
     if n_gt == 0 or sorted_tp.size == 0:
         return None
@@ -728,7 +727,7 @@ def _detection_ap(sorted_tp: np.ndarray, n_gt: int) -> Optional[float]:
 
 def _detection_recall_at_k(
     sorted_tp: np.ndarray, n_gt: int, k: int,
-) -> Optional[float]:
+) -> float | None:
     """Recall@K for detection: fraction of GT matched in top-K predictions."""
     if n_gt == 0:
         return None
@@ -736,7 +735,7 @@ def _detection_recall_at_k(
     return float(top.sum() / n_gt)
 
 
-def _detection_auc(sorted_tp: np.ndarray) -> Optional[float]:
+def _detection_auc(sorted_tp: np.ndarray) -> float | None:
     """Rank-AUC on the TP/FP binary labels from greedy assignment."""
     if sorted_tp.size == 0:
         return None
@@ -763,7 +762,7 @@ def _compute_iou_ladder(
     positives: list[dict],
     iou_thresholds: list[float],
     recall_ks: tuple[int, ...],
-) -> Optional[dict]:
+) -> dict | None:
     """M6 ladder over the full multi-k span set (per doc §5 head note).
 
     IoU is length-agnostic — predictions and GT spans of differing length are
@@ -803,8 +802,8 @@ def _compute_emd(
     wins_inv: dict[tuple[int, int], float],
     L: int,
     y_density: np.ndarray,
-    k_filter: Optional[int] = None,
-) -> Optional[dict]:
+    k_filter: int | None = None,
+) -> dict | None:
     """1D EMD between per-residue pred density and GT coverage density.
 
     Uses the residue-level `score(r)` from §5.1 (max over the full multi-k
@@ -843,7 +842,7 @@ def _bootstrap_ci(
     n_resamples: int,
     seed: int,
     confidence: float = 0.95,
-) -> Optional[dict]:
+) -> dict | None:
     """Non-parametric percentile bootstrap CI over proteins."""
     arr = np.asarray([v for v in values if v is not None], dtype=np.float64)
     if arr.size == 0:
@@ -865,8 +864,8 @@ def _bootstrap_ci(
 
 
 def _paired_wilcoxon(
-    head: list[Optional[float]], nmp: list[Optional[float]],
-) -> Optional[dict]:
+    head: list[float | None], nmp: list[float | None],
+) -> dict | None:
     """Wilcoxon signed-rank, head - nmp. Matched by position in input lists."""
     assert len(head) == len(nmp)
     pairs = [
@@ -947,7 +946,7 @@ def _validate_nmp_cache_meta(
     allele: str,
     min_k: int,
     max_k: int,
-) -> Optional[str]:
+) -> str | None:
     """Return an error message for hard-incompatible NMP cache metadata, or
     None if the cache is usable. Soft mismatches (e.g. nmp_mode) are not
     surfaced here — callers handle them as warnings."""
@@ -961,13 +960,16 @@ def _validate_nmp_cache_meta(
         )
     cache_min_k = cache_meta.get("min_k")
     cache_max_k = cache_meta.get("max_k")
-    if cache_min_k is not None and cache_max_k is not None:
-        if cache_min_k > min_k or cache_max_k < max_k:
-            return (
-                f"cache k-range [{cache_min_k},{cache_max_k}] does not "
-                f"cover requested [{min_k},{max_k}]; NMP would be missing "
-                f"windows. Re-run NMP from scratch."
-            )
+    if (
+        cache_min_k is not None
+        and cache_max_k is not None
+        and (cache_min_k > min_k or cache_max_k < max_k)
+    ):
+        return (
+            f"cache k-range [{cache_min_k},{cache_max_k}] does not "
+            f"cover requested [{min_k},{max_k}]; NMP would be missing "
+            f"windows. Re-run NMP from scratch."
+        )
     return None
 
 
@@ -997,9 +999,9 @@ def _load_windows_cache(
 
 def _collect_pp(
     per_protein: list[dict], path: tuple[str, ...],
-) -> list[Optional[float]]:
+) -> list[float | None]:
     """Walk a dotted path into each row; return list aligned with per_protein."""
-    out: list[Optional[float]] = []
+    out: list[float | None] = []
     for row in per_protein:
         cur: object = row
         for key in path:
@@ -1401,7 +1403,7 @@ def main() -> int:
 
     def _compute_metric_bundle(
         scores_t: torch.Tensor, labels: torch.Tensor,
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """AUC + AP + Recall@K + Precision views, or None if not evaluable."""
         if scores_t.numel() == 0:
             return None
@@ -1596,7 +1598,7 @@ def main() -> int:
     # ── Macro averages ─────────────────────────────────────────────────
     # Each (predictor, mode) averaged over its own evaluable proteins.
 
-    def _macro_value(predictor: str, mode: str, metric_key: str) -> Optional[float]:
+    def _macro_value(predictor: str, mode: str, metric_key: str) -> float | None:
         vals = []
         for r in per_protein:
             bundle = r["metrics"].get(f"{predictor}_{mode}")
@@ -1653,7 +1655,7 @@ def main() -> int:
     }
 
     # ── EL landscape macro blocks ──────────────────────────────────────
-    def _macro_mean(values: list[Optional[float]]) -> Optional[float]:
+    def _macro_mean(values: list[float | None]) -> float | None:
         vs = [float(v) for v in values if v is not None]
         return sum(vs) / len(vs) if vs else None
 
@@ -1851,8 +1853,8 @@ def main() -> int:
 
     for mode, heading in (
         ("primary",
-         "[Primary — Q1: who wins on the same real test set? "
-         "NMP missing=worst]"),
+         ("[Primary — Q1: who wins on the same real test set? "
+         "NMP missing=worst]")),
         ("conditional",
          "[Conditional — Q2: who wins when they successfully score?]"),
     ):

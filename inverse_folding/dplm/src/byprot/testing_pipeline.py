@@ -3,18 +3,13 @@
 
 
 import os
-from typing import List
 
 import hydra
 from omegaconf import DictConfig
 from pytorch_lightning import (
-    LightningDataModule,
-    LightningModule,
     Trainer,
     seed_everything,
 )
-from pytorch_lightning.loggers import Logger as LightningLoggerBase
-from torch import nn
 
 from byprot import utils
 from byprot.tasks import on_prediction_mode

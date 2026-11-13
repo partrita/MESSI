@@ -167,9 +167,8 @@ def process_tensors_from_config(tensors, common_cfg, mode_cfg):
         d["ensemble_index"] = i
         return fn(d)
 
-    no_templates = True
     if("template_aatype" in tensors):
-        no_templates = tensors["template_aatype"].shape[0] == 0
+        tensors["template_aatype"].shape[0] == 0  # noqa: B015
 
     nonensembled = nonensembled_transform_fns(
         common_cfg,

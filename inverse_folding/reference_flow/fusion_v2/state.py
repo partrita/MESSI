@@ -25,44 +25,64 @@ from __future__ import annotations
 
 import enum
 import json
+import math
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any
+
+from inverse_folding.reference_flow.fusion.state import sequence_md5
+from inverse_folding.reference_flow.fusion.v1_admission import StructureOutcome
+from inverse_folding.reference_flow.fusion.v1_alloc import validate_complete_aa20
 
 from .errors import V2Error
 from .identity import (
-    SafetyReferenceBinding,
+    V2_STATE_SCHEMA_VERSION,
     HeadScoreBinding,
     HeadScoreLike,
-    ProjectionPolicyIdentity,
-    V2_STATE_SCHEMA_VERSION,
-    V2ConditioningIdentity,
     LineageRef,
+    ProjectionPolicyIdentity,
+    SafetyReferenceBinding,
+    V2ConditioningIdentity,
     assert_id_binds_digest,
     canonical_digest,
-    make_live_state_id,
     make_archive_entry_id,
     make_endpoint_id,
+    make_live_state_id,
     make_projected_state_id,
     make_transition_id,
     require_digest,
     require_id_namespace,
     window_grid_digest,
 )
-from inverse_folding.reference_flow.fusion.state import sequence_md5
-from inverse_folding.reference_flow.fusion.v1_alloc import validate_complete_aa20
-from inverse_folding.reference_flow.fusion.v1_admission import StructureOutcome
-
 from .schedule import CoordinateLaw, HistoryKey, MaturityRecord, observe_maturity
 
 __all__ = [
-    "V2StateError", "ActiveOriginKind", "FeedbackOriginRef", "ActiveScoreStatus",
-    "OriginEvidence", "PositionProvenance", "ReplayIdentity", "LivePartialState",
-    "SupportAction", "ProtectionGrantReason", "TemporaryProtection", "SupportPartition",
-    "ProjectedPartialState", "carry_is_temporally_legal", "validate_endpoint_writeback",
-    "FeasibilityLevel", "TransitionOutcome", "validate_propagated_capture",
-    "EndpointPositionEvidence", "CompleteEndpoint", "endpoint_may_become_ancestry",
-    "ArchiveMembership", "ArchiveEntry", "advance_archive_entry", "AssimilationRecord",
+    "ActiveOriginKind",
+    "ActiveScoreStatus",
+    "ArchiveEntry",
+    "ArchiveMembership",
+    "AssimilationRecord",
+    "CompleteEndpoint",
+    "EndpointPositionEvidence",
+    "FeasibilityLevel",
+    "FeedbackOriginRef",
     "FeedbackTransition",
+    "LivePartialState",
+    "OriginEvidence",
+    "PositionProvenance",
+    "ProjectedPartialState",
+    "ProtectionGrantReason",
+    "ReplayIdentity",
+    "SupportAction",
+    "SupportPartition",
+    "TemporaryProtection",
+    "TransitionOutcome",
+    "V2StateError",
+    "advance_archive_entry",
+    "carry_is_temporally_legal",
+    "endpoint_may_become_ancestry",
+    "validate_endpoint_writeback",
+    "validate_propagated_capture",
 ]
 
 
@@ -131,7 +151,7 @@ def _require_finite(value: Any, name: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise V2StateError(f"{name} must be a real number, got {type(value).__name__}")
     out = float(value)
-    if out != out or out in (float("inf"), float("-inf")):
+    if not math.isfinite(out):
         raise V2StateError(f"{name} must be finite, got {out!r}")
     return out
 
@@ -552,7 +572,7 @@ class LivePartialState:
     active_sampler_score_by_pos: tuple[float | None, ...]
     active_score_status_by_pos: tuple[ActiveScoreStatus, ...]
     provenance_by_pos: tuple[PositionProvenance, ...]
-    expired_protection: tuple["TemporaryProtection", ...]
+    expired_protection: tuple[TemporaryProtection, ...]
     replay: ReplayIdentity
     accumulated_lineage_dfe: int
     conditioning: V2ConditioningIdentity
@@ -1308,7 +1328,7 @@ class TransitionOutcome(str, enum.Enum):
 
 
 def validate_propagated_capture(
-    *, projected: "ProjectedPartialState", propagated: LivePartialState,
+    *, projected: ProjectedPartialState, propagated: LivePartialState,
     background_remask_events: int,
 ) -> None:
     """Check that a propagation segment ended where and how it declared it would.

@@ -18,8 +18,7 @@ import collections
 import dataclasses
 import re
 import string
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
-
+from collections.abc import Iterable, Sequence
 
 DeletionMatrix = Sequence[Sequence[int]]
 
@@ -34,11 +33,11 @@ class TemplateHit:
     sum_probs: float
     query: str
     hit_sequence: str
-    indices_query: List[int]
-    indices_hit: List[int]
+    indices_query: list[int]
+    indices_hit: list[int]
 
 
-def parse_fasta(fasta_string: str) -> Tuple[Sequence[str], Sequence[str]]:
+def parse_fasta(fasta_string: str) -> tuple[Sequence[str], Sequence[str]]:
     """Parses FASTA string and returns list of strings with amino-acid sequences.
 
     Arguments:
@@ -71,7 +70,7 @@ def parse_fasta(fasta_string: str) -> Tuple[Sequence[str], Sequence[str]]:
 
 def parse_stockholm(
     stockholm_string: str,
-) -> Tuple[Sequence[str], DeletionMatrix, Sequence[str]]:
+) -> tuple[Sequence[str], DeletionMatrix, Sequence[str]]:
     """Parses sequences and deletion matrix from stockholm format alignment.
 
     Args:
@@ -129,7 +128,7 @@ def parse_stockholm(
     return msa, deletion_matrix, list(name_to_sequence.keys())
 
 
-def parse_a3m(a3m_string: str) -> Tuple[Sequence[str], DeletionMatrix]:
+def parse_a3m(a3m_string: str) -> tuple[Sequence[str], DeletionMatrix]:
     """Parses sequences and deletion matrix from a3m format alignment.
 
     Args:
@@ -174,7 +173,7 @@ def _convert_sto_seq_to_a3m(
 
 
 def convert_stockholm_to_a3m(
-    stockholm_format: str, max_sequences: Optional[int] = None
+    stockholm_format: str, max_sequences: int | None = None
 ) -> str:
     """Converts MSA in Stockholm format to the A3M format."""
     descriptions = {}
@@ -229,7 +228,7 @@ def convert_stockholm_to_a3m(
 
 def _get_hhr_line_regex_groups(
     regex_pattern: str, line: str
-) -> Sequence[Optional[str]]:
+) -> Sequence[str | None]:
     match = re.match(regex_pattern, line)
     if match is None:
         raise RuntimeError(f"Could not parse query line {line}")
@@ -237,7 +236,7 @@ def _get_hhr_line_regex_groups(
 
 
 def _update_hhr_residue_indices_list(
-    sequence: str, start_index: int, indices_list: List[int]
+    sequence: str, start_index: int, indices_list: list[int]
 ):
     """Computes the relative indices for each residue with respect to the original sequence."""
     counter = start_index
@@ -277,10 +276,9 @@ def _parse_hhr_hit(detailed_lines: Sequence[str]) -> TemplateHit:
     match = re.match(pattern, detailed_lines[2])
     if match is None:
         raise RuntimeError(
-            "Could not parse section: %s. Expected this: \n%s to contain summary."
-            % (detailed_lines, detailed_lines[2])
+            f"Could not parse section: {detailed_lines}. Expected this: \n{detailed_lines[2]} to contain summary."
         )
-    (prob_true, e_value, _, aligned_cols, _, _, sum_probs, neff) = [
+    (_prob_true, _e_value, _, aligned_cols, _, _, sum_probs, _neff) = [
         float(x) for x in match.groups()
     ]
 
@@ -321,7 +319,7 @@ def _parse_hhr_hit(detailed_lines: Sequence[str]) -> TemplateHit:
             query += delta_query
             _update_hhr_residue_indices_list(delta_query, start, indices_query)
 
-        elif line.startswith("T "):
+        elif line.startswith("T "):  # noqa: SIM102
             # Parse the hit sequence.
             if (
                 not line.startswith("T ss_dssp")
@@ -375,7 +373,7 @@ def parse_hhr(hhr_string: str) -> Sequence[TemplateHit]:
     return hits
 
 
-def parse_e_values_from_tblout(tblout: str) -> Dict[str, float]:
+def parse_e_values_from_tblout(tblout: str) -> dict[str, float]:
     """Parse target to e-value mapping parsed from Jackhmmer tblout string."""
     e_values = {"query": 0}
     lines = [line for line in tblout.splitlines() if line[0] != "#"]

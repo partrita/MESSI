@@ -10,7 +10,6 @@ Frozen thresholds (PLAN_DATA_SEL §L3):
 """
 
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass

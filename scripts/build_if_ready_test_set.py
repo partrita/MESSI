@@ -16,7 +16,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import os
 import re
 import sys
 from collections import Counter, defaultdict
@@ -26,8 +25,7 @@ from typing import Any
 
 import pandas as pd
 from Bio.Data import PDBData
-from Bio.PDB import MMCIFIO, MMCIFParser, PDBIO, PDBParser, Select
-
+from Bio.PDB import MMCIFIO, PDBIO, MMCIFParser, PDBParser, Select
 
 CANONICAL_AA = frozenset("ACDEFGHIKLMNPQRSTVWY")
 AA3_TO1_EXT = {k.upper(): v for k, v in PDBData.protein_letters_3to1_extended.items()}
@@ -566,7 +564,7 @@ def main(argv: list[str] | None = None) -> int:
         "output_parquet": str(output_parquet.resolve()),
         "output_structure_dir": str(output_structure_dir.resolve()),
         "failure_csv": str(failure_csv.resolve()),
-        "n_input": int(len(df)),
+        "n_input": len(df),
         "min_if_length": int(args.min_if_length),
         "min_coverage": float(args.min_coverage),
         "model_idx": int(args.model_idx),

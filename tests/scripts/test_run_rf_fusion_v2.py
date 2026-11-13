@@ -23,22 +23,21 @@ import pytest
 pytest.importorskip("pyarrow")
 pytest.importorskip("yaml")
 
-import yaml  # noqa: E402
+import yaml
 
-from scripts.run_rf_fusion_v2 import (  # noqa: E402
-    DeclaredInput,
+from scripts.rf_fusion_v2_preflight import input_signature
+from scripts.rf_fusion_v2_resume import RunSignature
+from scripts.run_rf_fusion_v2 import (
     EXIT_FAILED,
     EXIT_OK,
     EXIT_PARTIAL,
     EXIT_UNLAUNCHABLE,
+    DeclaredInput,
     V2DriverError,
     build_parser,
     execution_replicates,
     main,
 )
-from scripts.rf_fusion_v2_preflight import input_signature  # noqa: E402
-from scripts.rf_fusion_v2_resume import RunSignature  # noqa: E402
-from tests.inverse_folding import _v2_fixtures as F  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -123,7 +122,7 @@ def test_print_config_derives_the_one_shared_digest_and_loads_no_model(tmp_path)
     result = subprocess.run(
         [sys.executable, "scripts/run_rf_fusion_v2.py", "--v2-config", str(config_path),
          "--out-dir", str(tmp_path / "out"), "--cohort", "A_1", "--print-config"],
-        capture_output=True, text=True, cwd=str(REPO),
+        capture_output=True, text=True, cwd=str(REPO), check=False,
     )
     assert result.returncode == EXIT_OK, result.stderr
     payload = json.loads(result.stdout)
@@ -139,8 +138,8 @@ def test_no_torch_is_imported_by_the_config_paths(tmp_path):
     config_path = _write_config(tmp_path)
     probe = (
         "import sys, runpy;\n"
-        "sys.argv = ['run_rf_fusion_v2.py', '--v2-config', %r, '--out-dir', %r,"
-        " '--cohort', 'A_1', '--input-file', %r, '--dry-run'];\n"
+        "sys.argv = ['run_rf_fusion_v2.py', '--v2-config', {!r}, '--out-dir', {!r},"
+        " '--cohort', 'A_1', '--input-file', {!r}, '--dry-run'];\n"
         "import contextlib, io;\n"
         "buf = io.StringIO();\n"
         "code = 0\n"
@@ -150,10 +149,10 @@ def test_no_torch_is_imported_by_the_config_paths(tmp_path):
         "except SystemExit as exc:\n"
         "    code = exc.code\n"
         "print('torch' in sys.modules)\n"
-    ) % (str(config_path), str(tmp_path / "out"),
+    ).format(str(config_path), str(tmp_path / "out"),
          f"cohort_table={_input_file(tmp_path)}")
     result = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True,
-                            cwd=str(REPO))
+                            cwd=str(REPO), check=False)
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip().splitlines()[-1] == "False"
 
@@ -698,7 +697,6 @@ def test_a_shard_that_stops_without_a_definitive_design_is_not_a_success(tmp_pat
         production_depth_authorized=False, exploratory_depth_override=False,
     )
 
-    import scripts.rf_fusion_v2_cohort as cohort_mod
     from inverse_folding.reference_flow.fusion_v2_runtime import ladder as ladder_mod
 
     original = ladder_mod.run_depth_ladder
@@ -925,7 +923,9 @@ def test_dry_run_still_succeeds_on_well_formed_runtime_paths(tmp_path):
 
 def _overlay_file(tmp_path, **over):
     """A signed Dual overlay on disk, authored through the loader's own serializer."""
-    from inverse_folding.reference_flow.fusion_v2.dual_config import dual_overlay_payload
+    from inverse_folding.reference_flow.fusion_v2.dual_config import (
+        dual_overlay_payload,
+    )
     from tests.inverse_folding.test_fusion_v2_dual_config import overlay
 
     payload = dual_overlay_payload(overlay())
@@ -973,7 +973,7 @@ def test_print_config_reports_the_resolved_dual_mode_rather_than_the_flag(tmp_pa
         [sys.executable, "scripts/run_rf_fusion_v2.py", "--v2-config", str(config_path),
          "--out-dir", str(tmp_path / "out"), "--cohort", "A_1", "--print-config",
          "--shard-input", f"dual_overlay={overlay_path}", "--dual-overlay", str(overlay_path), "--dual-arm", "joint"],
-        capture_output=True, text=True, cwd=str(REPO),
+        capture_output=True, text=True, cwd=str(REPO), check=False,
     )
     assert result.returncode == EXIT_OK, result.stderr
     payload = json.loads(result.stdout)
@@ -987,7 +987,7 @@ def test_print_config_reports_no_dual_mode_for_a_legacy_run(tmp_path):
     result = subprocess.run(
         [sys.executable, "scripts/run_rf_fusion_v2.py", "--v2-config", str(config_path),
          "--out-dir", str(tmp_path / "out"), "--cohort", "A_1", "--print-config"],
-        capture_output=True, text=True, cwd=str(REPO),
+        capture_output=True, text=True, cwd=str(REPO), check=False,
     )
     assert result.returncode == EXIT_OK, result.stderr
     payload = json.loads(result.stdout)
@@ -1046,7 +1046,9 @@ def test_an_overlay_with_no_measured_panel_sensitivity_is_refused_at_the_gate(tm
     import dataclasses
     import json
 
-    from inverse_folding.reference_flow.fusion_v2.dual_config import dual_overlay_payload
+    from inverse_folding.reference_flow.fusion_v2.dual_config import (
+        dual_overlay_payload,
+    )
     from tests.inverse_folding.test_fusion_v2_dual_config import overlay as _ov
 
     def write(name, calibration):

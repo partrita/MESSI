@@ -32,13 +32,12 @@ import types
 import pytest
 
 from scripts.rf_fusion_v2_artifacts import (
-    V2ArtifactError,
     V2_TABLE_SCHEMAS,
+    V2ArtifactError,
     free_domain,
     mechanism_contrast_rows,
 )
 from tests.inverse_folding import _v2_fixtures as F
-
 
 # --------------------------------------------------------------------------------------------
 # helpers
@@ -69,8 +68,8 @@ def _descendant(projected, overrides=None, endpoint_id="d0"):
 
 
 def _rows(arm_a, arm_b, **over):
-    kw = dict(protein_id="5ZHV_B", source_index=0, source_seed=7, source_state_id="s0",
-              source_unresolved_editable=1, view="endpoint_change", arm_a=arm_a, arm_b=arm_b)
+    kw = {"protein_id": "5ZHV_B", "source_index": 0, "source_seed": 7, "source_state_id": "s0",
+              "source_unresolved_editable": 1, "view": "endpoint_change", "arm_a": arm_a, "arm_b": arm_b}
     kw.update(over)
     return mechanism_contrast_rows(**kw)
 
@@ -361,9 +360,9 @@ def _frame(spec, view="endpoint_change", protein_id="5ZHV_B", n_free=55):
 
 def test_the_sizing_formula_reproduces_the_reference_table():
     """sigma_d -> pairs, at delta = 0.02.  One-sample paired: no factor of 2."""
-    from scripts.analysis.read_v2_mechanism import _Z_SUM_SQUARED
-
     import math
+
+    from scripts.analysis.read_v2_mechanism import _Z_SUM_SQUARED
     for sigma, expected in [(0.03, 18), (0.04, 32), (0.05, 50), (0.06, 71), (0.08, 126)]:
         assert math.ceil(_Z_SUM_SQUARED * sigma**2 / 0.02**2) == expected
 

@@ -7,7 +7,7 @@ Enforces the frozen contract from PLAN_IF.md Task K0:
 """
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import yaml
 
@@ -40,7 +40,7 @@ _DEFAULT_CONFIG_PATH = Path(__file__).parent / "dplm_v1.yaml"
 
 # ── Public API ───────────────────────────────────────────────────────────────
 
-def validate_baseline_config(cfg: Dict[str, Any]) -> Dict[str, Any]:
+def validate_baseline_config(cfg: dict[str, Any]) -> dict[str, Any]:
     """Validate a baseline config dict against the frozen K0 contract.
 
     Returns the config unchanged if valid; raises BaselineConfigError otherwise.
@@ -81,8 +81,8 @@ def validate_baseline_config(cfg: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def load_baseline_config(
-    override_path: Optional[str] = None,
-) -> Dict[str, Any]:
+    override_path: str | None = None,
+) -> dict[str, Any]:
     """Load the default baseline config, optionally merged with overrides.
 
     The default config is ``inverse_folding/configs/dplm_v1.yaml``.

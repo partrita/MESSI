@@ -13,23 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-import math
+
 import torch
-import torch.nn as nn
-from typing import Optional, List, Tuple
+from torch import nn
 
 from openfold.model.primitives import (
-    Linear, 
+    Attention,
+    GlobalAttention,
     LayerNorm,
-    Attention, 
-    GlobalAttention, 
+    Linear,
     _attention_chunked_trainable,
 )
 from openfold.utils.checkpointing import get_checkpoint_fn
 from openfold.utils.chunk_utils import chunk_layer
 from openfold.utils.tensor_utils import (
     permute_final_dims,
-    flatten_final_dims,
 )
 
 
@@ -59,7 +57,7 @@ class MSAAttention(nn.Module):
             inf:
                 A large number to be used in computing the attention mask
         """
-        super(MSAAttention, self).__init__()
+        super().__init__()
 
         self.c_in = c_in
         self.c_hidden = c_hidden
@@ -89,12 +87,12 @@ class MSAAttention(nn.Module):
     @torch.jit.ignore
     def _chunk(self, 
         m: torch.Tensor,
-        biases: Optional[List[torch.Tensor]],
+        biases: list[torch.Tensor] | None,
         chunk_size: int,
         use_memory_efficient_kernel: bool, 
         use_lma: bool,
         use_flash: bool,
-        flash_mask: Optional[torch.Tensor],
+        flash_mask: torch.Tensor | None,
     ) -> torch.Tensor:
         def fn(m, biases, flash_mask):
             m = self.layer_norm_m(m)
@@ -127,10 +125,10 @@ class MSAAttention(nn.Module):
 
     def _prep_inputs(self,
         m: torch.Tensor,
-        z: Optional[torch.Tensor],
-        mask: Optional[torch.Tensor],
+        z: torch.Tensor | None,
+        mask: torch.Tensor | None,
         inplace_safe: bool = False,
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]: 
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]: 
         n_seq, n_res = m.shape[-3:-1]
         if mask is None:
             # [*, N_seq, N_res]
@@ -169,8 +167,8 @@ class MSAAttention(nn.Module):
     @torch.jit.ignore
     def _chunked_msa_attn(self,
         m: torch.Tensor,
-        z: Optional[torch.Tensor],
-        mask: Optional[torch.Tensor],
+        z: torch.Tensor | None,
+        mask: torch.Tensor | None,
         chunk_logits: int,
         checkpoint: bool,
         inplace_safe: bool = False
@@ -217,15 +215,15 @@ class MSAAttention(nn.Module):
 
     def forward(self, 
         m: torch.Tensor, 
-        z: Optional[torch.Tensor] = None, 
-        mask: Optional[torch.Tensor] = None, 
-        chunk_size: Optional[int] = None,
+        z: torch.Tensor | None = None, 
+        mask: torch.Tensor | None = None, 
+        chunk_size: int | None = None,
         use_memory_efficient_kernel: bool = False,
         use_lma: bool = False,
         use_flash: bool = False,
         inplace_safe: bool = False,
-        _chunk_logits: Optional[int] = None,
-        _checkpoint_chunks: Optional[bool] = None,
+        _chunk_logits: int | None = None,
+        _checkpoint_chunks: bool | None = None,
     ) -> torch.Tensor:
         """
         Args:
@@ -306,7 +304,7 @@ class MSARowAttentionWithPairBias(MSAAttention):
             inf:
                 Large number used to construct attention masks
         """
-        super(MSARowAttentionWithPairBias, self).__init__(
+        super().__init__(
             c_m,
             c_hidden,
             no_heads,
@@ -336,7 +334,7 @@ class MSAColumnAttention(nn.Module):
             inf:
                 Large number used to construct attention masks
         """
-        super(MSAColumnAttention, self).__init__()
+        super().__init__()
         
         self.c_m = c_m
         self.c_hidden = c_hidden
@@ -354,8 +352,8 @@ class MSAColumnAttention(nn.Module):
 
     def forward(self, 
         m: torch.Tensor, 
-        mask: Optional[torch.Tensor] = None, 
-        chunk_size: Optional[int] = None,
+        mask: torch.Tensor | None = None, 
+        chunk_size: int | None = None,
         use_lma: bool = False,
         use_flash: bool = False,
     ) -> torch.Tensor:
@@ -395,7 +393,7 @@ class MSAColumnGlobalAttention(nn.Module):
     def __init__(
         self, c_in, c_hidden, no_heads, inf=1e9, eps=1e-10,
     ):
-        super(MSAColumnGlobalAttention, self).__init__()
+        super().__init__()
 
         self.c_in = c_in
         self.c_hidden = c_hidden
@@ -439,11 +437,11 @@ class MSAColumnGlobalAttention(nn.Module):
     def forward(
         self, 
         m: torch.Tensor, 
-        mask: Optional[torch.Tensor] = None, 
-        chunk_size: Optional[int] = None,
+        mask: torch.Tensor | None = None, 
+        chunk_size: int | None = None,
         use_lma: bool = False,
     ) -> torch.Tensor:
-        n_seq, n_res, c_in = m.shape[-3:]
+        _n_seq, _n_res, _c_in = m.shape[-3:]
 
         if mask is None:
             # [*, N_seq, N_res]

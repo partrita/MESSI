@@ -14,18 +14,18 @@ from .test_fusion_v2_dual_evidence import EVAL_A, EVAL_B, calibration
 
 
 def head_b(**over):
-    kwargs = dict(evaluator=EVAL_B, variant_id="LC1", allele_idx=0, window_batch_size=64)
+    kwargs = {"evaluator": EVAL_B, "variant_id": "LC1", "allele_idx": 0, "window_batch_size": 64}
     kwargs.update(over)
     return dc.HeadRuntimeBinding(**kwargs)
 
 
 def overlay(**over):
-    kwargs = dict(
-        schema_version=dc.DUAL_OVERLAY_SCHEMA_VERSION, calibration=calibration(),
-        head_b_runtime=head_b(), arm_bundle=("joint", "a_only"),
-        max_counterfactual_sequences_per_cycle=278,
-        objective_spec_digest=fx.digest("objective-spec"),
-        calibration_artifact_digest=fx.digest("calibration-artifact"))
+    kwargs = {
+        "schema_version": dc.DUAL_OVERLAY_SCHEMA_VERSION, "calibration": calibration(),
+        "head_b_runtime": head_b(), "arm_bundle": ("joint", "a_only"),
+        "max_counterfactual_sequences_per_cycle": 278,
+        "objective_spec_digest": fx.digest("objective-spec"),
+        "calibration_artifact_digest": fx.digest("calibration-artifact")}
     kwargs.update(over)
     return dc.DualOverlay(**kwargs)
 
@@ -128,8 +128,8 @@ def test_binding_the_same_head_to_both_roles_is_refused_before_an_overlay_can_ex
 
 def test_the_runtime_knobs_are_declared_rather_than_defaulted():
     # read from shard inputs today with silent fallbacks of 0 and 64
-    for bad in (dict(allele_idx=-1), dict(window_batch_size=0), dict(variant_id=""),
-                dict(window_batch_size=True)):
+    for bad in ({"allele_idx": -1}, {"window_batch_size": 0}, {"variant_id": ""},
+                {"window_batch_size": True}):
         with pytest.raises(dc.V2DualConfigError):
             head_b(**bad)
 
@@ -139,12 +139,12 @@ def test_the_runtime_knobs_are_declared_rather_than_defaulted():
 # ------------------------------------------------------------------------------------------
 
 def payload():
-    return dict(
-        schema_version=dc.DUAL_OVERLAY_SCHEMA_VERSION, calibration=calibration(),
-        head_b_runtime=head_b(), arm_bundle=["joint", "a_only"],
-        max_counterfactual_sequences_per_cycle=278,
-        objective_spec_digest=fx.digest("objective-spec"),
-        calibration_artifact_digest=fx.digest("calibration-artifact"))
+    return {
+        "schema_version": dc.DUAL_OVERLAY_SCHEMA_VERSION, "calibration": calibration(),
+        "head_b_runtime": head_b(), "arm_bundle": ["joint", "a_only"],
+        "max_counterfactual_sequences_per_cycle": 278,
+        "objective_spec_digest": fx.digest("objective-spec"),
+        "calibration_artifact_digest": fx.digest("calibration-artifact")}
 
 
 def test_the_loader_round_trips_a_declared_overlay():
@@ -171,6 +171,6 @@ def test_every_overlay_key_is_required(missing):
 
 
 def test_the_module_holds_no_cluster_path_and_no_scientific_default():
-    src = open(dc.__file__, encoding="utf-8").read()
+    src = open(dc.__file__, encoding="utf-8").read()  # noqa: SIM115
     for banned in ("/scratch/", "/home/", "DRB1_0701", "DRB1_0401", "tau=0.", "= 0.15"):
         assert banned not in src, banned

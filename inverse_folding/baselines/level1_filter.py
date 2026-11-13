@@ -10,10 +10,9 @@ Reads directly from M3 sweep outputs (all_candidates/ directory).
 import hashlib
 import os
 import re
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
-
 
 # Regex for M3 candidate FASTA header format:
 #   >{protein_id}_cand{i} | risk={value} | hash={hex}
@@ -22,15 +21,15 @@ _HEADER_RE = re.compile(
 )
 
 
-def parse_candidates_fasta(fasta_path: str) -> Dict[str, Any]:
+def parse_candidates_fasta(fasta_path: str) -> dict[str, Any]:
     """Parse an M3 all_candidates FASTA file.
 
     Returns dict with keys: sequences, risks, hashes.
     """
-    sequences: List[str] = []
-    risks: List[float] = []
-    hashes: List[str] = []
-    current_seq_parts: List[str] = []
+    sequences: list[str] = []
+    risks: list[float] = []
+    hashes: list[str] = []
+    current_seq_parts: list[str] = []
 
     with open(fasta_path) as f:
         for line in f:
@@ -69,8 +68,8 @@ def parse_candidates_fasta(fasta_path: str) -> Dict[str, Any]:
 
 def select_argmin_candidate(
     risks: np.ndarray,
-    sequences: List[str],
-) -> Dict[str, Any]:
+    sequences: list[str],
+) -> dict[str, Any]:
     """Select the candidate with lowest risk (argmin).
 
     Ties are broken by selecting the first occurrence (np.argmin behavior).
@@ -93,18 +92,18 @@ def select_argmin_candidate(
 
 def filter_protein_set(
     candidates_dir: str,
-) -> Dict[str, Dict[str, Any]]:
+) -> dict[str, dict[str, Any]]:
     """Apply argmin filter to all proteins in an M3 all_candidates/ directory.
 
     Returns {protein_id: selection_result}.
     """
-    results: Dict[str, Dict[str, Any]] = {}
+    results: dict[str, dict[str, Any]] = {}
 
     if not os.path.isdir(candidates_dir):
         return results
 
     for fname in sorted(os.listdir(candidates_dir)):
-        if not (fname.endswith(".fasta") or fname.endswith(".fa")):
+        if not (fname.endswith((".fasta", ".fa"))):
             continue
 
         protein_id = os.path.splitext(fname)[0]

@@ -14,7 +14,7 @@
 # limitations under the License.
 
 import copy
-from typing import Mapping, Tuple, List, Optional, Dict, Sequence
+from collections.abc import Mapping, Sequence
 
 import ml_collections
 import numpy as np
@@ -22,9 +22,8 @@ import torch
 
 from openfold.data import input_pipeline
 
-
 FeatureDict = Mapping[str, np.ndarray]
-TensorDict = Dict[str, torch.Tensor]
+TensorDict = dict[str, torch.Tensor]
 
 
 def np_to_tensor_dict(
@@ -54,7 +53,7 @@ def make_data_config(
     config: ml_collections.ConfigDict,
     mode: str,
     num_res: int,
-) -> Tuple[ml_collections.ConfigDict, List[str]]:
+) -> tuple[ml_collections.ConfigDict, list[str]]:
     cfg = copy.deepcopy(config)
     mode_cfg = cfg[mode]
     with cfg.unlocked():

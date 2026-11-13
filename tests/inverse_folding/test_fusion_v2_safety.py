@@ -17,10 +17,10 @@ from __future__ import annotations
 
 import pytest
 
-from inverse_folding.reference_flow.fusion_v2 import identity as ident
 from inverse_folding.reference_flow.fusion_v2 import config as cfg
-from inverse_folding.reference_flow.fusion_v2 import schedule as sch
+from inverse_folding.reference_flow.fusion_v2 import identity as ident
 from inverse_folding.reference_flow.fusion_v2 import safety as sf
+from inverse_folding.reference_flow.fusion_v2 import schedule as sch
 from inverse_folding.reference_flow.fusion_v2.errors import V2Error
 
 D = "a" * 64
@@ -63,8 +63,8 @@ class _HS:
 
 
 def _evaluator(**over):
-    kw = dict(allele="DRB1_0701", score_scale="nats", window_k_min=4, window_k_max=4,
-              head_config_hash=D, head_checkpoint_digest=D)
+    kw = {"allele": "DRB1_0701", "score_scale": "nats", "window_k_min": 4, "window_k_max": 4,
+              "head_config_hash": D, "head_checkpoint_digest": D}
     kw.update(over)
     return ident.HeadEvaluatorIdentity(**kw)
 
@@ -161,9 +161,9 @@ def _policy(*, cumulative_value=0.10, incremental_enabled=False, evaluator=None,
 
 def _reference(zs=(0.0, 0.0, 0.0), sequence=REF_SEQ, policy=None, **over):
     policy = policy or _policy(reference_sequence=sequence)
-    kw = dict(lineage_id="5ZHV_B:fam0", protein_id="5ZHV_B", reference_label="wt_native",
-              reference_sequence=sequence, reference_content_digest=_seq_digest(sequence),
-              policy=policy, head_score=_HS(sequence, zs))
+    kw = {"lineage_id": "5ZHV_B:fam0", "protein_id": "5ZHV_B", "reference_label": "wt_native",
+              "reference_sequence": sequence, "reference_content_digest": _seq_digest(sequence),
+              "policy": policy, "head_score": _HS(sequence, zs)}
     kw.update(over)
     return sf.bind_cumulative_reference(**kw)
 
@@ -733,7 +733,10 @@ def test_the_incremental_gate_is_inapplicable_at_depth_zero_and_binding_from_dep
     could pass off as one.  From depth 1 a real verdict is required, and the typed marker is
     refused.
     """
-    from inverse_folding.reference_flow.fusion_v2_runtime.admission import SafetyGate, admit_endpoint
+    from inverse_folding.reference_flow.fusion_v2_runtime.admission import (
+        SafetyGate,
+        admit_endpoint,
+    )
 
     policy = _policy(incremental_enabled=True)
     reference = _reference(policy=policy)

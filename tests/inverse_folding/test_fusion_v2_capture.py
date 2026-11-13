@@ -52,7 +52,7 @@ def _denoiser(x_t: torch.Tensor, t: float, struct) -> torch.Tensor:
 
 
 def _cfg(**over):
-    kw = dict(n_steps=F.N_STEPS, seed=11, temperature=1.0)
+    kw = {"n_steps": F.N_STEPS, "seed": 11, "temperature": 1.0}
     kw.update(over)
     return ReferenceFlowConfig(
         sampler=SamplerConfig(
@@ -72,15 +72,15 @@ ANCHORS = {0: 10}
 
 
 def _capture(**over):
-    kw = dict(
-        sampler=PositionDependentDFMSampler(mask_token_id=F.MASK, vocab_size=VOCAB),
-        denoiser=_denoiser, config=_cfg(), sequence_length=F.L,
-        h_values=np.zeros(F.L, dtype=np.float32), residue_token_ids=F.AA,
-        at_step=C0, fixed_tokens=ANCHORS,
-        lineage=F.lineage(), mask_token_id=F.MASK, aa_token_ids=F.AA,
-        conditioning=F.conditioning(), safety_reference=F.safety_reference(),
-        cost_event_ids=("evt:root",),
-    )
+    kw = {
+        "sampler": PositionDependentDFMSampler(mask_token_id=F.MASK, vocab_size=VOCAB),
+        "denoiser": _denoiser, "config": _cfg(), "sequence_length": F.L,
+        "h_values": np.zeros(F.L, dtype=np.float32), "residue_token_ids": F.AA,
+        "at_step": C0, "fixed_tokens": ANCHORS,
+        "lineage": F.lineage(), "mask_token_id": F.MASK, "aa_token_ids": F.AA,
+        "conditioning": F.conditioning(), "safety_reference": F.safety_reference(),
+        "cost_event_ids": ("evt:root",),
+    }
     kw.update(over)
     return capture_depth_zero(**kw)
 

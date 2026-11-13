@@ -16,7 +16,7 @@
 """A Python wrapper for Kalign."""
 import os
 import subprocess
-from typing import Sequence
+from collections.abc import Sequence
 
 from absl import logging
 
@@ -25,11 +25,11 @@ from openfold.data.tools import utils
 
 def _to_a3m(sequences: Sequence[str]) -> str:
     """Converts sequences to an a3m file."""
-    names = ["sequence %d" % i for i in range(1, len(sequences) + 1)]
+    names = ["sequence %d" % i for i in range(1, len(sequences) + 1)]  # noqa: UP031
     a3m = []
     for sequence, name in zip(sequences, names):
-        a3m.append(u">" + name + u"\n")
-        a3m.append(sequence + u"\n")
+        a3m.append(">" + name + "\n")
+        a3m.append(sequence + "\n")
     return "".join(a3m)
 
 
@@ -68,7 +68,7 @@ class Kalign:
         for s in sequences:
             if len(s) < 6:
                 raise ValueError(
-                    "Kalign requires all sequences to be at least 6 "
+                    "Kalign requires all sequences to be at least 6 "  # noqa: UP031
                     "residues long. Got %s (%d residues)." % (s, len(s))
                 )
 
@@ -105,8 +105,7 @@ class Kalign:
 
             if retcode:
                 raise RuntimeError(
-                    "Kalign failed\nstdout:\n%s\n\nstderr:\n%s\n"
-                    % (stdout.decode("utf-8"), stderr.decode("utf-8"))
+                    "Kalign failed\nstdout:\n{}\n\nstderr:\n{}\n".format(stdout.decode("utf-8"), stderr.decode("utf-8"))
                 )
 
             with open(output_a3m_path) as f:

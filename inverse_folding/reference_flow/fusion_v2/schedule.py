@@ -21,29 +21,60 @@ from __future__ import annotations
 
 import enum
 import hashlib
+import itertools
 import json
 import math
 import re
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, fields, replace
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 from .errors import V2Error
 
 __all__ = [
-    "SCHEDULE_BAND_SCHEMA_VERSION", "SCHEDULE_BAND_SCOPE", "SCHEDULE_BAND_SEED_SCHEMA",
-    "V2ScheduleError", "MissingScheduleBandError", "EmptyBandIntersectionError",
-    "CoordinateLaw", "HistoryKey", "CycleCoordinates", "DepthSchedule",
-    "QuantileLevels", "BandInterval", "ScheduleBand", "BandProvenance", "ScheduleBandTable",
-    "MaturityRecord", "BandVerdictReason", "BandVerdict", "UnresolvedInterval",
-    "AdmissibleMaskLoad", "BandCenterRule", "BandCenterTarget",
-    "history_key", "make_cycle", "make_depth_schedule", "make_band", "make_band_table",
-    "bind_band_table", "band_table_content_digest", "band_table_payload", "load_band_table",
+    "SCHEDULE_BAND_SCHEMA_VERSION",
+    "SCHEDULE_BAND_SCOPE",
+    "SCHEDULE_BAND_SEED_SCHEMA",
+    "AdmissibleMaskLoad",
+    "BandCenterRule",
+    "BandCenterTarget",
+    "BandInterval",
+    "BandProvenance",
+    "BandVerdict",
+    "BandVerdictReason",
+    "CoordinateLaw",
+    "CycleCoordinates",
+    "DepthSchedule",
+    "EmptyBandIntersectionError",
+    "HistoryKey",
+    "MaturityRecord",
+    "MissingScheduleBandError",
+    "QuantileLevels",
+    "ScheduleBand",
+    "ScheduleBandTable",
+    "UnresolvedInterval",
+    "V2ScheduleError",
+    "admissible_reopen_cardinality",
     "assumed_linear_band",
-    "lookup_band", "observe_maturity", "gate_projected_maturity", "pinned_unresolved_interval",
-    "admissible_reopen_cardinality", "validate_realized_mask_load",
-    "band_center_target", "required_reopen_count",
-    "segment_cost", "screening_cost",
+    "band_center_target",
+    "band_table_content_digest",
+    "band_table_payload",
+    "bind_band_table",
+    "gate_projected_maturity",
+    "history_key",
+    "load_band_table",
+    "lookup_band",
+    "make_band",
+    "make_band_table",
+    "make_cycle",
+    "make_depth_schedule",
+    "observe_maturity",
+    "pinned_unresolved_interval",
+    "required_reopen_count",
+    "screening_cost",
+    "segment_cost",
+    "validate_realized_mask_load",
 ]
 
 
@@ -591,9 +622,9 @@ class ScheduleBand:
         for value in rho:
             if not 0.0 <= value <= 1.0:
                 raise V2ScheduleError(f"rho quantile must be in [0, 1], got {value}")
-        if any(b < a for a, b in zip(rho, rho[1:])):
+        if any(b < a for a, b in itertools.pairwise(rho)):
             raise V2ScheduleError("rho quantiles must be non-decreasing across increasing levels")
-        if any(b > a for a, b in zip(unresolved, unresolved[1:])):
+        if any(b > a for a, b in itertools.pairwise(unresolved)):
             raise V2ScheduleError(
                 "unresolved-mass quantiles must be non-increasing across increasing levels; mass "
                 "falls as maturity rises"

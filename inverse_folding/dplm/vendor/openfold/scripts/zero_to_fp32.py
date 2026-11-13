@@ -8,16 +8,15 @@
 # example: python zero_to_fp32.py . pytorch_model.bin
 
 import argparse
-import torch
 import glob
 import math
 import os
-from collections import OrderedDict
 import re
+from collections import OrderedDict
 
 # while this script doesn't use deepspeed to recover data, since the checkpoints are pickled with
 # DeepSpeed data structures it has to be available in the current python environment.
-import deepspeed
+import torch
 from deepspeed.utils import logger
 
 debug = 0
@@ -226,7 +225,7 @@ def _get_fp32_state_dict_from_zero2_checkpoint(world_size,
         align_to = 2 * world_size
 
         def zero2_align(x):
-            return align_to * math.ceil(x / align_to)
+            return align_to * math.ceil(x / align_to)  # noqa: B023
 
         if debug:
             print(f"original offset={offset}, avail_numel={avail_numel}")
@@ -423,10 +422,10 @@ def load_state_dict_from_zero_checkpoint(model, checkpoint_dir, tag=None):
     ``model.load_state_dict(state_dict)`` will remove all the deepspeed magic from it.
 
     """
-    logger.info(f"Extracting fp32 weights")
+    logger.info("Extracting fp32 weights")
     state_dict = get_fp32_state_dict_from_zero_checkpoint(checkpoint_dir, tag)
 
-    logger.info(f"Overwriting model with fp32 weights")
+    logger.info("Overwriting model with fp32 weights")
     model = model.cpu()
     model.load_state_dict(state_dict, strict=False)
 

@@ -28,13 +28,14 @@ from __future__ import annotations
 
 import enum
 from collections.abc import Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from ..config import with_reference_flow_overrides
 from ..fusion_v2.errors import V2Error
 from ..fusion_v2.identity import canonical_digest
 from ..fusion_v2.reward import DEPTH0_BOOTSTRAP_RULE
+from ..fusion_v2.safety import advance_lineage, bind_immediate_parent
 from ..fusion_v2.schedule import CoordinateLaw, make_cycle
 from ..fusion_v2.seeds import (
     ROOT_CAPTURE_MAX_ATTEMPTS,
@@ -43,18 +44,17 @@ from ..fusion_v2.seeds import (
     V2SeedContext,
 )
 from ..fusion_v2.state import CompleteEndpoint, TransitionOutcome
-from .archive import ExactArchive
-from ..fusion_v2.safety import advance_lineage, bind_immediate_parent
 from .admission import SafetyGate
+from .archive import ExactArchive
 from .capture import FullyResolvedRootError, capture_depth_zero
 
 __all__ = [
-    "V2LadderError",
-    "ProductionDepthDisabledError",
-    "StoppingReason",
     "DepthPlan",
     "DepthRecord",
     "LadderOutcome",
+    "ProductionDepthDisabledError",
+    "StoppingReason",
+    "V2LadderError",
     "run_depth_ladder",
 ]
 
@@ -478,8 +478,8 @@ def run_depth_ladder(
         if admission is None or admission.verdict is None:
             reason, detail = (
                 StoppingReason.NO_ADMISSIBLE_ENDPOINT,
-                f"selected endpoint {selected.endpoint_id} carries no admissibility verdict, so "
-                "the safety ratchet cannot record what the lineage descended through",
+                (f"selected endpoint {selected.endpoint_id} carries no admissibility verdict, so "
+                "the safety ratchet cannot record what the lineage descended through"),
             )
             break
         safety_gate = SafetyGate(
@@ -546,8 +546,8 @@ def run_depth_ladder(
         if not novel:
             reason, detail = (
                 StoppingReason.NO_NOVEL_DESCENDANT,
-                f"all {len(inherited_endpoints)} descendant(s) repeat a sequence-equivalence class "
-                f"an earlier depth already produced ({len(seen_equivalence_keys)} distinct so far)",
+                (f"all {len(inherited_endpoints)} descendant(s) repeat a sequence-equivalence class "
+                f"an earlier depth already produced ({len(seen_equivalence_keys)} distinct so far)"),
             )
             break
         seen_equivalence_keys.update(

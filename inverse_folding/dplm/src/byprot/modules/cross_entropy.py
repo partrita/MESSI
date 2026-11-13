@@ -102,7 +102,7 @@ class Coord2SeqCrossEntropyLoss(nn.CrossEntropyLoss):
         if label_mask is None:
             label_mask = coord_mask
 
-        bsz, num_classes = scores.shape[0], scores.shape[-1]
+        bsz, _num_classes = scores.shape[0], scores.shape[-1]
 
         n_tokens = target.numel()
         if self.ignore_index is not None:
@@ -167,7 +167,7 @@ class RDMCrossEntropyLoss(nn.CrossEntropyLoss):
         target: [N, L]
         coord_mask: FloatTensor [N, L], where elements with `True` are allowed and `False` are masked-out
         """
-        bsz, num_classes = scores.shape[0], scores.shape[-1]
+        bsz, _num_classes = scores.shape[0], scores.shape[-1]
 
         n_tokens = target.numel()
         if self.ignore_index is not None:
@@ -265,7 +265,7 @@ class StructAARDMCrossEntropyLoss(nn.CrossEntropyLoss):
         def compute(scores, target, label_mask, weights, key=""):
             if len(key) > 0:
                 key = f"{key}/"
-            bsz, num_classes = scores.shape[0], scores.shape[-1]
+            bsz, _num_classes = scores.shape[0], scores.shape[-1]
             n_tokens = target.numel()
             if self.ignore_index is not None:
                 sample_size = n_nonpad_tokens = (

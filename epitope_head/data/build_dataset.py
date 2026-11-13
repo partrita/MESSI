@@ -13,19 +13,6 @@ from pathlib import Path
 import pandas as pd
 
 from epitope_head.configs import load_data_config
-from epitope_head.data.parse_mhc_if_v2 import (
-    RejectionLedger,
-    apply_allele_filter,
-    explode_positions,
-    normalize_coordinates,
-    read_and_parse,
-)
-from epitope_head.data.join_fasta import JoinStats, build_fasta_index, join_and_validate
-from epitope_head.data.make_protein_samples import (
-    AggStats,
-    aggregate_protein_samples,
-    validate_protein_samples,
-)
 from epitope_head.data.create_splits import (
     build_cluster_assignment,
     build_seq_hash_groups,
@@ -34,6 +21,19 @@ from epitope_head.data.create_splits import (
     validate_split_disjointness,
     weighted_cluster_split,
     write_id_file,
+)
+from epitope_head.data.join_fasta import JoinStats, build_fasta_index, join_and_validate
+from epitope_head.data.make_protein_samples import (
+    AggStats,
+    aggregate_protein_samples,
+    validate_protein_samples,
+)
+from epitope_head.data.parse_mhc_if_v2 import (
+    RejectionLedger,
+    apply_allele_filter,
+    explode_positions,
+    normalize_coordinates,
+    read_and_parse,
 )
 from epitope_head.data.validators import validate_span_records
 

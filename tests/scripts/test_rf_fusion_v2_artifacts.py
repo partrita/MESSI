@@ -27,22 +27,22 @@ import pytest
 
 pytest.importorskip("pyarrow")
 
-import pyarrow.parquet as pq  # noqa: E402
+import pyarrow.parquet as pq
 
-from scripts.rf_fusion_v2_artifacts import (  # noqa: E402
+from scripts.rf_fusion_v2_artifacts import (
     V2_TABLE_SCHEMAS,
     V2ArtifactError,
     a2_view_rows,
     archive_rows,
-    structure_evaluation_rows,
     complete_endpoint_rows,
     feedback_event_rows,
     partial_state_rows,
     run_manifest,
+    structure_evaluation_rows,
     terminal_validation_rows,
     write_v2_bundle,
 )
-from tests.inverse_folding import _v2_fixtures as F  # noqa: E402
+from tests.inverse_folding import _v2_fixtures as F
 
 
 def _read(path):
@@ -155,9 +155,9 @@ def test_a_feedback_event_row_names_all_four_support_sets_and_their_reasons():
     """
     projected = F.projected()
     row = feedback_event_rows(
-        [dict(source=F.source(), endpoint=F.endpoint(), projected=projected, propagated=None,
-              policy=F.policy_identity(), outcome="committed", detail="",
-              pair_id="5ZHV_B:d0:r40-c60:p0", arm_slot="arm_a", treatment_identity="v2")]
+        [{"source": F.source(), "endpoint": F.endpoint(), "projected": projected, "propagated": None,
+              "policy": F.policy_identity(), "outcome": "committed", "detail": "",
+              "pair_id": "5ZHV_B:d0:r40-c60:p0", "arm_slot": "arm_a", "treatment_identity": "v2"}]
     )[0]
     assert row["outcome"] == "committed"
     assert json.loads(row["write_from_endpoint_json"]) == list(
@@ -175,10 +175,10 @@ def test_a_null_feedback_event_is_recorded_with_no_projected_state():
     """PLAN §4.5: a refusal is a result.  A bundle that dropped null events would report only the
     cycles that worked, which is the definition of a biased record."""
     row = feedback_event_rows(
-        [dict(source=F.source(), endpoint=F.endpoint(), projected=None, propagated=None,
-              policy=F.policy_identity(), outcome="null_band_incompatible",
-              detail="projected maturity is outside B(r_d)", pair_id="p", arm_slot="arm_a",
-              treatment_identity="v2")]
+        [{"source": F.source(), "endpoint": F.endpoint(), "projected": None, "propagated": None,
+              "policy": F.policy_identity(), "outcome": "null_band_incompatible",
+              "detail": "projected maturity is outside B(r_d)", "pair_id": "p", "arm_slot": "arm_a",
+              "treatment_identity": "v2"}]
     )[0]
     assert row["outcome"] == "null_band_incompatible"
     assert row["projected_state_id"] is None
@@ -254,7 +254,9 @@ def test_the_evaluations_table_is_written_even_when_every_endpoint_failed():
 
 
 def test_an_a2_row_records_the_exact_pre_feedback_membership_and_the_extra_allocation():
-    from inverse_folding.reference_flow.fusion_v2_runtime.a2_view import snapshot_a2_view
+    from inverse_folding.reference_flow.fusion_v2_runtime.a2_view import (
+        snapshot_a2_view,
+    )
     from inverse_folding.reference_flow.fusion_v2_runtime.archive import ExactArchive
 
     archive = ExactArchive()
@@ -275,7 +277,9 @@ def test_an_a2_row_records_the_exact_pre_feedback_membership_and_the_extra_alloc
 
 
 def test_an_unexecuted_a2_match_is_reported_as_declared_not_executed():
-    from inverse_folding.reference_flow.fusion_v2_runtime.a2_view import snapshot_a2_view
+    from inverse_folding.reference_flow.fusion_v2_runtime.a2_view import (
+        snapshot_a2_view,
+    )
     from inverse_folding.reference_flow.fusion_v2_runtime.archive import ExactArchive
 
     source = F.source()
@@ -294,7 +298,9 @@ def test_an_unexecuted_a2_match_is_reported_as_declared_not_executed():
 
 
 def test_a2_view_ids_bind_protein_and_source_and_do_not_collide_in_one_bundle(tmp_path):
-    from inverse_folding.reference_flow.fusion_v2_runtime.a2_view import snapshot_a2_view
+    from inverse_folding.reference_flow.fusion_v2_runtime.a2_view import (
+        snapshot_a2_view,
+    )
     from inverse_folding.reference_flow.fusion_v2_runtime.archive import ExactArchive
 
     first = F.source()
@@ -425,10 +431,10 @@ def test_a_ledger_row_that_is_not_a_ledger_event_is_refused(tmp_path):
 def test_terminal_validation_keeps_the_structure_and_immune_results_separate():
     """They are independent measurements; one column for "passed" would hide which one failed."""
     row = terminal_validation_rows([
-        dict(endpoint_id=F.endpoint().endpoint_id, sequence_md5=F.SEQ_MD5,
-             structure_definitive=True, structure_feasible=True, structure_metrics={"scTM": 0.91},
-             immune_evaluator="nmp", immune_global_risk=-9.1, immune_passed=True,
-             diversity_family_id="fam0", v0_before_after=None),
+        {"endpoint_id": F.endpoint().endpoint_id, "sequence_md5": F.SEQ_MD5,
+             "structure_definitive": True, "structure_feasible": True, "structure_metrics": {"scTM": 0.91},
+             "immune_evaluator": "nmp", "immune_global_risk": -9.1, "immune_passed": True,
+             "diversity_family_id": "fam0", "v0_before_after": None},
     ])[0]
     assert row["structure_feasible"] is True
     assert row["immune_passed"] is True

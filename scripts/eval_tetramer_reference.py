@@ -9,7 +9,7 @@ import json
 import re
 import shlex
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
@@ -261,7 +261,7 @@ def _load_relay_annotation(
         raise FileNotFoundError(path)
     payload = json.loads(path.read_text())
     if not isinstance(payload, dict):
-        raise ValueError("relay annotation must be a JSON object")
+        raise ValueError("relay annotation must be a JSON object")  # noqa: TRY004
     annotated_id = payload.get("protein_id")
     if annotated_id is not None and str(annotated_id) != protein_id:
         raise ValueError(
@@ -355,12 +355,12 @@ def _contact_mask_payload(
                 mechanisms_for_class[0] if len(mechanisms_for_class) == 1 else "unresolved"
             ),
             "bsa_rank_classes_seen": sorted(
-                set(
+                {
                     value
                     for values in group["bsa_rank_classes_seen"].astype(str)
                     for value in values.split(",")
                     if value
-                )
+                }
             ),
             "positions_index_0b": {
                 "all_N": group.loc[group["mask_all_N"], "index_0b"].astype(int).tolist(),
@@ -603,7 +603,7 @@ def _run_contact_consensus_mode(
     metadata_path = out_dir / f"{args.name}_contact_metadata.json"
     metadata = {
         "schema_version": "tetramer_contact_consensus_v1",
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "command": command,
         "persistent_output_dir": str(out_dir),
         "implementation": {
@@ -639,7 +639,7 @@ def _run_contact_consensus_mode(
             "status": mask_payload["mechanism_status"],
             "relay": relay,
             "resolution_by_sample": {
-                str(sample_id): sorted(set(group["mechanism_resolution"].astype(str)))[0]
+                str(sample_id): min(set(group["mechanism_resolution"].astype(str)))
                 for sample_id, group in pairs.groupby("sample_id", sort=False)
             },
             "bsa_rank_is_not_mechanism": True,
@@ -653,11 +653,11 @@ def _run_contact_consensus_mode(
             if args.position_annotations is not None else None
         ),
         "row_counts": {
-            "residue_mapping": int(len(mappings_all)),
-            "contact_chain_pairs": int(len(pairs)),
-            "contact_candidates": int(len(candidates_all)),
-            "residue_pair_contacts": int(len(residue_pairs_all)),
-            "contact_consensus": int(len(consensus)),
+            "residue_mapping": len(mappings_all),
+            "contact_chain_pairs": len(pairs),
+            "contact_candidates": len(candidates_all),
+            "residue_pair_contacts": len(residue_pairs_all),
+            "contact_consensus": len(consensus),
         },
         "software": {
             "numpy": np.__version__,
@@ -797,7 +797,7 @@ def main(argv=None) -> int:
         residue_keys = sorted(set(zip(
             protein.res_id[chain_mask].astype(int), protein_ins_codes[chain_mask]
         )))
-        residue_ids = sorted(set(res_id for res_id, _ in residue_keys))
+        residue_ids = sorted({res_id for res_id, _ in residue_keys})
         missing_internal = sorted(set(range(residue_ids[0], residue_ids[-1] + 1)) - set(residue_ids))
         chain_rows.append({
             "name": args.name,
@@ -877,8 +877,8 @@ def main(argv=None) -> int:
         for interface_pair, group in by_position.groupby("interface_pair", sort=True):
             prefix = "alanine_scan_" + interface_pair.replace(":", "")
             interpretable = group[group["is_interpretable_sidechain_alanine"]]
-            summary[f"{prefix}_n_positions"] = int(len(group))
-            summary[f"{prefix}_n_interpretable_sidechain_positions"] = int(len(interpretable))
+            summary[f"{prefix}_n_positions"] = len(group)
+            summary[f"{prefix}_n_interpretable_sidechain_positions"] = len(interpretable)
             summary[f"{prefix}_all_mutations_ddg_bind_mean_reu"] = float(
                 group["ddg_bind_mean_reu"].mean()
             )
@@ -906,7 +906,7 @@ def main(argv=None) -> int:
 
     metadata = {
         "schema_version": "tetramer_reference_metrics_v2",
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "name": args.name,
         "source_structure": str(source),
         "source_sha256": summary["source_sha256"],
@@ -947,10 +947,10 @@ def main(argv=None) -> int:
             if log_dir is not None else []
         ),
         "row_counts": {
-            "interface_pairs": int(len(pairs)),
-            "chain_summary": int(len(chain_summary)),
-            "alanine_scan_chain_residue": int(len(scan)) if scan is not None else 0,
-            "alanine_scan_by_position": int(len(by_position)) if by_position is not None else 0,
+            "interface_pairs": len(pairs),
+            "chain_summary": len(chain_summary),
+            "alanine_scan_chain_residue": len(scan) if scan is not None else 0,
+            "alanine_scan_by_position": len(by_position) if by_position is not None else 0,
         },
     }
     metadata_path = out_dir / "metadata.json"

@@ -13,21 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import math
 
-import numpy as np
 import torch
-import torch.nn as nn
-from typing import Dict
+from torch import nn
 
-from openfold.np import protein
 import openfold.np.residue_constants as rc
-from openfold.utils.rigid_utils import Rotation, Rigid
+from openfold.utils.rigid_utils import Rigid, Rotation
 from openfold.utils.tensor_utils import (
     batched_gather,
-    one_hot,
-    tree_map,
-    tensor_tree_map,
 )
 
 
@@ -244,7 +237,7 @@ def frames_and_literature_positions_to_atom14_pos(
     lit_positions,
 ):
     # [*, N, 14, 4, 4]
-    default_4x4 = default_frames[aatype, ...]
+    default_frames[aatype, ...]
 
     # [*, N, 14]
     group_mask = group_idx[aatype, ...]

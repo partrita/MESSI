@@ -31,9 +31,6 @@ from inverse_folding.reference_flow.fusion_v2 import policy as pol
 from inverse_folding.reference_flow.fusion_v2 import schedule as sch
 from tests.inverse_folding import _v2_fixtures as F
 
-
-
-
 #: Stands in for the sha256 of ``configs/v2_state_derived_probe_policy_v1.json`` -- the run's
 #: DECLARED ``projection_policy_spec`` role.  Supplied, never derived: the kernel checks the
 #: answering policy's spec digest against the run's conditioning, and a policy that computed its
@@ -43,7 +40,7 @@ SPEC_DIGEST = "5" * 64
 
 def _policy(**over):
     table = over.pop("band_table", None) or F.band_table()
-    kw = dict(band_table=table, stratum_key=F.STRATUM, policy_spec_digest=SPEC_DIGEST)
+    kw = {"band_table": table, "stratum_key": F.STRATUM, "policy_spec_digest": SPEC_DIGEST}
     kw.update(over)
     return pol.StateDerivedProbePolicy(**kw)
 

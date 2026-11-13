@@ -41,17 +41,17 @@ def _endpoint(*, seq="ACDEFG", fork_index=0, fork_seed=4242, risk=-9.0, **over):
     from inverse_folding.reference_flow.fusion.state import sequence_md5
 
     md5 = sequence_md5(seq)
-    kw = dict(
-        sequence=seq, sequence_md5=md5,
-        head_binding=dataclasses.replace(F.endpoint().head_binding, sequence_md5=md5),
-        head_score=dataclasses.replace(F.endpoint().head_score, sequence_md5=md5,
+    kw = {
+        "sequence": seq, "sequence_md5": md5,
+        "head_binding": dataclasses.replace(F.endpoint().head_binding, sequence_md5=md5),
+        "head_score": dataclasses.replace(F.endpoint().head_score, sequence_md5=md5,
                                        global_risk=risk),
-        head_global_risk=risk, fork_index=fork_index, fork_seed=fork_seed,
-        replay=st.ReplayIdentity(mode="fork", rng_state=None, fork_seed=fork_seed,
+        "head_global_risk": risk, "fork_index": fork_index, "fork_seed": fork_seed,
+        "replay": st.ReplayIdentity(mode="fork", rng_state=None, fork_seed=fork_seed,
                                  replay_state_hash=F.E),
-        feasibility_level=st.FeasibilityLevel.DEFINITIVE,
-        structure_outcome=StructureOutcome(feasible=True, metrics={"scTM": 0.9}),
-    )
+        "feasibility_level": st.FeasibilityLevel.DEFINITIVE,
+        "structure_outcome": StructureOutcome(feasible=True, metrics={"scTM": 0.9}),
+    }
     kw.update(over)
     return F.endpoint(**kw)
 
@@ -68,8 +68,8 @@ def _archive(n=3):
 
 
 def _ledger(**over):
-    kw = dict(logical_dfe=200, head_calls=3, definitive_refolds=1, gpu_seconds=12.5,
-              walltime_s=30.0)
+    kw = {"logical_dfe": 200, "head_calls": 3, "definitive_refolds": 1, "gpu_seconds": 12.5,
+              "walltime_s": 30.0}
     kw.update(over)
     return ResourceLedger(**kw)
 
@@ -272,8 +272,8 @@ def test_extra_lookahead_seeds_are_disjoint_from_each_other():
 
 
 def test_the_seed_allocation_is_deterministic():
-    kw = dict(v2_post_feedback_cost=_ledger(logical_dfe=200), matching_resource="logical_dfe",
-              per_lookahead_cost=_ledger(logical_dfe=50), used_seeds=(1, 2), seed_base=90)
+    kw = {"v2_post_feedback_cost": _ledger(logical_dfe=200), "matching_resource": "logical_dfe",
+              "per_lookahead_cost": _ledger(logical_dfe=50), "used_seeds": (1, 2), "seed_base": 90}
     assert matched_extra_lookahead_budget(**kw).extra_fork_seeds == \
         matched_extra_lookahead_budget(**kw).extra_fork_seeds
 
@@ -294,14 +294,14 @@ TXN = "5ZHV_B:fam0:txn:d0:r40-c60:abcdef012345"
 def _event(event_id, phase, *, attempt=None, logical_dfe=0, head_calls=0, structure_attempts=0,
            gpu_seconds=0.0, walltime_s=0.0, status="ok"):
     """One raw ledger row, in the ``asdict`` form the shard payload carries."""
-    return dict(
-        event_id=event_id, attempt_id=attempt or f"att:{event_id}", protein_id="5ZHV_B",
-        arm="v2", phase=phase, status=status, logical_dfe=logical_dfe, head_calls=head_calls,
-        structure_attempts=structure_attempts, physical_forwards=0, batch_size=1,
-        physical_forwards_charged=True, structure_cache_hits=0, head_cache_hits=0,
-        gpu_seconds=gpu_seconds, walltime_s=walltime_s, physical_cost_status="observed",
-        outcome=None,
-    )
+    return {
+        "event_id": event_id, "attempt_id": attempt or f"att:{event_id}", "protein_id": "5ZHV_B",
+        "arm": "v2", "phase": phase, "status": status, "logical_dfe": logical_dfe, "head_calls": head_calls,
+        "structure_attempts": structure_attempts, "physical_forwards": 0, "batch_size": 1,
+        "physical_forwards_charged": True, "structure_cache_hits": 0, "head_cache_hits": 0,
+        "gpu_seconds": gpu_seconds, "walltime_s": walltime_s, "physical_cost_status": "observed",
+        "outcome": None,
+    }
 
 
 @pytest.mark.parametrize("phase,stage", [
@@ -396,16 +396,18 @@ def test_a_unit_cost_over_no_lookaheads_is_refused():
 
 
 def _allocation(**over):
-    from inverse_folding.reference_flow.fusion_v2_runtime.a2_view import a2_matched_allocation
-
-    kw = dict(
-        matching_resource="definitive_refolds",
-        pre_feedback_cost=ResourceLedger(logical_dfe=300, head_calls=3, definitive_refolds=3),
-        v2_post_feedback_cost=ResourceLedger(logical_dfe=120, head_calls=2, definitive_refolds=2),
-        per_lookahead_cost=ResourceLedger(logical_dfe=50, head_calls=1, definitive_refolds=1),
-        executed_extra_lookaheads=0,
-        post_feedback_spend_observed=True,
+    from inverse_folding.reference_flow.fusion_v2_runtime.a2_view import (
+        a2_matched_allocation,
     )
+
+    kw = {
+        "matching_resource": "definitive_refolds",
+        "pre_feedback_cost": ResourceLedger(logical_dfe=300, head_calls=3, definitive_refolds=3),
+        "v2_post_feedback_cost": ResourceLedger(logical_dfe=120, head_calls=2, definitive_refolds=2),
+        "per_lookahead_cost": ResourceLedger(logical_dfe=50, head_calls=1, definitive_refolds=1),
+        "executed_extra_lookaheads": 0,
+        "post_feedback_spend_observed": True,
+    }
     kw.update(over)
     return a2_matched_allocation(**kw)
 

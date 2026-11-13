@@ -20,11 +20,9 @@ distinguish "the Dual code exists" from "the Dual code decided":
 from __future__ import annotations
 
 import dataclasses
-import pathlib
 
 import pytest
 
-from inverse_folding.reference_flow.fusion_v2 import identity as ident
 from inverse_folding.reference_flow.fusion_v2 import joint_objective as jo
 from inverse_folding.reference_flow.fusion_v2_runtime import ledger as lg
 from inverse_folding.reference_flow.fusion_v2_runtime.dual_runtime import (
@@ -34,7 +32,14 @@ from inverse_folding.reference_flow.fusion_v2_runtime.dual_runtime import (
 
 from . import _v2_fixtures as F
 from .test_fusion_v2_cycle import (
-    _FakeHeadOracle, _head, _Row, _run as _run_cycle, _run_kwargs, _support_policy,
+    _FakeHeadOracle,
+    _head,
+    _Row,
+    _run_kwargs,
+    _support_policy,
+)
+from .test_fusion_v2_cycle import (
+    _run as _run_cycle,
 )
 
 
@@ -209,7 +214,7 @@ def test_the_archive_elite_follows_the_joint_objective_not_role_a():
 def test_the_two_alleles_actually_disagree_in_this_fixture():
     """Guard: if A and B ranked the pool identically, every assertion above would be vacuous."""
     runtime = _runtime()
-    outcome = _run(dual=runtime)
+    _run(dual=runtime)
     evidence = runtime.evidence_by_endpoint
     by_a = sorted(evidence, key=lambda k: evidence[k].a.raw_risk)
     by_b = sorted(evidence, key=lambda k: evidence[k].b.raw_risk)
@@ -255,7 +260,9 @@ def test_a_dual_cycle_charges_twice_the_single_head_calls(tmp_path):
 # ------------------------------------------------------------------------------------------
 
 def test_an_arm_that_names_no_ordering_law_is_refused():
-    from inverse_folding.reference_flow.fusion_v2.joint_objective import V2JointObjectiveError
+    from inverse_folding.reference_flow.fusion_v2.joint_objective import (
+        V2JointObjectiveError,
+    )
 
     with pytest.raises(V2JointObjectiveError, match="names no ordering law"):
         _runtime(arm="c_only")
@@ -263,9 +270,9 @@ def test_an_arm_that_names_no_ordering_law_is_refused():
 
 def test_a_declared_arm_the_overlay_did_not_bundle_is_refused():
     """A different condition: the law exists, but THIS overlay never declared that branch."""
-    runtime_kwargs = dict(overlay=_Overlay(arms=("joint", "a_only")), arm="b_only",
-                          head_b=_FakeHeadOracleB(),
-                          objective=jo.build_arm_objective(_calibration(), arm="b_only"))
+    runtime_kwargs = {"overlay": _Overlay(arms=("joint", "a_only")), "arm": "b_only",
+                          "head_b": _FakeHeadOracleB(),
+                          "objective": jo.build_arm_objective(_calibration(), arm="b_only")}
     with pytest.raises(V2DualRuntimeError, match="declared bundle"):
         DualRuntime(**runtime_kwargs)
 
@@ -279,7 +286,7 @@ def test_a_runtime_steering_on_the_density_view_is_refused():
 def test_the_same_endpoint_cannot_be_bound_with_two_different_verdicts():
     runtime = _runtime()
     _run(dual=runtime)
-    endpoint_id, evidence = next(iter(runtime.evidence_by_endpoint.items()))
+    _endpoint_id, evidence = next(iter(runtime.evidence_by_endpoint.items()))
     with pytest.raises(V2DualRuntimeError, match="bound twice"):
         runtime.register(dataclasses.replace(evidence, sequence_md5="0" * 32))
 
@@ -298,7 +305,7 @@ def test_the_policy_is_rebound_with_this_cycles_role_b_scores():
     happened, so it proved nothing. What matters is WHICH scores the deciding object was given."""
     probe = _DualCapableProbe()
     runtime = _runtime()
-    outcome = _run_cycle(dual=runtime, support_policy=probe)
+    _run_cycle(dual=runtime, support_policy=probe)
     assert probe.rebound_with is None, "the original must not be mutated"
     assert probe.clones, "the cycle never rebound the policy at all"
     decided = probe.clones[0]

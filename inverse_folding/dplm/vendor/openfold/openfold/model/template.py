@@ -12,32 +12,31 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from functools import partial
 import math
 import sys
-from typing import Optional, List
+from functools import partial
 
 import torch
-import torch.nn as nn
+from torch import nn
 
-from openfold.model.primitives import Linear, LayerNorm, Attention
 from openfold.model.dropout import (
-    DropoutRowwise,
     DropoutColumnwise,
+    DropoutRowwise,
 )
 from openfold.model.pair_transition import PairTransition
+from openfold.model.primitives import Attention, LayerNorm
 from openfold.model.triangular_attention import (
-    TriangleAttentionStartingNode,
     TriangleAttentionEndingNode,
+    TriangleAttentionStartingNode,
 )
 from openfold.model.triangular_multiplicative_update import (
-    TriangleMultiplicationOutgoing,
     TriangleMultiplicationIncoming,
+    TriangleMultiplicationOutgoing,
 )
 from openfold.utils.checkpointing import checkpoint_blocks
 from openfold.utils.chunk_utils import (
-    chunk_layer,
     ChunkSizeTuner,
+    chunk_layer,
 )
 from openfold.utils.feats import (
     build_template_angle_feat,
@@ -46,7 +45,6 @@ from openfold.utils.feats import (
 from openfold.utils.tensor_utils import (
     add,
     permute_final_dims,
-    flatten_final_dims,
     tensor_tree_map,
 )
 
@@ -65,7 +63,7 @@ class TemplatePointwiseAttention(nn.Module):
             c_hidden:
                 Hidden channel dimension
         """
-        super(TemplatePointwiseAttention, self).__init__()
+        super().__init__()
 
         self.c_t = c_t
         self.c_z = c_z
@@ -85,7 +83,7 @@ class TemplatePointwiseAttention(nn.Module):
     def _chunk(self,
         z: torch.Tensor,
         t: torch.Tensor,
-        biases: List[torch.Tensor],
+        biases: list[torch.Tensor],
         chunk_size: int,
         use_lma: bool = False,
     ) -> torch.Tensor:
@@ -105,9 +103,9 @@ class TemplatePointwiseAttention(nn.Module):
     def forward(self, 
         t: torch.Tensor, 
         z: torch.Tensor, 
-        template_mask: Optional[torch.Tensor] = None,
+        template_mask: torch.Tensor | None = None,
         # This module suffers greatly from a small chunk size
-        chunk_size: Optional[int] = 256,
+        chunk_size: int | None = 256,
         use_lma: bool = False,
     ) -> torch.Tensor:
         """
@@ -157,7 +155,7 @@ class TemplatePairStackBlock(nn.Module):
         inf: float,
         **kwargs,
     ):
-        super(TemplatePairStackBlock, self).__init__()
+        super().__init__()
 
         self.c_t = c_t
         self.c_hidden_tri_att = c_hidden_tri_att
@@ -200,11 +198,11 @@ class TemplatePairStackBlock(nn.Module):
     def forward(self, 
         z: torch.Tensor, 
         mask: torch.Tensor, 
-        chunk_size: Optional[int] = None, 
+        chunk_size: int | None = None, 
         use_lma: bool = False,
         inplace_safe: bool = False,
         _mask_trans: bool = True,
-        _attn_chunk_size: Optional[int] = None,
+        _attn_chunk_size: int | None = None,
     ):
         if(_attn_chunk_size is None):
             _attn_chunk_size = chunk_size
@@ -326,7 +324,7 @@ class TemplatePairStack(nn.Module):
                 Number of blocks per activation checkpoint. None disables
                 activation checkpointing
         """
-        super(TemplatePairStack, self).__init__()
+        super().__init__()
 
         self.blocks_per_ckpt = blocks_per_ckpt
 
@@ -449,7 +447,7 @@ def embed_templates_offload(
     for i in range(n_templ):
         idx = batch["template_aatype"].new_tensor(i)
         single_template_feats = tensor_tree_map(
-            lambda t: torch.index_select(t, templ_dim, idx).squeeze(templ_dim),
+            lambda t: torch.index_select(t, templ_dim, idx).squeeze(templ_dim),  # noqa: B023
             batch,
         )
 
@@ -556,13 +554,13 @@ def embed_templates_average(
     to scale almost indefinitely.
     """
     # Embed the templates one at a time (with a poor man's vmap)
-    n = z.shape[-2]
+    z.shape[-2]
     n_templ = batch["template_aatype"].shape[templ_dim]
     out_tensor = z.new_zeros(z.shape)
     for i in range(0, n_templ, templ_group_size): 
         def slice_template_tensor(t):
             s = [slice(None) for _ in t.shape]
-            s[templ_dim] = slice(i, i + templ_group_size)
+            s[templ_dim] = slice(i, i + templ_group_size)  # noqa: B023
             return t[s]
         
         template_feats = tensor_tree_map(

@@ -7,22 +7,23 @@ import functools
 import hashlib
 import json
 import sys
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from inverse_folding.reference_flow.fusion_v2.errors import V2Error  # noqa: E402
-from scripts.rf_fusion_v2_artifacts import (  # noqa: E402
+from inverse_folding.reference_flow.fusion_v2.errors import V2Error
+from scripts.rf_fusion_v2_artifacts import (
+    DUAL_TABLE_SCHEMAS,
     V2_TABLE_SCHEMAS,
     run_manifest,
-    DUAL_TABLE_SCHEMAS,
     write_v2_bundle,
 )
-from scripts.rf_fusion_v2_preflight import (  # noqa: E402
+from scripts.rf_fusion_v2_preflight import (
     V2PreflightError,
     assert_launch_feasible,
     input_signature,
@@ -30,7 +31,7 @@ from scripts.rf_fusion_v2_preflight import (  # noqa: E402
     print_config_payload,
     project_v2_budget,
 )
-from scripts.rf_fusion_v2_resume import (  # noqa: E402
+from scripts.rf_fusion_v2_resume import (
     RunSignature,
     aggregate_fragments,
     write_fragment,
@@ -42,12 +43,20 @@ EXIT_PARTIAL = 3     # some proteins missing or rejected
 EXIT_UNLAUNCHABLE = 4
 
 __all__ = [
-    "EXIT_OK", "EXIT_FAILED", "EXIT_PARTIAL", "EXIT_UNLAUNCHABLE",
-    "V2DriverError", "DeclaredInput",
-    "build_parser", "main", "decide_exit_code",
-    "parse_declared_inputs", "parse_shard_inputs", "realized_cap_verdict",
-    "resolve_code_revision",
+    "EXIT_FAILED",
+    "EXIT_OK",
+    "EXIT_PARTIAL",
+    "EXIT_UNLAUNCHABLE",
+    "DeclaredInput",
+    "V2DriverError",
+    "build_parser",
     "content_provenance",
+    "decide_exit_code",
+    "main",
+    "parse_declared_inputs",
+    "parse_shard_inputs",
+    "realized_cap_verdict",
+    "resolve_code_revision",
 ]
 
 
@@ -376,7 +385,7 @@ def realized_cap_verdict(ledger_events, *, caps):
     Returns ``None`` when the run kept no ledger at all -- an absent ledger is not a certificate of
     compliance and the caller reports it as such rather than reading it as "within budget".
     """
-    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (  # noqa: PLC0415
+    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (
         V2LedgerEvent,
         aggregate_v2_ledger,
         check_caps,
@@ -415,7 +424,6 @@ def resolve_dual(args, *, shard_inputs=None):
             "cannot say which comparison this process is running, and an arm without an overlay "
             "names a bundle nothing declared"
         )
-    from inverse_folding.reference_flow.fusion_v2 import dual_config as _dual_config
 
     from scripts.rf_fusion_v2_preflight import load_dual_overlay_file
 
@@ -455,7 +463,9 @@ def _dual_signature(overlay, arm: str) -> str:
     resolved yet.  That check belongs where the checkpoint is actually opened, and calling it here
     against the overlay's own declared digests would compare a value with itself and always pass.
     """
-    from inverse_folding.reference_flow.fusion_v2.dual_config import dual_run_signature_component
+    from inverse_folding.reference_flow.fusion_v2.dual_config import (
+        dual_run_signature_component,
+    )
 
     return dual_run_signature_component(overlay, arm=arm)
 
@@ -632,7 +642,7 @@ def main(argv=None, *, runner=None, oracles_factory=None) -> int:
 
     if not args.aggregate_only:
         if runner is None:
-            from scripts.rf_fusion_v2_cohort import (  # noqa: PLC0415
+            from scripts.rf_fusion_v2_cohort import (
                 run_v2_mechanism_shard,
                 run_v2_shard,
             )
@@ -643,7 +653,7 @@ def main(argv=None, *, runner=None, oracles_factory=None) -> int:
             # cost a GPU allocation.  The DRIVER is where the real stack is named: without this a
             # production launch failed with "no oracles_factory was supplied" after the config had
             # already been resolved, signed and budget-checked.
-            from scripts.rf_fusion_v2_oracles import build_v2_oracles  # noqa: PLC0415
+            from scripts.rf_fusion_v2_oracles import build_v2_oracles
 
             oracles_factory = build_v2_oracles
 
@@ -663,11 +673,11 @@ def main(argv=None, *, runner=None, oracles_factory=None) -> int:
                 if verdict.records_success:
                     continue
             try:
-                runner_kwargs = dict(
-                    protein_id=protein_id, config=config, signature=signature,
-                    out_dir=out_dir, inputs=shard_inputs,
-                    oracles_factory=oracles_factory,
-                )
+                runner_kwargs = {
+                    "protein_id": protein_id, "config": config, "signature": signature,
+                    "out_dir": out_dir, "inputs": shard_inputs,
+                    "oracles_factory": oracles_factory,
+                }
                 if dual_overlay is not None:
                     # The overlay reached the SIGNATURE and stopped there: the shard still ran a
                     # single Head, so joint / a_only / b_only executed identical A-only V2 under

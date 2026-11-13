@@ -1,8 +1,11 @@
 """Head and definitive structure oracles shared by the official workflow."""
 from __future__ import annotations
+
 import argparse
 from pathlib import Path
+
 import pandas as pd
+
 
 def _require(path, what):
     if not path:
@@ -70,6 +73,8 @@ def build_oracles(args, config):
 
         from inverse_folding.evaluation.sc_rmsd import (
             compute_ca_self_consistency as compute_ca_self_consistency_fn,
+        )
+        from inverse_folding.evaluation.sc_rmsd import (
             parse_ca_trace,
         )
         from inverse_folding.reference_flow.fusion import structure_metrics as sm
@@ -91,8 +96,10 @@ def build_oracles(args, config):
             METRIC_GLOBAL_CA_RMSD,
             METRIC_PLDDT,
             METRIC_SIDECHAIN,
-            evaluate_prediction as evaluate_prediction_fn,
             prepare_reference_context,
+        )
+        from inverse_folding.evaluation.structural_metrics_v2 import (
+            evaluate_prediction as evaluate_prediction_fn,
         )
 
         reference_context_cache: dict[str, object] = {}

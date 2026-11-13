@@ -10,10 +10,10 @@ compares against ground-truth positive spans, and computes:
 from __future__ import annotations
 
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 logger = logging.getLogger(__name__)
 

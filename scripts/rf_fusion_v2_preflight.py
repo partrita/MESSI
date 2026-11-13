@@ -22,28 +22,30 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from inverse_folding.reference_flow.fusion_v2.config import (  # noqa: E402
+from inverse_folding.reference_flow.fusion_v2.config import (
     V2ConfigError,
     load_v2_config,
 )
+
 __all__ = [
-    "V2PreflightError",
     "BudgetProjection",
-    "resolve_v2_config",
-    "load_v2_config_file",
-    "load_dual_overlay_file",
-    "input_signature",
-    "project_v2_budget",
+    "V2PreflightError",
     "assert_launch_feasible",
+    "input_signature",
+    "load_dual_overlay_file",
+    "load_v2_config_file",
     "print_config_payload",
+    "project_v2_budget",
+    "resolve_v2_config",
 ]
 
 
@@ -70,7 +72,9 @@ def load_dual_overlay_file(path: Any):
     """
     import json
 
-    from inverse_folding.reference_flow.fusion_v2.dual_config import dual_overlay_from_mapping
+    from inverse_folding.reference_flow.fusion_v2.dual_config import (
+        dual_overlay_from_mapping,
+    )
 
     with open(path, encoding="utf-8") as handle:
         payload = json.load(handle)

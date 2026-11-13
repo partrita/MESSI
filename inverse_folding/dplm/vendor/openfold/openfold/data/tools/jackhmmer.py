@@ -15,12 +15,13 @@
 
 """Library to run Jackhmmer from Python."""
 
-from concurrent import futures
 import glob
 import logging
 import os
 import subprocess
-from typing import Any, Callable, Mapping, Optional, Sequence
+from collections.abc import Callable, Mapping, Sequence
+from concurrent import futures
+from typing import Any
 from urllib import request
 
 from openfold.data.tools import utils
@@ -37,15 +38,15 @@ class Jackhmmer:
         n_cpu: int = 8,
         n_iter: int = 1,
         e_value: float = 0.0001,
-        z_value: Optional[int] = None,
+        z_value: int | None = None,
         get_tblout: bool = False,
         filter_f1: float = 0.0005,
         filter_f2: float = 0.00005,
         filter_f3: float = 0.0000005,
-        incdom_e: Optional[float] = None,
-        dom_e: Optional[float] = None,
-        num_streamed_chunks: Optional[int] = None,
-        streaming_callback: Optional[Callable[[int], None]] = None,
+        incdom_e: float | None = None,
+        dom_e: float | None = None,
+        num_streamed_chunks: int | None = None,
+        streaming_callback: Callable[[int], None] | None = None,
     ):
         """Initializes the Python Jackhmmer wrapper.
 
@@ -75,7 +76,7 @@ class Jackhmmer:
             not os.path.exists(self.database_path)
             and num_streamed_chunks is None
         ):
-            logging.error("Could not find Jackhmmer database %s", database_path)
+            logging.error("Could not find Jackhmmer database %s", database_path)  # noqa: LOG015
             raise ValueError(
                 f"Could not find Jackhmmer database {database_path}"
             )
@@ -146,7 +147,7 @@ class Jackhmmer:
                 + [input_fasta_path, database_path]
             )
 
-            logging.info('Launching subprocess "%s"', " ".join(cmd))
+            logging.info('Launching subprocess "%s"', " ".join(cmd))  # noqa: LOG015
             process = subprocess.Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
@@ -158,7 +159,7 @@ class Jackhmmer:
 
             if retcode:
                 raise RuntimeError(
-                    "Jackhmmer failed\nstderr:\n%s\n" % stderr.decode("utf-8")
+                    "Jackhmmer failed\nstderr:\n{}\n".format(stderr.decode("utf-8"))
                 )
 
             # Get e-values for each target name
@@ -170,13 +171,13 @@ class Jackhmmer:
             with open(sto_path) as f:
                 sto = f.read()
 
-        raw_output = dict(
-            sto=sto,
-            tbl=tbl,
-            stderr=stderr,
-            n_iter=self.n_iter,
-            e_value=self.e_value,
-        )
+        raw_output = {
+            "sto": sto,
+            "tbl": tbl,
+            "stderr": stderr,
+            "n_iter": self.n_iter,
+            "e_value": self.e_value,
+        }
 
         return raw_output
 

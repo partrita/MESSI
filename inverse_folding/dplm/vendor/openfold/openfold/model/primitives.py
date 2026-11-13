@@ -12,35 +12,32 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from functools import partial
 import importlib
 import math
-from typing import Optional, Callable, List, Tuple, Sequence
+from collections.abc import Callable
+
 import numpy as np
 
 deepspeed_is_installed = importlib.util.find_spec("deepspeed") is not None
 if(deepspeed_is_installed):
-    import deepspeed
+    pass
 
 fa_is_installed = importlib.util.find_spec("flash_attn") is not None
 if(fa_is_installed):
-    from flash_attn.bert_padding import unpad_input, pad_input
-    from flash_attn.flash_attention import FlashAttention
+    from flash_attn.bert_padding import unpad_input
     from flash_attn.flash_attn_interface import flash_attn_unpadded_kvpacked_func
 
 import torch
-import torch.nn as nn
 from scipy.stats import truncnorm
+from torch import nn
 
 from openfold.utils.checkpointing import get_checkpoint_fn
-from openfold.utils.chunk_utils import _chunk_slice
 from openfold.utils.kernel.attention_core import attention_core
 from openfold.utils.precision_utils import is_fp16_enabled
 from openfold.utils.tensor_utils import (
-    permute_final_dims,
     flatten_final_dims,
+    permute_final_dims,
 )
-
 
 DEFAULT_LMA_Q_CHUNK_SIZE=1024
 DEFAULT_LMA_KV_CHUNK_SIZE=4096
@@ -129,7 +126,7 @@ class Linear(nn.Linear):
         out_dim: int,
         bias: bool = True,
         init: str = "default",
-        init_fn: Optional[Callable[[torch.Tensor, torch.Tensor], None]] = None,
+        init_fn: Callable[[torch.Tensor, torch.Tensor], None] | None = None,
     ):
         """
         Args:
@@ -154,7 +151,7 @@ class Linear(nn.Linear):
                 A custom initializer taking weight and bias as inputs.
                 Overrides init if not None.
         """
-        super(Linear, self).__init__(in_dim, out_dim, bias=bias)
+        super().__init__(in_dim, out_dim, bias=bias)
 
         if bias:
             with torch.no_grad():
@@ -184,7 +181,7 @@ class Linear(nn.Linear):
 
 class LayerNorm(nn.Module):
     def __init__(self, c_in, eps=1e-5):
-        super(LayerNorm, self).__init__()
+        super().__init__()
         
         self.c_in = (c_in,)
         self.eps = eps
@@ -242,7 +239,7 @@ def softmax_no_cast(t: torch.Tensor, dim: int = -1) -> torch.Tensor:
 
 
 #@torch.jit.script
-def _attention(query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, biases: List[torch.Tensor]) -> torch.Tensor:
+def _attention(query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, biases: list[torch.Tensor]) -> torch.Tensor:
     # [*, H, C_hidden, K]
     key = permute_final_dims(key, (1, 0))
 
@@ -287,10 +284,10 @@ def _attention_chunked_trainable(
         v_chunk = value[idx_tup]
 
         def _slice_bias(b):
-            idx[chunk_dim] = (
-                slice(start, end) if b.shape[chunk_dim] != 1 else slice(None)
+            idx[chunk_dim] = (  # noqa: B023
+                slice(start, end) if b.shape[chunk_dim] != 1 else slice(None)  # noqa: B023
             )
-            return b[tuple(idx)]
+            return b[tuple(idx)]  # noqa: B023
 
         if(checkpoint):
             bias_1_chunk, bias_2_chunk = [
@@ -344,7 +341,7 @@ class Attention(nn.Module):
             gating:
                 Whether the output should be gated using query data
         """
-        super(Attention, self).__init__()
+        super().__init__()
 
         self.c_q = c_q
         self.c_k = c_k
@@ -380,7 +377,7 @@ class Attention(nn.Module):
     def _prep_qkv(self,
         q_x: torch.Tensor, 
         kv_x: torch.Tensor
-    ) -> Tuple[
+    ) -> tuple[
         torch.Tensor, torch.Tensor, torch.Tensor
     ]:
         # [*, Q/K/V, H * C_hidden]
@@ -425,13 +422,13 @@ class Attention(nn.Module):
         self,
         q_x: torch.Tensor,
         kv_x: torch.Tensor,
-        biases: Optional[List[torch.Tensor]] = None,
+        biases: list[torch.Tensor] | None = None,
         use_memory_efficient_kernel: bool = False,
         use_lma: bool = False,
         lma_q_chunk_size: int = DEFAULT_LMA_Q_CHUNK_SIZE,
         lma_kv_chunk_size: int = DEFAULT_LMA_KV_CHUNK_SIZE,
         use_flash: bool = False,
-        flash_mask: Optional[torch.Tensor] = None,
+        flash_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """
         Args:
@@ -513,7 +510,7 @@ class Attention(nn.Module):
 
 class GlobalAttention(nn.Module):
     def __init__(self, c_in, c_hidden, no_heads, inf, eps):
-        super(GlobalAttention, self).__init__()
+        super().__init__()
 
         self.c_in = c_in
         self.c_hidden = c_hidden
@@ -604,7 +601,7 @@ def _lma(
     q: torch.Tensor, 
     k: torch.Tensor, 
     v: torch.Tensor, 
-    biases: List[torch.Tensor], 
+    biases: list[torch.Tensor], 
     q_chunk_size: int, 
     kv_chunk_size: int,
 ):

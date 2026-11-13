@@ -36,22 +36,22 @@ from ..fusion_v2.errors import V2Error
 from ..fusion_v2.identity import canonical_digest, require_digest, require_id_namespace
 
 __all__ = [
-    "V2A2Error",
-    "LEDGER_STAGES",
-    "PRE_FEEDBACK_STAGES",
-    "POST_FEEDBACK_STAGES",
-    "RESOURCE_FIELDS",
     "ALLOCATION_STATUSES",
-    "ResourceLedger",
+    "LEDGER_STAGES",
+    "POST_FEEDBACK_STAGES",
+    "PRE_FEEDBACK_STAGES",
+    "RESOURCE_FIELDS",
+    "A2Allocation",
     "A2View",
     "MatchedLookaheadBudget",
-    "A2Allocation",
-    "snapshot_a2_view",
-    "matched_extra_lookahead_budget",
-    "ledger_stage",
-    "resource_ledger_from_events",
-    "stage_ledgers",
+    "ResourceLedger",
+    "V2A2Error",
     "a2_matched_allocation",
+    "ledger_stage",
+    "matched_extra_lookahead_budget",
+    "resource_ledger_from_events",
+    "snapshot_a2_view",
+    "stage_ledgers",
 ]
 
 #: The five envelope components, in a stable order.  Asserted equal to the config's closed
@@ -100,13 +100,13 @@ class ResourceLedger:
         """
         return {name: float(getattr(self, name)) for name in RESOURCE_FIELDS}
 
-    def plus(self, other: "ResourceLedger") -> "ResourceLedger":
+    def plus(self, other: ResourceLedger) -> ResourceLedger:
         if not isinstance(other, ResourceLedger):
             raise V2A2Error("only a ResourceLedger may be added to a ResourceLedger")
         return ResourceLedger(
             **{name: getattr(self, name) + getattr(other, name) for name in RESOURCE_FIELDS})
 
-    def per_unit(self, n_lookaheads: int) -> "ResourceLedger":
+    def per_unit(self, n_lookaheads: int) -> ResourceLedger:
         """This total spread over the lookaheads that produced it: the unit cost of one exact
         future.
 
@@ -483,11 +483,11 @@ def a2_matched_allocation(
         )
     executed = int(executed_extra_lookaheads)
     complement = tuple(sorted(set(A2_RESOURCE_COMPONENTS) - {matching_resource}))
-    common = dict(
-        matching_resource=matching_resource, executed_extra_lookaheads=executed,
-        pre_feedback_cost=pre_feedback_cost, v2_post_feedback_cost=v2_post_feedback_cost,
-        per_lookahead_cost=per_lookahead_cost, unmatched_components=complement,
-    )
+    common = {
+        "matching_resource": matching_resource, "executed_extra_lookaheads": executed,
+        "pre_feedback_cost": pre_feedback_cost, "v2_post_feedback_cost": v2_post_feedback_cost,
+        "per_lookahead_cost": per_lookahead_cost, "unmatched_components": complement,
+    }
 
     if not post_feedback_spend_observed:
         return A2Allocation(

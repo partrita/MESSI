@@ -49,24 +49,24 @@ from .errors import V2Error
 from .identity import HeadEvaluatorIdentity, canonical_digest, require_digest
 
 __all__ = [
-    "V2JointObjectiveError",
+    "ARM_STEERING_ROLE",
     "LOG2",
     "MEASURED_QUANTITIES",
     "QUANTITY_ATTRIBUTES",
-    "AlleleRole",
-    "ObjectiveMode",
-    "smooth_max",
-    "hard_max",
     "AlleleCoordinate",
-    "QuantityCoordinates",
-    "DualObjectiveLaw",
-    "PanelBinding",
+    "AlleleRole",
     "DualCalibration",
-    "JointValue",
     "DualObjective",
+    "DualObjectiveLaw",
+    "JointValue",
+    "ObjectiveMode",
+    "PanelBinding",
+    "QuantityCoordinates",
     "SingleAlleleObjective",
-    "ARM_STEERING_ROLE",
+    "V2JointObjectiveError",
     "build_arm_objective",
+    "hard_max",
+    "smooth_max",
 ]
 
 LOG2 = math.log(2.0)
@@ -158,7 +158,7 @@ def smooth_max(u_a: float, u_b: float, tau: float) -> float:
             "the near-worst allele may influence the decision, and a non-positive width is the "
             "hard maximum, which is a separately declared mode"
         )
-    peak = left if left >= right else right
+    peak = max(left, right)
     gap = abs(left - right)
     return peak + width * (math.log1p(math.exp(-gap / width)) - LOG2)
 
@@ -167,7 +167,7 @@ def hard_max(u_a: float, u_b: float) -> float:
     """The strict normalized maximum: the ``tau -> 0`` limit of :func:`smooth_max`."""
     left = _finite(u_a, "u_a")
     right = _finite(u_b, "u_b")
-    return left if left >= right else right
+    return max(left, right)
 
 
 # ----------------------------------------------------------------------------------------------

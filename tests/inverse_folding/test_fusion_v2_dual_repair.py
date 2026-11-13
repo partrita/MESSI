@@ -85,11 +85,17 @@ def test_the_reopen_attribution_names_the_conjunct_that_ordered_the_row():
 
 
 def test_a_typed_stall_keeps_the_dual_evidence_the_cycle_paid_for():
+    from inverse_folding.reference_flow.fusion_v2 import policy as pol
+
     from .test_fusion_v2_dual_select import _authority
     from .test_fusion_v2_head_directed_policy import (
-        SOURCE_SEQ, _calibration, _coords, _donor, _policy, _source,
+        SOURCE_SEQ,
+        _calibration,
+        _coords,
+        _donor,
+        _policy,
+        _source,
     )
-    from inverse_folding.reference_flow.fusion_v2 import policy as pol
 
     source = _source(SOURCE_SEQ)
     endpoint = _donor(source=source)
@@ -108,9 +114,14 @@ def test_a_typed_stall_keeps_the_dual_evidence_the_cycle_paid_for():
 # -- majors: role B's landscape is watched ---------------------------------------------------------
 
 def test_role_b_hotspot_drift_is_measured_when_a_reference_is_declared():
-    from .test_fusion_v2_dual_execution import _FakeHeadOracleB, _calibration, _Overlay
-    from inverse_folding.reference_flow.fusion_v2.joint_objective import build_arm_objective
-    from inverse_folding.reference_flow.fusion_v2_runtime.dual_runtime import DualRuntime
+    from inverse_folding.reference_flow.fusion_v2.joint_objective import (
+        build_arm_objective,
+    )
+    from inverse_folding.reference_flow.fusion_v2_runtime.dual_runtime import (
+        DualRuntime,
+    )
+
+    from .test_fusion_v2_dual_execution import _calibration, _FakeHeadOracleB, _Overlay
 
     probe = _runtime()
     _run(dual=probe)
@@ -141,7 +152,7 @@ def test_a_run_that_declares_no_role_b_reference_reports_absent_not_zero():
 def test_forking_an_archive_preserves_its_ordering_law():
     """Every matched arm forks the shared pre-feedback archive. A default fork silently reverted a
     joint-ordered archive to head_global_risk while the gate still compared J."""
-    sentinel = lambda endpoint: (0.0, str(endpoint.endpoint_id))          # noqa: E731
+    sentinel = lambda endpoint: (0.0, str(endpoint.endpoint_id))
     forked = arch.ExactArchive(rank_key=sentinel).fork_view()
     assert forked._rank_key is sentinel
 
@@ -149,9 +160,9 @@ def test_forking_an_archive_preserves_its_ordering_law():
 # -- majors: the launch gate must price both Heads ------------------------------------------------
 
 def test_the_budget_projection_doubles_the_head_calls_for_a_dual_run():
+    from inverse_folding.reference_flow.fusion_v2.config import load_v2_config
     from scripts.rf_fusion_v2_preflight import project_v2_budget
     from tests.inverse_folding.test_fusion_v2_config import _mapping
-    from inverse_folding.reference_flow.fusion_v2.config import load_v2_config
 
     config = load_v2_config(_mapping())
     single = project_v2_budget(config, n_proteins=1, n_heads=1)
@@ -172,17 +183,24 @@ def test_a_position_only_role_b_improves_reaches_the_joint_batch_through_select(
     (measured), and role B's landscape improves the window that covers it. The union must therefore
     make position 9 legal, or an A-only prefilter is still deciding which positions get scored.
     """
-    import dataclasses
 
     from inverse_folding.reference_flow.fusion.state import sequence_md5
     from inverse_folding.reference_flow.fusion_v2 import identity as ident
-    from inverse_folding.reference_flow.fusion_v2 import policy as pol
 
     from . import _v2_fixtures as F
     from .test_fusion_v2_dual_select import EVAL_B, _authority, _ScriptedHeadB
     from .test_fusion_v2_head_directed_policy import (
-        INCUMBENT_SEQ, MASKED, SOURCE_SEQ, WINDOW_K, _Result, _calibration, _coords, _donor,
-        _policy, _score, _source,
+        INCUMBENT_SEQ,
+        MASKED,
+        SOURCE_SEQ,
+        WINDOW_K,
+        _calibration,
+        _coords,
+        _donor,
+        _policy,
+        _Result,
+        _score,
+        _source,
     )
 
     #: 'R' at position 9 is measured to be non-improving under role A; A/C/D keep the other three

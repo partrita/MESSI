@@ -30,14 +30,16 @@ expires.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Any, Callable, Sequence
+from typing import Any
 
 import numpy as np
 import torch
 
 from ..amplification import amplification_factor
 from ..fusion_v2.errors import V2Error
+from ..fusion_v2.schedule import history_key
 from ..fusion_v2.state import (
     ActiveOriginKind,
     ActiveScoreStatus,
@@ -52,21 +54,20 @@ from ..sampler import (
     _union_protected,
     editable_maturity,
 )
-from ..fusion_v2.schedule import history_key
 from ..schedule import positionwise_unmask_probabilities
 from .scoring import token_logprob
 
 __all__ = [
-    "adapt_segment_to_live_state",
-    "V2SegmentError",
-    "PendingAssimilationError",
-    "BackgroundRemaskError",
-    "SegmentOutcome",
     "AssimilationEvent",
+    "BackgroundRemaskError",
+    "PendingAssimilationError",
+    "SegmentOutcome",
+    "V2SegmentError",
+    "adapt_segment_to_live_state",
+    "pending_positions",
     "run_projected_segment",
     "run_projected_segment_batch",
     "segment_is_terminal",
-    "pending_positions",
 ]
 
 #: The V1 sampler's sentinel for "this position has never been unmasked".
@@ -528,7 +529,7 @@ def run_projected_segment_batch(
                 _lane_capture_if_due(state, step, t)
             break
         logits_by_lane = batched_denoiser([state.x_t.clone() for state in states], t, structs)
-        n_batched += 1
+        n_batched += 1  # noqa: SIM113
         if len(logits_by_lane) != len(states):
             raise V2SegmentError(
                 f"batched_denoiser returned {len(logits_by_lane)} logit tensors for "

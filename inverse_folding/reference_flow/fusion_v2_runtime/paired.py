@@ -33,29 +33,29 @@ from ..fusion_v2.seeds import FeedbackPairSeedContext, MatchedPairSeedRecord
 from ..fusion_v2.state import LivePartialState, TransitionOutcome
 
 __all__ = [
-    "V2PairedError",
-    "NotYetFrozenError",
+    "ALL_VIEWS",
+    "ENDPOINT_RELATIONS",
+    "INTERVENTIONS",
     "MECHANISM_VIEWS",
     "POLICY_QUALIFICATION_VIEWS",
-    "ALL_VIEWS",
-    "SUPPORT_LAW_VIEW",
-    "ENDPOINT_RELATIONS",
     "POLICY_VARIANTS",
-    "PolicyQualificationResult",
-    "assert_write_reopen_parity",
-    "run_policy_qualification_view",
+    "SUPPORT_LAW_VIEW",
     "InterventionAxes",
-    "SupportBudget",
-    "assert_support_parity",
     "MechanismViewResult",
-    "PairedArmRun",
-    "run_mechanism_views",
-    "INTERVENTIONS",
+    "NotYetFrozenError",
     "PairedArm",
+    "PairedArmRun",
     "PairedContrast",
+    "PolicyQualificationResult",
     "SourceDependenceVerdict",
-    "build_paired_contrasts",
+    "SupportBudget",
+    "V2PairedError",
     "ablate_source",
+    "assert_support_parity",
+    "assert_write_reopen_parity",
+    "build_paired_contrasts",
+    "run_mechanism_views",
+    "run_policy_qualification_view",
     "shuffle_source",
     "source_dependence_verdict",
 ]
@@ -174,7 +174,7 @@ class SupportBudget:
     n_carry_from_source: int
 
     @classmethod
-    def of(cls, partition: Any) -> "SupportBudget":
+    def of(cls, partition: Any) -> SupportBudget:
         return cls(
             n_write_from_endpoint=len(partition.write_from_endpoint),
             n_inject_from_source_feedback=len(partition.inject_from_source_feedback),
@@ -253,7 +253,7 @@ class PairedContrast:
     """Exactly two arms: the treatment and its matched control."""
 
     intervention_kind: str
-    axes: "InterventionAxes"
+    axes: InterventionAxes
     arm_a: PairedArm
     arm_b: PairedArm
 

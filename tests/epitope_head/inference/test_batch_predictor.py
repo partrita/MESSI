@@ -11,6 +11,7 @@ Verifies:
 from __future__ import annotations
 
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 import torch
@@ -260,7 +261,7 @@ def test_predict_proteins_reuses_single_model_instance(tmp_path: Path):
 
     class CountingPredictor(InferencePredictor):
         enumerate_call_count = 0
-        observed_model_ids: set[int] = set()
+        observed_model_ids: ClassVar[set[int]] = set()
 
         def enumerate_and_score(self, *args, **kwargs):
             CountingPredictor.enumerate_call_count += 1
@@ -295,7 +296,7 @@ def test_predict_proteins_forwards_window_batch_size(tmp_path: Path):
     path, which chunks the scorer directly — see the batched test below)."""
 
     class RecordingPredictor(InferencePredictor):
-        recorded_batch_sizes: list[int] = []
+        recorded_batch_sizes: ClassVar[list[int]] = []
 
         def enumerate_and_score(self, *args, **kwargs):
             RecordingPredictor.recorded_batch_sizes.append(int(kwargs.get("window_batch_size", -1)))

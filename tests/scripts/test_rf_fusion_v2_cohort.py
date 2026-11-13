@@ -32,21 +32,21 @@ import pytest
 
 pytest.importorskip("torch")
 
-from inverse_folding.reference_flow.fusion_v2 import config as cfg  # noqa: E402
-from inverse_folding.reference_flow.fusion_v2_runtime.capture import (  # noqa: E402
+from inverse_folding.reference_flow.fusion_v2 import config as cfg
+from inverse_folding.reference_flow.fusion_v2_runtime.capture import (
     FullyResolvedRootError,
 )
-from inverse_folding.reference_flow.sampler import (  # noqa: E402
+from inverse_folding.reference_flow.sampler import (
     PositionDependentDFMSampler,
 )
-from scripts.rf_fusion_v2_cohort import (  # noqa: E402
+from scripts.rf_fusion_v2_cohort import (
     ShardInputs,
     V2CohortError,
     run_v2_shard,
 )
-from scripts.rf_fusion_v2_resume import RunSignature  # noqa: E402
-from tests.inverse_folding import _v2_fixtures as F  # noqa: E402
-from tests.inverse_folding.test_fusion_v2_cycle import (  # noqa: E402
+from scripts.rf_fusion_v2_resume import RunSignature
+from tests.inverse_folding import _v2_fixtures as F
+from tests.inverse_folding.test_fusion_v2_cycle import (
     ALPHABET,
     VOCAB,
     _cfg,
@@ -56,7 +56,7 @@ from tests.inverse_folding.test_fusion_v2_cycle import (  # noqa: E402
     _structure_oracle,
     _support_policy,
 )
-from tests.inverse_folding.test_fusion_v2_ladder import (  # noqa: E402
+from tests.inverse_folding.test_fusion_v2_ladder import (
     C0,
     C1,
     C2,
@@ -117,21 +117,21 @@ class _NamedPolicy:
 
 def _cycle_kwargs(**over):
     table = _ladder_band_table()
-    kwargs = dict(
-        sampler=PositionDependentDFMSampler(mask_token_id=F.MASK, vocab_size=VOCAB),
-        denoiser=_denoiser, config=_cfg(), sequence_length=LADDER_L,
-        h_values=np.zeros(LADDER_L, dtype=np.float32), residue_token_ids=F.AA,
-        alphabet=ALPHABET, fixed_tokens={0: 10}, lineage=F.lineage(),
-        mask_token_id=F.MASK, aa_token_ids=F.AA,
-        conditioning=F.conditioning(
+    kwargs = {
+        "sampler": PositionDependentDFMSampler(mask_token_id=F.MASK, vocab_size=VOCAB),
+        "denoiser": _denoiser, "config": _cfg(), "sequence_length": LADDER_L,
+        "h_values": np.zeros(LADDER_L, dtype=np.float32), "residue_token_ids": F.AA,
+        "alphabet": ALPHABET, "fixed_tokens": {0: 10}, "lineage": F.lineage(),
+        "mask_token_id": F.MASK, "aa_token_ids": F.AA,
+        "conditioning": F.conditioning(
             schedule_band_calibration=table.provenance.calibration_content_digest),
-        safety_reference=F.safety_reference(length=LADDER_L),
-        head_oracle=_FakeHeadOracle(length=LADDER_L), structure_oracle=_structure_oracle,
-        support_policy=_NamedPolicy(),
-        band_table=table, stratum_key=F.STRATUM, declared_band_id=F.BAND_ID,
-        declared_band_digest=table.provenance.calibration_content_digest,
-        safety_gate=F.safety_gate(length=LADDER_L),
-    )
+        "safety_reference": F.safety_reference(length=LADDER_L),
+        "head_oracle": _FakeHeadOracle(length=LADDER_L), "structure_oracle": _structure_oracle,
+        "support_policy": _NamedPolicy(),
+        "band_table": table, "stratum_key": F.STRATUM, "declared_band_id": F.BAND_ID,
+        "declared_band_digest": table.provenance.calibration_content_digest,
+        "safety_gate": F.safety_gate(length=LADDER_L),
+    }
     kwargs.update(over)
     return kwargs
 
@@ -161,12 +161,12 @@ def _shard(tmp_path, *, config=None, **over):
 
 def _signature(config=None, **over):
     config = config or _v2_config()
-    fields = dict(
-        config_digest=config.config_digest(), campaign_id=config.identity.campaign_id,
-        split_role=config.identity.split_role, arm_role=config.arm.arm_role,
-        protein_id=PROTEIN, input_signature="1" * 64,
-        code_revision=config.identity.code_revision,
-    )
+    fields = {
+        "config_digest": config.config_digest(), "campaign_id": config.identity.campaign_id,
+        "split_role": config.identity.split_role, "arm_role": config.arm.arm_role,
+        "protein_id": PROTEIN, "input_signature": "1" * 64,
+        "code_revision": config.identity.code_revision,
+    }
     fields.update(over)
     return RunSignature(**fields)
 
@@ -485,7 +485,9 @@ def test_the_realized_substrate_digest_reaches_the_payload(realized):
     The digest is computed by the LADDER from the config the engine really ran, so it is the run's
     one realized witness; a payload that dropped it would leave no record of the substrate at all.
     """
-    from inverse_folding.reference_flow.fusion_v2_runtime.ladder import _substrate_digest
+    from inverse_folding.reference_flow.fusion_v2_runtime.ladder import (
+        _substrate_digest,
+    )
 
     _, _, payload = realized
     assert payload["substrate_digest"] == _substrate_digest(_cfg())

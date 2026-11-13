@@ -26,8 +26,8 @@ from inverse_folding.reference_flow.refine import (
     enumerate_round_robin_doubles,
     enumerate_singles,
     extract_target_cores,
-    head_objective_dominates,
     head_first_pareto_front,
+    head_objective_dominates,
     head_refinement_metrics,
     hotspot_blocks,
     rank_margin_mass,
@@ -246,7 +246,7 @@ def make_propose_fn(oracles: Oracles, protein_id: str, anchors: set, *, max_pair
 def _head_metrics_batch(oracles, protein_id: str, sequences):
     """Score complete sequences through the rich Head interface and bind row order."""
     if not callable(getattr(oracles, "head_score_fn", None)):
-        raise ValueError("--target-source head requires an oracle head_score_fn")
+        raise ValueError("--target-source head requires an oracle head_score_fn")  # noqa: TRY004
     sequences = list(sequences)
     scores = list(oracles.head_score_fn(protein_id, sequences))
     if len(scores) != len(sequences):
@@ -1116,7 +1116,7 @@ def _free_gpu() -> None:
         import torch
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-    except Exception:
+    except Exception:  # noqa: BLE001, S110
         pass
 
 
@@ -1167,10 +1167,13 @@ def _run_final_metrics(args) -> None:
         return
 
     from scripts.evaluate_phase_c import (
-        load_generated_designs, load_test_lookup,
-        build_head_predictor, build_nmp_runner,
-        evaluate_immunogenicity_rows, evaluate_structural_rows,
         _load_anchor_indices_by_protein,
+        build_head_predictor,
+        build_nmp_runner,
+        evaluate_immunogenicity_rows,
+        evaluate_structural_rows,
+        load_generated_designs,
+        load_test_lookup,
     )
 
     gdf = load_generated_designs(gen_parquet)
@@ -1330,12 +1333,14 @@ def build_oracles(args) -> Oracles:
         )
 
     # --- Head (reuse the existing build_head_scorer helper) ---
-    from scripts.head_runtime import build_head_scorer  # ControllerSetup-style seam
     from types import SimpleNamespace
+
     import yaml
 
+    from scripts.head_runtime import build_head_scorer  # ControllerSetup-style seam
+
     head_config_dir = Path(args.head_config_dir)
-    inf = yaml.safe_load(open(head_config_dir / "inference.yaml")) or {}
+    inf = yaml.safe_load(open(head_config_dir / "inference.yaml")) or {}  # noqa: SIM115
     inf_sec = inf.get("inference", {}) if isinstance(inf, dict) else {}
     # build_head_scorer reads setup.{head_config_dir, head_checkpoint(Path), head_variant_id,
     # head_device, allele, head_allele_idx, config.head.score_scale, head_window_batch_size}.
@@ -1423,7 +1428,7 @@ def build_oracles(args) -> Oracles:
                         "incomplete scoring would under-count cores -- aborting."
                     )
                 rows = []
-                for _pep_len, peptide_scores in by_len.items():
+                for peptide_scores in by_len.values():
                     for peptide_score in peptide_scores:
                         rows.append({
                             "pos": peptide_score.pos,
@@ -1446,6 +1451,8 @@ def build_oracles(args) -> Oracles:
     if evaluation_structure_metrics:
         from inverse_folding.evaluation.structural_metrics_v2 import (
             evaluate_prediction as evaluate_prediction_v2,
+        )
+        from inverse_folding.evaluation.structural_metrics_v2 import (
             prepare_reference_context as prepare_reference_context_v2,
         )
 
@@ -1773,7 +1780,7 @@ def main(argv=None) -> int:
         # cheap and independently re-runnable via evaluate_phase_c on refined/evaluator_ready.parquet.
         try:
             _run_final_metrics(args)
-        except Exception:
+        except Exception:  # noqa: BLE001
             import traceback
             print("[refine] final-metrics FAILED (refinement outputs intact; re-run eval on "
                   "refined/evaluator_ready.parquet):", flush=True)

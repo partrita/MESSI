@@ -9,10 +9,11 @@ import os
 import random
 import subprocess
 import warnings
+from collections.abc import Sequence
 from contextlib import contextmanager
-from copy import deepcopy
+from copy import deepcopy  # noqa: F401
 from pathlib import Path
-from typing import Any, List, Sequence
+from typing import Any, List  # noqa: F401, UP035
 
 import hydra
 import numpy as np
@@ -27,11 +28,11 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.utilities import rank_zero_only
 from pytorch_lightning.utilities.seed import isolate_rng
 
-from . import strategies
+from . import strategies  # noqa: F401
 from .config import (
     instantiate_from_config,
     load_yaml_config,
-    resolve_experiment_config,
+    resolve_experiment_config,  # noqa: F401
 )
 
 
@@ -158,8 +159,8 @@ def log_hyperparameters(
     model: pl.LightningModule,
     datamodule: pl.LightningDataModule,
     trainer: pl.Trainer,
-    callbacks: List[pl.Callback],
-    logger: List[LightningLoggerBase],
+    callbacks: list[pl.Callback],
+    logger: list[LightningLoggerBase],
 ) -> None:
     """Controls which config parts are saved by Lightning loggers.
 
@@ -205,8 +206,8 @@ def finish(
     model: pl.LightningModule,
     datamodule: pl.LightningDataModule,
     trainer: pl.Trainer,
-    callbacks: List[pl.Callback],
-    logger: List[LightningLoggerBase],
+    callbacks: list[pl.Callback],
+    logger: list[LightningLoggerBase],
 ) -> None:
     """Makes sure everything closed properly."""
 
@@ -234,9 +235,9 @@ def common_pipeline(config, training=False):
     )
 
     # Init lightning loggers
-    logger: List[LightningLoggerBase] = []
+    logger: list[LightningLoggerBase] = []
     if "logger" in config:
-        for _, lg_conf in config.logger.items():
+        for lg_conf in config.logger.values():
             if "_target_" in lg_conf:
                 log.info(f"Instantiating logger <{lg_conf._target_}>")
                 lg = hydra.utils.instantiate(lg_conf)
@@ -251,9 +252,9 @@ def common_pipeline(config, training=False):
                     open(hparams_file, "w").close()
 
     # Init lightning callbacks
-    callbacks: List[Callback] = []
+    callbacks: list[Callback] = []
     if "callbacks" in config:
-        for cb_name, cb_conf in config.callbacks.items():
+        for cb_conf in config.callbacks.values():
             # if cb_name == 'model_summary' and not training:
             #     continue
             if "_target_" in cb_conf:
@@ -327,12 +328,14 @@ def recursive_eval(obj):
     else:
         try:
             _obj = eval(obj)
-        except:
+        except:  # noqa: E722, S110
             pass
         return _obj
 
 
-def import_modules(models_dir, namespace, excludes=[]):
+def import_modules(models_dir, namespace, excludes=None):
+    if excludes is None:
+        excludes = []
     for path in glob.glob(models_dir + "/**", recursive=True)[1:]:
         if any(e in path for e in excludes):
             continue

@@ -21,8 +21,9 @@ import subprocess
 import sys
 import tempfile
 import traceback
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 READY_PREFIX = "ESMFOLD2_WORKER_READY"
 RESULT_PREFIX = "ESMFOLD2_WORKER_RESULT"
@@ -260,10 +261,10 @@ def _load_worker_runtime(args: argparse.Namespace) -> dict[str, Any]:
     import esm
     import transformers
     from esm.models.esmfold2 import (
+        MSA,
         ESMFold2InputBuilder,
         ProteinInput,
         StructurePredictionInput,
-        MSA,
     )
     from transformers.models.esmfold2.modeling_esmfold2 import ESMFold2Model
 

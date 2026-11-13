@@ -24,9 +24,9 @@ score in place of an endpoint.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 import torch
@@ -50,14 +50,14 @@ from ..fusion_v2.state import (
 from ..sampler import ContinuationResume, _replay_state_hash
 
 __all__ = [
-    "V2LookaheadError",
     "HeadBatchError",
     "OracleRequest",
     "RawCompletion",
+    "V2LookaheadError",
+    "bind_head_scores",
     "generate_lookaheads",
     "oracle_request",
     "oracle_request_for_endpoint",
-    "bind_head_scores",
 ]
 
 _CANONICAL_AA20 = frozenset(CANONICAL_AA20)
@@ -373,7 +373,7 @@ def bind_head_scores(
             endpoint_provenance_evidence_by_pos=completion.evidence_by_pos,
             head_binding=binding,
             head_score=result,
-            head_global_risk=float(getattr(result, "global_risk")),
+            head_global_risk=float(result.global_risk),
             # Scoring alone confers no feasibility (PLAN §4.2).
             feasibility_level=FeasibilityLevel.UNVALIDATED,
             structure_outcome=None,

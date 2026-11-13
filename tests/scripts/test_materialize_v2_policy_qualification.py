@@ -9,12 +9,12 @@ from pathlib import Path
 
 import pytest
 
-from inverse_folding.reference_flow.fusion_v2.identity import HeadEvaluatorIdentity
 from inverse_folding.reference_flow.fusion_v2.config import (
     PolicyCalibrationArtifact,
     load_v2_config,
     policy_calibration_source_ref,
 )
+from inverse_folding.reference_flow.fusion_v2.identity import HeadEvaluatorIdentity
 from scripts.calibrate_v2_head_policy import build_calibration_bundle
 from scripts.materialize_v2_canary_config import (
     MaterializeError,
@@ -24,7 +24,6 @@ from scripts.materialize_v2_canary_config import (
 )
 from scripts.rf_fusion_v2_preflight import project_v2_budget
 from tests.inverse_folding.test_fusion_v2_config import _mapping
-
 
 D = "a" * 64
 
@@ -84,8 +83,11 @@ def _replace_calibrated_value(block, key, value):
 
 @pytest.mark.parametrize("offset,steps", [(None,[40,50,60,70]), (5,[45,55,65,75]), (15,[35,45,55,65])])
 def test_relative_reentry_schedule_and_bound_bands(tmp_path, offset, steps):
-    from scripts.materialize_v2_canary_config import _relative_schedule, _resolve_relative_bands
     from inverse_folding.reference_flow.fusion_v2 import schedule as sch
+    from scripts.materialize_v2_canary_config import (
+        _relative_schedule,
+        _resolve_relative_bands,
+    )
     from tests.inverse_folding.test_fusion_v2_schedule import _band, _provenance
     source = sch.make_band_table(provenance=_provenance(), bands=(_band(
         n_editable_min=1, n_editable_max=10000,
@@ -108,7 +110,7 @@ def test_relative_reentry_schedule_and_bound_bands(tmp_path, offset, steps):
     _resolve_relative_bands(args)
     assert Path(args.band_json).read_bytes() == bound
     assert path.read_text() == json.dumps(sch.band_table_payload(source))
-    config = _mapping(**{"schedule": schedule})
+    config = _mapping(schedule=schedule)
     assert project_v2_budget(load_v2_config(config), n_proteins=1).total_logical_dfe == 1890 + 4 * (10 if offset is None else offset)
 
 

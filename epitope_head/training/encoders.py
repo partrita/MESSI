@@ -9,12 +9,9 @@ Provides:
 
 from __future__ import annotations
 
-import math
-
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-
+from torch import nn
 
 # ── AA Tokenizer (for non-ESM encoders) ─────────────────────────────────────
 
@@ -177,7 +174,7 @@ class DilatedCNNEncoder(nn.Module):
         residue_lengths = real_counts - 2
 
         # Extract residue tokens (skip BOS at position 0, skip EOS)
-        B, T = token_ids.shape
+        B, _T = token_ids.shape
         L_max = int(residue_lengths.max().item())
 
         # Build residue-only token_ids and mask
@@ -334,7 +331,7 @@ class MultiScaleDilatedCNNEncoder(nn.Module):
         real_counts = attention_mask.sum(dim=1)
         residue_lengths = real_counts - 2
 
-        B, T = token_ids.shape
+        B, _T = token_ids.shape
         L_max = int(residue_lengths.max().item())
 
         # Build residue-only token_ids and mask
@@ -430,7 +427,7 @@ class ShallowTransformerEncoder(nn.Module):
         real_counts = attention_mask.sum(dim=1)  # [B]
         residue_lengths = real_counts - 2
 
-        B, T = token_ids.shape
+        B, _T = token_ids.shape
         L_max = int(residue_lengths.max().item())
 
         # Build residue-only tokens and mask

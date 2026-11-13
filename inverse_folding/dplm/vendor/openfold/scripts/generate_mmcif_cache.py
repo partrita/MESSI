@@ -1,16 +1,15 @@
 import argparse
-from functools import partial
 import json
 import logging
-from multiprocessing import Pool
 import os
-
 import sys
+from functools import partial
+from multiprocessing import Pool
+
 sys.path.append(".") # an innocent hack to get this to run from the top level
 
+from openfold.data.mmcif_parsing import parse
 from tqdm import tqdm
-
-from openfold.data.mmcif_parsing import parse 
 
 
 def parse_file(f, args):
@@ -19,7 +18,7 @@ def parse_file(f, args):
     file_id = os.path.splitext(f)[0]
     mmcif = parse(file_id=file_id, mmcif_string=mmcif_string)
     if mmcif.mmcif_object is None:
-        logging.info(f"Could not parse {f}. Skipping...")
+        logging.info(f"Could not parse {f}. Skipping...")  # noqa: LOG015
         return {}
     else:
         mmcif = mmcif.mmcif_object
@@ -41,11 +40,10 @@ def main(args):
     files = [f for f in os.listdir(args.mmcif_dir) if ".cif" in f]
     fn = partial(parse_file, args=args)
     data = {}
-    with Pool(processes=args.no_workers) as p:
-        with tqdm(total=len(files)) as pbar:
-            for d in p.imap_unordered(fn, files, chunksize=args.chunksize):
-                data.update(d)
-                pbar.update()
+    with Pool(processes=args.no_workers) as p, tqdm(total=len(files)) as pbar:
+        for d in p.imap_unordered(fn, files, chunksize=args.chunksize):
+            data.update(d)
+            pbar.update()
 
     with open(args.output_path, "w") as fp:
         fp.write(json.dumps(data, indent=4))

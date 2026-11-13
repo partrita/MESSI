@@ -220,7 +220,7 @@ def read_policy_qualification(
         key_b = (str(row["bundle"]), str(row.get("arm_b_descendant_id")))
         endpoint_a, endpoint_b = endpoints.get(key_a), endpoints.get(key_b)
         if endpoint_a is None or endpoint_b is None:
-            missing_ids.append((key_a if endpoint_a is None else key_b))
+            missing_ids.append(key_a if endpoint_a is None else key_b)
             continue
         protein_id = str(row["protein_id"])
         if endpoint_a["protein_id"] != protein_id or endpoint_b["protein_id"] != protein_id:
@@ -380,9 +380,9 @@ def read_mechanism(frame: pd.DataFrame, *, delta: float, floor: int, cap: int) -
             n_prefixes_seen = int(view_rows.groupby("source_index").ngroups)
             n_prefixes_scored = int(scored.groupby("source_index").ngroups) if len(scored) else 0
             per_view[view] = {
-                "n_rows": int(len(view_rows)),
-                "n_rows_analyzable": int(len(analyzable)),
-                "n_rows_scored": int(len(scored)),
+                "n_rows": len(view_rows),
+                "n_rows_analyzable": len(analyzable),
+                "n_rows_scored": len(scored),
                 "n_prefixes_seen": n_prefixes_seen,
                 "n_prefixes_scored": n_prefixes_scored,
                 "contrastable_fraction": (

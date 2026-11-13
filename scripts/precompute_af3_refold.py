@@ -16,7 +16,7 @@ def _repo_on_path() -> None:
 
 
 _repo_on_path()
-from inverse_folding.evaluation.refold_normalize import fold_records_from_parquet  # noqa: E402
+from inverse_folding.evaluation.refold_normalize import fold_records_from_parquet
 
 
 def _clean_colabfold_a3m(text: str) -> str:

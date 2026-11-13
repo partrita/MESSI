@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-import glob
-import importlib
+import glob  # noqa: F401
+import importlib  # noqa: F401
 import os
 
-from omegaconf import DictConfig
+from omegaconf import DictConfig  # noqa: F401
 
 from byprot.utils import import_modules
 

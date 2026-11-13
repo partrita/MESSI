@@ -9,8 +9,8 @@ then use a caller-supplied content key.  It has no I/O and does not participate 
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
 
 
 @dataclass(frozen=True)

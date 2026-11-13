@@ -2,18 +2,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from typing import Any, Union
+from typing import Any
 
 import torch
-from lightning.pytorch.utilities import grad_norm
-from omegaconf import DictConfig
-from torch import nn
-from torch.nn import functional as F
-from torchmetrics import CatMetric, MaxMetric, MeanMetric, MinMetric, SumMetric
-
 from byprot import utils
 from byprot.tasks import TaskLitModule, register_task
 from byprot.utils.config import compose_config as Cfg
+from lightning.pytorch.utilities import grad_norm
+from omegaconf import DictConfig
+from torch import nn
+from torchmetrics import MeanMetric, MinMetric
 
 log = utils.get_logger(__name__)
 
@@ -43,8 +41,8 @@ class DPLMTrainingTask(TaskLitModule):
 
     def __init__(
         self,
-        model: Union[nn.Module, DictConfig],
-        criterion: Union[nn.Module, DictConfig],
+        model: nn.Module | DictConfig,
+        criterion: nn.Module | DictConfig,
         optimizer: DictConfig,
         lr_scheduler: DictConfig = None,
         *,

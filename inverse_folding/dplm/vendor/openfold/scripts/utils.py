@@ -1,7 +1,6 @@
 import argparse
 import ctypes
 from datetime import date
-import sys
 
 
 def add_data_args(parser: argparse.ArgumentParser):
@@ -85,7 +84,7 @@ def get_nvidia_cc():
         if error_str.value:
             return None, error_str.value.decode()
         else:
-            return None, "Unknown error: cuInit returned %d" % result
+            return None, "Unknown error: cuInit returned %d" % result  # noqa: UP031
     result = cuda.cuDeviceGetCount(ctypes.byref(nGpus))
     if result != CUDA_SUCCESS:
         cuda.cuGetErrorString(result, ctypes.byref(error_str))

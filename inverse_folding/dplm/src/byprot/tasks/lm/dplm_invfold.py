@@ -2,23 +2,21 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-import copy
 import os
 from copy import deepcopy
-from typing import Any, Callable, List, Union
+from typing import Any
 
 import numpy as np
 import torch
-from omegaconf import DictConfig
-from torch import nn
-from torchmetrics import CatMetric, MaxMetric, MeanMetric, MinMetric
-
 from byprot import utils
 from byprot.datamodules.dataset.data_utils import Alphabet
 from byprot.modules import metrics
 from byprot.tasks import TaskLitModule, register_task
 from byprot.utils.config import compose_config as Cfg
 from byprot.utils.config import merge_config
+from omegaconf import DictConfig
+from torch import nn
+from torchmetrics import CatMetric, MaxMetric, MeanMetric, MinMetric
 
 log = utils.get_logger(__name__)
 
@@ -60,9 +58,9 @@ class ConditionalDPLMTrainingTask(TaskLitModule):
 
     def __init__(
         self,
-        model: Union[nn.Module, DictConfig],
+        model: nn.Module | DictConfig,
         alphabet: DictConfig,
-        criterion: Union[nn.Module, DictConfig],
+        criterion: nn.Module | DictConfig,
         optimizer: DictConfig,
         lr_scheduler: DictConfig = None,
         *,
@@ -96,7 +94,7 @@ class ConditionalDPLMTrainingTask(TaskLitModule):
             import esm
 
             log.info(
-                f"Eval structural self-consistency enabled. Loading ESMFold model..."
+                "Eval structural self-consistency enabled. Loading ESMFold model..."
             )
             self._folding_model = esm.pretrained.esmfold_v1().eval()
             self._folding_model = self._folding_model.to(self.device)
@@ -106,7 +104,7 @@ class ConditionalDPLMTrainingTask(TaskLitModule):
             import esm
 
             log.info(
-                f"Eval structural self-consistency enabled. Loading ESMFold model..."
+                "Eval structural self-consistency enabled. Loading ESMFold model..."
             )
             self._folding_model = esm.pretrained.esmfold_v1().eval()
             self._folding_model = self._folding_model.to(self.device)
@@ -338,7 +336,7 @@ class ConditionalDPLMTrainingTask(TaskLitModule):
 
         return {"loss": loss}
 
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
+    @torch.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")
     def eval_self_consistency(self, pred_ids, positions, mask=None):
         import byprot.modules.protein_metrics as pmetrics
 
@@ -430,7 +428,7 @@ class ConditionalDPLMTrainingTask(TaskLitModule):
 
     # -------# Inference/Prediction #-------- #
     def forward(self, batch, return_ids=False):
-        output_tokens, output_scores = self.model.generate(
+        output_tokens, _output_scores = self.model.generate(
             batch=batch,
             max_iter=self.hparams.generator.max_iter,
             sampling_strategy=self.hparams.generator.sampling_strategy,
@@ -450,7 +448,7 @@ class ConditionalDPLMTrainingTask(TaskLitModule):
     ) -> Any:
         tokens = batch.pop("tokens")
         coord_mask = batch["coord_mask"]
-        prev_tokens, prev_token_mask = self.inject_noise(
+        prev_tokens, _prev_token_mask = self.inject_noise(
             tokens,
             coord_mask,
             noise=self.hparams.generator.noise,  # NOTE: 'full_mask' by default. Set to 'selected_mask' when doing inpainting.
@@ -574,8 +572,8 @@ class ConditionalDPLMTrainingTask(TaskLitModule):
         if saveto:
             saveto = os.path.abspath(saveto)
             log.info(f"Saving predictions to {saveto}...")
-            fp = open(saveto, "w")
-            fp_native = open("./native.fasta", "w")
+            fp = open(saveto, "w")  # noqa: SIM115
+            fp_native = open("./native.fasta", "w")  # noqa: SIM115
 
         for entry in results:
             for name, prediction, native, recovery, scTM, scRMSD, plddt in zip(

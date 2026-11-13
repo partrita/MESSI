@@ -22,7 +22,7 @@ from ..fusion.state import sequence_md5
 from ..fusion_v2.errors import V2Error
 from .lookahead import OracleRequest
 
-__all__ = ["V2ContributionError", "CounterfactualHeadScorer"]
+__all__ = ["CounterfactualHeadScorer", "V2ContributionError"]
 
 
 class V2ContributionError(V2Error):

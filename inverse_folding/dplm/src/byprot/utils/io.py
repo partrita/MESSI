@@ -7,24 +7,15 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import json
-import math
-from typing import List, Sequence, Tuple
+import warnings
 
 import biotite.structure
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.utils.data as data
 from Bio.Data import PDBData
 from biotite.sequence import ProteinSequence
 from biotite.structure import filter_amino_acids, get_chains
 from biotite.structure.io import pdb, pdbx
 from biotite.structure.residues import get_residues
-from scipy.spatial import transform
-from scipy.stats import special_ortho_group
-
 
 AA3_TO1_EXT = {k.upper(): v for k, v in PDBData.protein_letters_3to1_extended.items()}
 
@@ -64,7 +55,13 @@ def load_structure(fpath, chain=None):
     if fpath.endswith("cif"):
         with open(fpath) as fin:
             pdbxf = pdbx.CIFFile.read(fin)
-        structure = pdbx.get_structure(pdbxf, model=1)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message=r"Attribute 'auth_.*_id' not found within 'atom_site' category.*",
+                category=UserWarning,
+            )
+            structure = pdbx.get_structure(pdbxf, model=1)
     elif fpath.endswith("pdb"):
         with open(fpath) as fin:
             pdbf = pdb.PDBFile.read(fin)
@@ -81,7 +78,7 @@ def load_structure(fpath, chain=None):
         chain_ids = chain
     else:
         chain_ids = [chain]
-    for chain in chain_ids:
+    for chain in chain_ids:  # noqa: PLR1704
         if chain not in all_chains:
             raise ValueError(f"Chain {chain} not found in input file")
     chain_filter = [a.chain_id in chain_ids for a in structure]
@@ -101,7 +98,7 @@ def convert_residue_3to1(resname):
 
 
 def extract_coords_from_structure(
-    structure: biotite.structure.AtomArray, atoms=["N", "CA", "C"]
+    structure: biotite.structure.AtomArray, atoms=None
 ):
     """
     Args:
@@ -113,6 +110,8 @@ def extract_coords_from_structure(
             - seq is the extracted sequence
     """
     # coords = get_atom_coords_residuewise(["N", "CA", "C"], structure)
+    if atoms is None:
+        atoms = ["N", "CA", "C"]
     coords = get_atom_coords_residuewise(atoms, structure)
     residue_identities = get_residues(structure)[1]
     seq = "".join(
@@ -121,7 +120,7 @@ def extract_coords_from_structure(
     return coords, seq
 
 
-def load_coords(fpath, chain, atoms=["N", "CA", "C", "O"]):
+def load_coords(fpath, chain, atoms=None):
     """
     Args:
         fpath: filepath to either pdb or cif file
@@ -131,12 +130,14 @@ def load_coords(fpath, chain, atoms=["N", "CA", "C", "O"]):
             - coords is an L x 3 x 3 array for N, CA, C coordinates
             - seq is the extracted sequence
     """
+    if atoms is None:
+        atoms = ["N", "CA", "C", "O"]
     structure = load_structure(fpath, chain)
     return extract_coords_from_structure(structure, atoms=atoms)
 
 
 def get_atom_coords_residuewise(
-    atoms: List[str], struct: biotite.structure.AtomArray
+    atoms: list[str], struct: biotite.structure.AtomArray
 ):
     """Example for atoms argument: ["N", "CA", "C"]"""
 

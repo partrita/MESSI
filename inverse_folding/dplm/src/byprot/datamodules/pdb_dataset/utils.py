@@ -11,16 +11,16 @@
 
 import collections
 import dataclasses
+import io
 import os
 import pickle
 import string
-from typing import Any, Dict, List
+from typing import Any
 
 import mdtraj as md
 import numpy as np
 import torch
 from Bio import PDB
-from Bio.PDB import PDBIO, MMCIFParser
 from Bio.PDB.Chain import Chain
 from openfold.utils import rigid_utils as ru
 from torch_scatter import scatter, scatter_add
@@ -151,31 +151,26 @@ def pad(x: np.ndarray, max_len: int, dim=0, use_torch=False, reverse=False):
 class DataError(Exception):
     """Data exception."""
 
-    pass
 
 
 class FileExistsError(DataError):
     """Raised when file already exists."""
 
-    pass
 
 
 class MmcifParsingError(DataError):
     """Raised when mmcif parsing fails."""
 
-    pass
 
 
 class ResolutionError(DataError):
     """Raised when resolution isn't acceptable."""
 
-    pass
 
 
 class LengthError(DataError):
     """Raised when length isn't acceptable."""
 
-    pass
 
 
 class CPU_Unpickler(pickle.Unpickler):
@@ -200,7 +195,7 @@ def batch_align_structures(pos_1, pos_2, mask=None):
     if pos_1.shape != pos_2.shape:
         raise ValueError("pos_1 and pos_2 must have the same shape.")
     if pos_1.ndim != 3:
-        raise ValueError(f"Expected inputs to have shape [B, N, 3]")
+        raise ValueError("Expected inputs to have shape [B, N, 3]")
     num_batch = pos_1.shape[0]
     device = pos_1.device
     batch_indices = (
@@ -354,11 +349,11 @@ def read_pkl(read_path: str, verbose=True, use_torch=False, map_location=None):
         else:
             with open(read_path, "rb") as handle:
                 return pickle.load(handle)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         try:
             with open(read_path, "rb") as handle:
                 return CPU_Unpickler(handle).load()
-        except Exception as e2:
+        except Exception as e2:  # noqa: BLE001
             if verbose:
                 print(
                     f"Failed to read {read_path}. First error: {e}\n Second error: {e2}"
@@ -398,7 +393,7 @@ def parse_chain_feats(chain_feats, scale_factor=1.0):
 
 
 def concat_np_features(
-    np_dicts: List[Dict[str, np.ndarray]], add_batch_dim: bool
+    np_dicts: list[dict[str, np.ndarray]], add_batch_dim: bool
 ):
     """Performs a nested concatenation of feature dicts.
 
@@ -547,14 +542,14 @@ def process_mmcif(mmcif_path: str, max_resolution: int, max_len: int):
     metadata = {}
     mmcif_name = os.path.basename(mmcif_path).replace(".cif", "")
     metadata["pdb_name"] = mmcif_name
-    mmcif_subdir = os.path.join(write_dir, mmcif_name[1:3].lower())
+    mmcif_subdir = os.path.join(write_dir, mmcif_name[1:3].lower())  # noqa: F821
     if not os.path.isdir(mmcif_subdir):
         os.mkdir(mmcif_subdir)
     processed_mmcif_path = os.path.join(mmcif_subdir, f"{mmcif_name}.pkl")
     processed_mmcif_path = os.path.abspath(processed_mmcif_path)
     metadata["processed_path"] = processed_mmcif_path
     with open(mmcif_path, "r") as f:
-        parsed_mmcif = mmcif_parsing.parse(
+        parsed_mmcif = mmcif_parsing.parse(  # noqa: F821
             file_id=mmcif_name, mmcif_string=f.read()
         )
     metadata["raw_path"] = mmcif_path
@@ -622,19 +617,19 @@ def process_mmcif(mmcif_path: str, max_resolution: int, max_len: int):
     if complex_aatype.shape[0] > max_len:
         raise LengthError(f"Too long {complex_aatype.shape[0]}")
 
-    chain_dict["ss"] = pdb_ss[0]
+    chain_dict["ss"] = pdb_ss[0]  # noqa: F821
     metadata["coil_percent"] = (
-        np.sum(pdb_ss == "C") / metadata["modeled_seq_len"]
+        np.sum(pdb_ss == "C") / metadata["modeled_seq_len"]  # noqa: F821
     )
     metadata["helix_percent"] = (
-        np.sum(pdb_ss == "H") / metadata["modeled_seq_len"]
+        np.sum(pdb_ss == "H") / metadata["modeled_seq_len"]  # noqa: F821
     )
     metadata["strand_percent"] = (
-        np.sum(pdb_ss == "E") / metadata["modeled_seq_len"]
+        np.sum(pdb_ss == "E") / metadata["modeled_seq_len"]  # noqa: F821
     )
 
     # Radius of gyration
-    metadata["radius_gyration"] = pdb_dg[0]
+    metadata["radius_gyration"] = pdb_dg[0]  # noqa: F821
 
     # Return metadata
     return metadata
@@ -703,7 +698,7 @@ def process_pdb_file(file_path: str):
         pdb_ss = md.compute_dssp(traj, simplified=True)
         # DG calculation
         pdb_dg = md.compute_rg(traj)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         raise DataError(f"Mdtraj failed with error {e}")
 
     chain_dict["ss"] = pdb_ss[0]

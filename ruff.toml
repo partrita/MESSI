@@ -1,0 +1,4 @@
+# sampler.py is frozen byte-identical to HEAD by test_fusion_v2_segment.py
+extend-exclude = [
+    "inverse_folding/reference_flow/sampler.py",
+]

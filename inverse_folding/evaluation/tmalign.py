@@ -9,10 +9,9 @@ import json
 import os
 import re
 import subprocess
-from typing import Dict, Optional
 
 
-def parse_tmalign_output(stdout: str) -> Dict[str, float]:
+def parse_tmalign_output(stdout: str) -> dict[str, float]:
     """Parse TM-align text output into a structured metrics dict.
 
     Extracts: tm_score, rmsd, aligned_length, seq_identity.
@@ -52,8 +51,8 @@ def run_tmalign(
     pred_pdb: str,
     ref_pdb: str,
     tmalign_bin: str = "TMalign",
-    cache_dir: Optional[str] = None,
-) -> Dict[str, float]:
+    cache_dir: str | None = None,
+) -> dict[str, float]:
     """Run TM-align on two PDB files and return parsed metrics.
 
     If cache_dir is provided, results are cached by file content hashes.
@@ -72,6 +71,7 @@ def run_tmalign(
         capture_output=True,
         text=True,
         timeout=120,
+        check=False,
     )
     if result.returncode != 0:
         raise RuntimeError(

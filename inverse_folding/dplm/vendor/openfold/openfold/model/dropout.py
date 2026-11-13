@@ -13,10 +13,10 @@
 # limitations under the License.
 
 
-import torch
-import torch.nn as nn
 from functools import partialmethod
-from typing import Union, List
+
+import torch
+from torch import nn
 
 
 class Dropout(nn.Module):
@@ -27,7 +27,7 @@ class Dropout(nn.Module):
     If not in training mode, this module computes the identity function.
     """
 
-    def __init__(self, r: float, batch_dim: Union[int, List[int]]):
+    def __init__(self, r: float, batch_dim: int | list[int]):
         """
         Args:
             r:
@@ -35,7 +35,7 @@ class Dropout(nn.Module):
             batch_dim:
                 Dimension(s) along which the dropout mask is shared
         """
-        super(Dropout, self).__init__()
+        super().__init__()
 
         self.r = r
         if type(batch_dim) == int:

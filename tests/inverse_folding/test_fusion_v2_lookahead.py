@@ -34,7 +34,6 @@ from inverse_folding.reference_flow.fusion_v2 import identity as ident
 from inverse_folding.reference_flow.fusion_v2_runtime.capture import capture_depth_zero
 from inverse_folding.reference_flow.fusion_v2_runtime.lookahead import (
     HeadBatchError,
-    RawCompletion,
     V2LookaheadError,
     bind_head_scores,
     generate_lookaheads,
@@ -63,7 +62,7 @@ def _denoiser(x_t: torch.Tensor, t: float, struct) -> torch.Tensor:
 
 
 def _cfg(**over):
-    kw = dict(n_steps=F.N_STEPS, seed=11, temperature=1.0)
+    kw = {"n_steps": F.N_STEPS, "seed": 11, "temperature": 1.0}
     kw.update(over)
     return ReferenceFlowConfig(
         sampler=SamplerConfig(
@@ -95,11 +94,11 @@ def _source():
 
 
 def _generate(**over):
-    kw = dict(
-        source=_source(), sampler=_sampler(), denoiser=_denoiser, config=_cfg(),
-        h_values=np.zeros(F.L, dtype=np.float32), residue_token_ids=F.AA,
-        fork_seeds=FORK_SEEDS, alphabet=ALPHABET,
-    )
+    kw = {
+        "source": _source(), "sampler": _sampler(), "denoiser": _denoiser, "config": _cfg(),
+        "h_values": np.zeros(F.L, dtype=np.float32), "residue_token_ids": F.AA,
+        "fork_seeds": FORK_SEEDS, "alphabet": ALPHABET,
+    }
     kw.update(over)
     return generate_lookaheads(**kw)
 
@@ -255,9 +254,9 @@ def _results(completions, **over):
 def _bind(completions=None, rows=None, **over):
     completions = completions if completions is not None else _generate()
     rows = rows if rows is not None else _results(completions)
-    kw = dict(completions=completions, results=rows,
-              evaluator=F.safety_reference().head_binding.evaluator,
-              window_grid_digest=ident.window_grid_digest(_WINDOWS))
+    kw = {"completions": completions, "results": rows,
+              "evaluator": F.safety_reference().head_binding.evaluator,
+              "window_grid_digest": ident.window_grid_digest(_WINDOWS)}
     kw.update(over)
     return bind_head_scores(**kw)
 
@@ -454,7 +453,9 @@ def test_a_request_whose_declared_length_disagrees_with_its_sequence_is_refused(
 def test_a_completion_builds_the_request_that_describes_it():
     """The runner must not assemble the request by hand at each call site; a builder is what makes
     "the oracle sees the completion's own bytes" structural."""
-    from inverse_folding.reference_flow.fusion_v2_runtime.lookahead import oracle_request
+    from inverse_folding.reference_flow.fusion_v2_runtime.lookahead import (
+        oracle_request,
+    )
 
     completion = _generate()[0]
     request = oracle_request(completion)

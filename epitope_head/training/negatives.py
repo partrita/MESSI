@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 
 class NegativeSamplingShortfall(RuntimeError):
     """Raised when target negative count cannot be met in strict mode."""
-    pass
 
 
 def sample_negatives(
@@ -95,7 +94,7 @@ def sample_negatives(
     pos_lengths = [p["pep_len"] for p in positives]
 
     total_neg = neg_ratio * len(positives)
-    n_hard = int(round(total_neg * hard_negative_fraction))
+    n_hard = round(total_neg * hard_negative_fraction)
     n_easy = total_neg - n_hard
 
     hard_negatives = []

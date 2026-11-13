@@ -207,19 +207,19 @@ def _source(sequence: str, **over):
                                      step=step, n_events=1 + (position % 3)))
         ref.append(st.FeedbackOriginRef.NONE)
 
-    kw = dict(
-        schema_version=ident.V2_STATE_SCHEMA_VERSION, lineage=F.lineage(),
-        sampler_step=C_SOURCE, n_steps=F.N_STEPS, tokens=tuple(tokens), mask_token_id=F.MASK,
-        aa_token_ids=F.AA, hard_anchors=((ANCHOR, tokens[ANCHOR]),), editable_positions=editable,
-        active_origin_kind_by_pos=tuple(kind), feedback_origin_ref_by_pos=tuple(ref),
-        active_commit_depth_step_by_pos=tuple(commit), origin_transition_id_by_pos=tuple([None] * L),
-        active_sampler_score_by_pos=tuple(score), active_score_status_by_pos=tuple(status),
-        provenance_by_pos=tuple(prov), expired_protection=(),
-        replay=st.ReplayIdentity(mode="identity", rng_state={"pos": 7}, fork_seed=None,
+    kw = {
+        "schema_version": ident.V2_STATE_SCHEMA_VERSION, "lineage": F.lineage(),
+        "sampler_step": C_SOURCE, "n_steps": F.N_STEPS, "tokens": tuple(tokens), "mask_token_id": F.MASK,
+        "aa_token_ids": F.AA, "hard_anchors": ((ANCHOR, tokens[ANCHOR]),), "editable_positions": editable,
+        "active_origin_kind_by_pos": tuple(kind), "feedback_origin_ref_by_pos": tuple(ref),
+        "active_commit_depth_step_by_pos": tuple(commit), "origin_transition_id_by_pos": tuple([None] * L),
+        "active_sampler_score_by_pos": tuple(score), "active_score_status_by_pos": tuple(status),
+        "provenance_by_pos": tuple(prov), "expired_protection": (),
+        "replay": st.ReplayIdentity(mode="identity", rng_state={"pos": 7}, fork_seed=None,
                                  replay_state_hash=F.D),
-        accumulated_lineage_dfe=C_SOURCE, conditioning=F.conditioning(),
-        safety_reference=F.safety_reference(length=L), cost_event_ids=("evt:root",),
-    )
+        "accumulated_lineage_dfe": C_SOURCE, "conditioning": F.conditioning(),
+        "safety_reference": F.safety_reference(length=L), "cost_event_ids": ("evt:root",),
+    }
     kw.update(over)
     return st.LivePartialState(**kw)
 
@@ -316,21 +316,21 @@ def _incumbent(sequence: str = INCUMBENT_SEQ, *, kind=None, safety_md5=None):
 
 def _policy(*, incumbent=None, calibration=None, band_table=None, head=None, **over):
     incumbent = incumbent or _incumbent()
-    kw = dict(
-        band_table=band_table or _band_table(), stratum_key=F.STRATUM, incumbent=incumbent,
-        safety_reference_score=_score(incumbent.sequence), evaluator=_evaluator(),
-        window_grid_digest=ident.window_grid_digest(_windows(incumbent.sequence)),
-        calibration=calibration or _calibration(),
-        incumbent_update_law="strict_improvement_by_epsilon",
-        counterfactual_scorer=_scorer(head), policy_spec_digest=F.digest("pspec"),
-    )
+    kw = {
+        "band_table": band_table or _band_table(), "stratum_key": F.STRATUM, "incumbent": incumbent,
+        "safety_reference_score": _score(incumbent.sequence), "evaluator": _evaluator(),
+        "window_grid_digest": ident.window_grid_digest(_windows(incumbent.sequence)),
+        "calibration": calibration or _calibration(),
+        "incumbent_update_law": "strict_improvement_by_epsilon",
+        "counterfactual_scorer": _scorer(head), "policy_spec_digest": F.digest("pspec"),
+    }
     kw.update(over)
     return pol.HeadDirectedCappedPolicy(**kw)
 
 
 def _coords(**over):
-    kw = dict(depth=0, r_step=R_STEP, c_source_step=C_SOURCE, c_next_step=C_NEXT,
-              n_steps=F.N_STEPS, law=sch.CoordinateLaw.PROGRESSIVE_CHECKPOINT)
+    kw = {"depth": 0, "r_step": R_STEP, "c_source_step": C_SOURCE, "c_next_step": C_NEXT,
+              "n_steps": F.N_STEPS, "law": sch.CoordinateLaw.PROGRESSIVE_CHECKPOINT}
     kw.update(over)
     return sch.make_cycle(**kw)
 
@@ -739,9 +739,9 @@ def test_reopen_priority_puts_new_hotspot_before_worsening_before_residual():
     """PLAN §2.5's frozen order.  Built directly on the sort key so the test states the LAW rather
     than a scenario that happens to realize it."""
     def row(**over):
-        kw = dict(position=5, new_hotspot=None, worsening=None, residual_burden=None,
-                  active_sampler_score=None, n_origin_events=1, commit_step=1,
-                  selection_rank=None, selected=False, priority_reason="index")
+        kw = {"position": 5, "new_hotspot": None, "worsening": None, "residual_burden": None,
+                  "active_sampler_score": None, "n_origin_events": 1, "commit_step": 1,
+                  "selection_rank": None, "selected": False, "priority_reason": "index"}
         kw.update(over)
         return pol.ReopenCandidateEvidence(**kw)
 
@@ -757,15 +757,15 @@ def test_absent_evidence_ranks_below_present_evidence_and_is_recorded_as_none():
     """PLAN §2.5: "Missing or inapplicable evidence ranks below present evidence and is recorded
     explicitly rather than replaced by a numeric sentinel"."""
     def row(position, **over):
-        kw = dict(position=position, new_hotspot=None, worsening=None, residual_burden=None,
-                  active_sampler_score=None, n_origin_events=1, commit_step=1,
-                  selection_rank=None, selected=False, priority_reason="index")
+        kw = {"position": position, "new_hotspot": None, "worsening": None, "residual_burden": None,
+                  "active_sampler_score": None, "n_origin_events": 1, "commit_step": 1,
+                  "selection_rank": None, "selected": False, "priority_reason": "index"}
         kw.update(over)
         return pol.ReopenCandidateEvidence(**kw)
 
     present_zero = row(2, new_hotspot=0.0, worsening=0.0, residual_burden=0.0)
     absent = row(1)
-    assert sorted([absent, present_zero], key=pol._reopen_sort_key)[0].position == 2
+    assert min([absent, present_zero], key=pol._reopen_sort_key).position == 2
 
 
 def test_a_previously_written_non_anchor_can_be_reopened_once_its_protection_expired():
@@ -1245,31 +1245,31 @@ def _cycle_kwargs(**over):
         safety_reference_score=_score(reference_sequence),
         calibration=_calibration(fraction=0.3),
     )
-    kw = dict(
-        sampler=PositionDependentDFMSampler(mask_token_id=F.MASK, vocab_size=VOCAB),
-        denoiser=_denoiser, config=_cfg(), sequence_length=L,
-        h_values=np.zeros(L, dtype=np.float32), residue_token_ids=F.AA,
-        alphabet=F.ALPHABET, fixed_tokens={ANCHOR: min(F.AA)},
-        lineage=F.lineage(), mask_token_id=F.MASK, aa_token_ids=F.AA,
-        conditioning=F.conditioning(
+    kw = {
+        "sampler": PositionDependentDFMSampler(mask_token_id=F.MASK, vocab_size=VOCAB),
+        "denoiser": _denoiser, "config": _cfg(), "sequence_length": L,
+        "h_values": np.zeros(L, dtype=np.float32), "residue_token_ids": F.AA,
+        "alphabet": F.ALPHABET, "fixed_tokens": {ANCHOR: min(F.AA)},
+        "lineage": F.lineage(), "mask_token_id": F.MASK, "aa_token_ids": F.AA,
+        "conditioning": F.conditioning(
             schedule_band_calibration=table.provenance.calibration_content_digest,
             projection_policy_spec=F.digest("pspec")),
         # The STATE's reference binding comes from the shared fixture (whose conditioning
         # declares the same placeholder digest); the GATE carries the real content-bound reference
         # the admission ratchet measures against.  Same split the cycle suite already uses.
-        safety_reference=F.safety_reference(length=L),
-        c_source_step=C_SOURCE, r_step=R_STEP, c_next_step=C_NEXT,
-        source_fork_seeds=(5001, 5002, 5003), descendant_fork_seeds=(6001, 6002),
-        descendant_propagation_seed=9001,
-        head_oracle=head, structure_oracle=_structure_oracle, support_policy=policy,
-        band_table=table, stratum_key=F.STRATUM, declared_band_id=F.BAND_ID,
-        declared_band_digest=table.provenance.calibration_content_digest,
-        origin_transition_id=F.TXN, safety_gate=gate,
-        declared_policy=pol.DeclaredPolicy(
+        "safety_reference": F.safety_reference(length=L),
+        "c_source_step": C_SOURCE, "r_step": R_STEP, "c_next_step": C_NEXT,
+        "source_fork_seeds": (5001, 5002, 5003), "descendant_fork_seeds": (6001, 6002),
+        "descendant_propagation_seed": 9001,
+        "head_oracle": head, "structure_oracle": _structure_oracle, "support_policy": policy,
+        "band_table": table, "stratum_key": F.STRATUM, "declared_band_id": F.BAND_ID,
+        "declared_band_digest": table.provenance.calibration_content_digest,
+        "origin_transition_id": F.TXN, "safety_gate": gate,
+        "declared_policy": pol.DeclaredPolicy(
             policy_id=pol.HEAD_DIRECTED_CAPPED_POLICY_ID, policy_version="v1",
             is_diagnostic=False, phase="policy_qualification"),
-        feedback_enabled=True, cost_meter=_module_meter(),
-    )
+        "feedback_enabled": True, "cost_meter": _module_meter(),
+    }
     kw.update(over)
     return kw
 
@@ -1305,7 +1305,10 @@ def test_the_counterfactual_head_batch_is_journaled_before_it_runs():
     import tempfile
 
     from inverse_folding.reference_flow.fusion_v2_runtime.cycle import run_one_cycle
-    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import AttemptJournal, CostMeter
+    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (
+        AttemptJournal,
+        CostMeter,
+    )
 
     path = pathlib.Path(tempfile.mkdtemp()) / "attempts.jsonl"
     meter = CostMeter(journal=AttemptJournal(path), protein_id="5ZHV_B", arm="v2",
@@ -1416,7 +1419,7 @@ def _replay_config():
     import dataclasses as _dc
 
     base = F.v2_config(length=L)
-    scalar = lambda value, unit, kind, source_id: cfg.PolicyCalibratedScalar(  # noqa: E731
+    scalar = lambda value, unit, kind, source_id: cfg.PolicyCalibratedScalar(
         value=value, unit=unit, source_kind="measured_calibration", source_id=source_id,
         source_ref=cfg.policy_calibration_source_ref(
             value=value, unit=unit, source_kind="measured_calibration", source_id=source_id,
@@ -1471,12 +1474,12 @@ def _write_bundle(directory, outcome, *, config):
     tables = {
         "partial_states": partial_state_rows(states),
         "complete_endpoints": complete_endpoint_rows(outcome.endpoints, depth=0),
-        "feedback_events": feedback_event_rows([dict(
-            source=outcome.source, endpoint=outcome.selected_endpoint,
-            projected=outcome.projected, propagated=outcome.propagated,
-            policy=outcome.policy_identity, policy_evidence=outcome.policy_evidence,
-            outcome=outcome.outcome.value, detail=outcome.detail,
-            pair_id=None, arm_slot="arm_a", treatment_identity="v2")]),
+        "feedback_events": feedback_event_rows([{
+            "source": outcome.source, "endpoint": outcome.selected_endpoint,
+            "projected": outcome.projected, "propagated": outcome.propagated,
+            "policy": outcome.policy_identity, "policy_evidence": outcome.policy_evidence,
+            "outcome": outcome.outcome.value, "detail": outcome.detail,
+            "pair_id": None, "arm_slot": "arm_a", "treatment_identity": "v2"}]),
     }
     directory.mkdir(parents=True, exist_ok=True)
     for name, rows in tables.items():
@@ -1639,12 +1642,12 @@ def test_the_support_law_contrast_is_scorable_on_the_shared_free_domain():
     """The two support laws reopen DIFFERENT positions -- that is the treatment -- so their free
     domains differ by construction. Requiring equality (as the mechanism views do) would mark every
     pair unscorable and the qualification cohort would produce an empty table."""
+    from inverse_folding.reference_flow.fusion_v2_runtime.cycle import run_one_cycle
     from scripts.rf_fusion_v2_artifacts import (
         POLICY_QUALIFICATION_CONTRAST_VIEWS,
         SCORABLE_CONTRAST_VIEWS,
         mechanism_contrast_rows,
     )
-    from inverse_folding.reference_flow.fusion_v2_runtime.cycle import run_one_cycle
 
     assert "support_law" in SCORABLE_CONTRAST_VIEWS
     assert "support_law" in POLICY_QUALIFICATION_CONTRAST_VIEWS

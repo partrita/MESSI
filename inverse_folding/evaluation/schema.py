@@ -8,7 +8,6 @@ Also defines the per-protein test set schema (PLAN_DATA_SEL §L0)
 with tier-specific nullable rules.
 """
 
-from typing import Dict, FrozenSet, Set
 
 import pandas as pd
 
@@ -19,7 +18,7 @@ class EvalSchemaError(Exception):
 
 # ── Frozen column sets (PLAN_IF.md §L0) ─────────────────────────────────────
 
-LEGACY_STRUCTURAL_COLUMNS: FrozenSet[str] = frozenset({
+LEGACY_STRUCTURAL_COLUMNS: frozenset[str] = frozenset({
     "protein_id",
     "design_id",
     "sequence",
@@ -30,7 +29,7 @@ LEGACY_STRUCTURAL_COLUMNS: FrozenSet[str] = frozenset({
     "foldability",
 })
 
-LEGACY_STRUCTURAL_RESIDUE_COLUMNS: FrozenSet[str] = frozenset({
+LEGACY_STRUCTURAL_RESIDUE_COLUMNS: frozenset[str] = frozenset({
     "protein_id",
     "design_id",
     "design_idx",
@@ -54,7 +53,7 @@ LEGACY_STRUCTURAL_RESIDUE_COLUMNS: FrozenSet[str] = frozenset({
     "refold_backend",
 })
 
-STRUCTURAL_V2_COLUMNS: FrozenSet[str] = frozenset({
+STRUCTURAL_V2_COLUMNS: frozenset[str] = frozenset({
     "protein_id",
     "design_id",
     "design_idx",
@@ -79,7 +78,7 @@ STRUCTURAL_V2_COLUMNS: FrozenSet[str] = frozenset({
     "refold_backend",
 })
 
-STRUCTURAL_V2_RESIDUE_COLUMNS: FrozenSet[str] = frozenset({
+STRUCTURAL_V2_RESIDUE_COLUMNS: frozenset[str] = frozenset({
     "protein_id",
     "design_id",
     "design_idx",
@@ -106,10 +105,10 @@ STRUCTURAL_V2_RESIDUE_COLUMNS: FrozenSet[str] = frozenset({
 
 # v2 is the canonical structural benchmark contract. Legacy names remain
 # available only for explicit compatibility callers during migration.
-STRUCTURAL_COLUMNS: FrozenSet[str] = STRUCTURAL_V2_COLUMNS
-STRUCTURAL_RESIDUE_COLUMNS: FrozenSet[str] = STRUCTURAL_V2_RESIDUE_COLUMNS
+STRUCTURAL_COLUMNS: frozenset[str] = STRUCTURAL_V2_COLUMNS
+STRUCTURAL_RESIDUE_COLUMNS: frozenset[str] = STRUCTURAL_V2_RESIDUE_COLUMNS
 
-IMMUNOGENICITY_HEAD_COLUMNS: FrozenSet[str] = frozenset({
+IMMUNOGENICITY_HEAD_COLUMNS: frozenset[str] = frozenset({
     "protein_id",
     "design_id",
     "global_risk",
@@ -118,7 +117,7 @@ IMMUNOGENICITY_HEAD_COLUMNS: FrozenSet[str] = frozenset({
     "n_hotspot_positions",
 })
 
-IMMUNOGENICITY_NMP_COLUMNS: FrozenSet[str] = frozenset({
+IMMUNOGENICITY_NMP_COLUMNS: frozenset[str] = frozenset({
     "protein_id",
     "design_id",
     "n_strong_binders",
@@ -127,7 +126,7 @@ IMMUNOGENICITY_NMP_COLUMNS: FrozenSet[str] = frozenset({
     "n_windows_scored",
 })
 
-COMPARISON_COLUMNS: FrozenSet[str] = frozenset({
+COMPARISON_COLUMNS: frozenset[str] = frozenset({
     "protein_id",
     "design_id",
     "delta_global_risk_head",
@@ -141,7 +140,7 @@ COMPARISON_COLUMNS: FrozenSet[str] = frozenset({
 
 # ── Per-protein test set schema (PLAN_DATA_SEL §L0) ──────────────────────────
 
-TEST_PROTEIN_COLUMNS: Set[str] = {
+TEST_PROTEIN_COLUMNS: set[str] = {
     "protein_id",
     "tier",
     "sequence",
@@ -161,7 +160,7 @@ TEST_PROTEIN_COLUMNS: Set[str] = {
     "selection_reason",
 }
 
-TIER_REQUIRED_FIELDS: Dict[int, Set[str]] = {
+TIER_REQUIRED_FIELDS: dict[int, set[str]] = {
     1: {"experimental_epitopes_json"},
     2: {"cath_topology"},
     3: {"literature_evidence"},
@@ -218,7 +217,7 @@ def validate_test_protein_entry(entry: dict) -> dict:
 
 def validate_dataframe(
     df: pd.DataFrame,
-    required_columns: FrozenSet[str],
+    required_columns: frozenset[str],
 ) -> pd.DataFrame:
     """Validate that a DataFrame contains all required columns and is non-empty.
 

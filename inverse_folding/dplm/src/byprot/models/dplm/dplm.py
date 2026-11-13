@@ -3,15 +3,14 @@
 
 
 import math
-import os
 from dataclasses import dataclass, field
 
 import numpy as np
 import torch
-import torch.nn as nn
 from omegaconf import OmegaConf
+from torch import nn
 from tqdm import tqdm
-from transformers import AutoConfig, AutoTokenizer
+from transformers import AutoConfig
 
 from byprot.models import register_model
 from byprot.models.utils import (
@@ -58,8 +57,12 @@ class DiffusionProteinLanguageModel(nn.Module):
 
     @classmethod
     def from_pretrained(
-        cls, net_name, cfg_override={}, net_override={}, from_huggingface=True
+        cls, net_name, cfg_override=None, net_override=None, from_huggingface=True
     ):
+        if net_override is None:
+            net_override = {}
+        if cfg_override is None:
+            cfg_override = {}
         if not from_huggingface:
             # Load model checkpoint from local if you pretrain a DPLM with this repo
             # The net_name should be like:
@@ -244,8 +247,7 @@ class DiffusionProteinLanguageModel(nn.Module):
                     most_token_dict[token] = [j]
                 else:
                     most_token_dict[token].append(j)
-                if len(most_token_dict[token]) > most_token_num:
-                    most_token_num = len(most_token_dict[token])
+                most_token_num = max(most_token_num, len(most_token_dict[token]))
             if most_token_num > len(seq) * ratio:
                 # For all tokens with a frequency higher than the threshold, transform them to mask token.
                 to_be_resample_idx.append(i)
@@ -364,15 +366,15 @@ class DiffusionProteinLanguageModel(nn.Module):
 
         history.append(output_tokens.clone())
 
-        return dict(
-            output_tokens=output_tokens,
-            output_scores=output_scores,
-            attentions=attentions,  # [B, L, H, T, T]
-            step=step + 1,
-            max_step=max_step,
-            history=history,
-            hidden_states=net_out["last_hidden_state"],
-        )
+        return {
+            "output_tokens": output_tokens,
+            "output_scores": output_scores,
+            "attentions": attentions,  # [B, L, H, T, T]
+            "step": step + 1,
+            "max_step": max_step,
+            "history": history,
+            "hidden_states": net_out["last_hidden_state"],
+        }
 
     def get_non_special_symbol_mask(self, output_tokens, partial_masks=None):
         non_special_sym_mask = (
@@ -511,10 +513,6 @@ class DiffusionProteinLanguageModel(nn.Module):
         disable_resample=False,
         resample_ratio=0.25,
     ):
-        tokenizer = tokenizer
-        max_iter = max_iter
-        temperature = temperature
-
         # 0) encoding
         encoder_out = self.forward_encoder(input_tokens)
         # 1) initialized from all mask tokens
@@ -524,16 +522,16 @@ class DiffusionProteinLanguageModel(nn.Module):
         ) = self.initialize_output_tokens(
             input_tokens, encoder_out=encoder_out, partial_masks=partial_masks
         )
-        prev_decoder_out = dict(
-            output_tokens=initial_output_tokens,
-            output_scores=initial_output_scores,
-            output_masks=None,
-            attentions=None,
-            step=0,
-            max_step=max_iter,
-            history=[initial_output_tokens.clone()],
-            temperature=temperature,
-        )
+        prev_decoder_out = {
+            "output_tokens": initial_output_tokens,
+            "output_scores": initial_output_scores,
+            "output_masks": None,
+            "attentions": None,
+            "step": 0,
+            "max_step": max_iter,
+            "history": [initial_output_tokens.clone()],
+            "temperature": temperature,
+        }
 
         prev_decoder_out["output_masks"] = self.get_non_special_symbol_mask(
             prev_decoder_out["output_tokens"], partial_masks=partial_masks

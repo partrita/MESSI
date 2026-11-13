@@ -11,16 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from functools import partial
 import logging
 import math
-from typing import Tuple, List, Callable, Any, Dict, Sequence, Optional
+from collections.abc import Callable, Sequence
+from functools import partial
+from typing import Any
 
 import torch
 
 from openfold.utils.tensor_utils import (
-    tree_map,
     tensor_tree_map,
+    tree_map,
 )
 
 
@@ -44,8 +45,8 @@ def _fetch_dims(tree):
 @torch.jit.ignore
 def _flat_idx_to_idx(
     flat_idx: int,
-    dims: Tuple[int],
-) -> Tuple[int]:
+    dims: tuple[int],
+) -> tuple[int]:
     idx = []
     for d in reversed(dims):
         idx.append(flat_idx % d)
@@ -59,9 +60,9 @@ def _get_minimal_slice_set(
     start: Sequence[int],
     end: Sequence[int],
     dims: int,
-    start_edges: Optional[Sequence[bool]] = None,
-    end_edges: Optional[Sequence[bool]] = None,
-) -> Sequence[Tuple[int]]:
+    start_edges: Sequence[bool] | None = None,
+    end_edges: Sequence[bool] | None = None,
+) -> Sequence[tuple[int]]:
     """ 
         Produces an ordered sequence of tensor slices that, when used in
         sequence on a tensor with shape dims, yields tensors that contain every
@@ -91,7 +92,7 @@ def _get_minimal_slice_set(
     # Base cases. Either start/end are empty and we're done, or the final,
     # one-dimensional tensor can be simply sliced
     if(len(start) == 0):
-        return [tuple()]
+        return [()]
     elif(len(start) == 1):
         return [(slice(start[0], end[0] + 1),)]
 
@@ -211,7 +212,7 @@ def _chunk_slice(
 
 def chunk_layer(
     layer: Callable,
-    inputs: Dict[str, Any],
+    inputs: dict[str, Any],
     chunk_size: int,
     no_batch_dims: int,
     low_mem: bool = False,
@@ -254,7 +255,7 @@ def chunk_layer(
 
     def _prep_inputs(t):
         if(not low_mem):
-            if not sum(t.shape[:no_batch_dims]) == no_batch_dims:
+            if sum(t.shape[:no_batch_dims]) != no_batch_dims:
                 t = t.expand(orig_batch_dims + t.shape[no_batch_dims:])
             t = t.reshape(-1, *t.shape[no_batch_dims:])
         else:
@@ -281,7 +282,7 @@ def chunk_layer(
         # Chunk the input
         if(not low_mem):
             select_chunk = (
-                lambda t: t[i : i + chunk_size] if t.shape[0] != 1 else t
+                lambda t: t[i : i + chunk_size] if t.shape[0] != 1 else t  # noqa: B023
             )
         else:
             select_chunk = (
@@ -312,9 +313,9 @@ def chunk_layer(
                         assign(v, d2[k])
                     else:
                         if(_add_into_out):
-                            v[i: i + chunk_size] += d2[k]
+                            v[i: i + chunk_size] += d2[k]  # noqa: B023
                         else:
-                            v[i: i + chunk_size] = d2[k]
+                            v[i: i + chunk_size] = d2[k]  # noqa: B023
 
             assign(out, output_chunk)
         elif out_type is tuple:
@@ -350,12 +351,12 @@ class ChunkSizeTuner:
         self.cached_arg_data = None
 
     def _determine_favorable_chunk_size(self, fn, args, min_chunk_size):
-        logging.info("Tuning chunk size...")
+        logging.info("Tuning chunk size...")  # noqa: LOG015
         
         if(min_chunk_size >= self.max_chunk_size):
             return min_chunk_size
     
-        candidates = [2**l for l in range(int(math.log(self.max_chunk_size, 2)) + 1)]
+        candidates = [2**l for l in range(int(math.log2(self.max_chunk_size)) + 1)]
         candidates = [c for c in candidates if c > min_chunk_size]
         candidates = [min_chunk_size] + candidates
         candidates[-1] += 4
@@ -401,7 +402,7 @@ class ChunkSizeTuner:
 
     def tune_chunk_size(self,
         representative_fn: Callable,
-        args: Tuple[Any],
+        args: tuple[Any],
         min_chunk_size: int,
     ) -> int: 
         consistent = True

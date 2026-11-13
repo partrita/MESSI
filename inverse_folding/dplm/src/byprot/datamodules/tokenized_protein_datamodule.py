@@ -1,19 +1,5 @@
-import os
-from functools import partial
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    TypeVar,
-)
 
 import numpy as np
-import pandas as pd
-import torch
 from datasets import Dataset
 from pytorch_lightning import LightningDataModule
 
@@ -21,7 +7,6 @@ from byprot import utils
 from byprot.datamodules import register_datamodule
 from byprot.datamodules.dataset.tokenized_protein import (
     DPLM2Tokenizer,
-    Subset,
     TokenizedProteinDataset,
     setup_dataloader,
 )
@@ -52,7 +37,7 @@ class TokenizedProteinDataModule(LightningDataModule):
 
         self.train_dl = None
 
-    def setup(self, stage: Optional[str] = None, split: Optional[str] = None):
+    def setup(self, stage: str | None = None, split: str | None = None):
         """Load data. Set variables: `self.data_train`, `self.data_val`,
         `self.data_test`.
 

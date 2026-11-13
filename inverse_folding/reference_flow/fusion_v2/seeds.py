@@ -31,8 +31,8 @@ own -- it reuses the audited V1 derivation unmodified.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
 
 from inverse_folding.reference_flow.fusion.v1_seeds import (
     assert_no_seed_collisions,
@@ -43,10 +43,18 @@ from inverse_folding.reference_flow.fusion.v1_seeds import (
 from .errors import V2Error
 
 __all__ = [
-    "V2SeedError", "MatchedPairSeedError", "V2_SEED_ENCODING_VERSION", "V2_SEED_NAMESPACES",
+    "PAIR_ARM_SLOTS",
     "ROOT_CAPTURE_MAX_ATTEMPTS",
-    "PAIR_ARM_SLOTS", "V2SeedContext", "FeedbackPairSeedContext", "MatchedPairSeedRecord",
-    "derive_pair_id", "assert_matched_pair_seeds", "realized_v2_seed_manifest",
+    "V2_SEED_ENCODING_VERSION",
+    "V2_SEED_NAMESPACES",
+    "FeedbackPairSeedContext",
+    "MatchedPairSeedError",
+    "MatchedPairSeedRecord",
+    "V2SeedContext",
+    "V2SeedError",
+    "assert_matched_pair_seeds",
+    "derive_pair_id",
+    "realized_v2_seed_manifest",
 ]
 
 #: Field 0 of every V2 hashed tuple. Deliberately a different *value* from V1's

@@ -6,20 +6,19 @@ import time
 
 import numpy
 import torch
+from pytorch_lightning.utilities.deepspeed import (
+    convert_zero_checkpoint_to_fp32_state_dict,
+)
 
 from openfold.model.model import AlphaFold
-from openfold.np import residue_constants, protein
+from openfold.np import protein, residue_constants
 from openfold.np.relax import relax
 from openfold.utils.import_weights import (
     import_jax_weights_,
 )
 
-from pytorch_lightning.utilities.deepspeed import (
-    convert_zero_checkpoint_to_fp32_state_dict
-)
-
 logging.basicConfig()
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
 
 
@@ -54,7 +53,7 @@ def load_models_from_command_line(config, model_device, openfold_checkpoint_path
 
     multiple_model_mode = count_models_to_evaluate(openfold_checkpoint_path, jax_param_path) > 1
     if multiple_model_mode:
-        logger.info(f"evaluating multiple models")
+        logger.info("evaluating multiple models")
 
     if jax_param_path:
         for path in jax_param_path.split(","):
@@ -115,7 +114,7 @@ def load_models_from_command_line(config, model_device, openfold_checkpoint_path
 
 
 def parse_fasta(data):
-    data = re.sub('>$', '', data, flags=re.M)
+    data = re.sub('>$', '', data, flags=re.MULTILINE)
     lines = [
         l.replace('\n', '')
         for prot in data.split('>') for l in prot.strip().split('\n', 1)
@@ -127,7 +126,7 @@ def parse_fasta(data):
     return tags, seqs
 
 
-def update_timings(timing_dict, output_file=os.path.join(os.getcwd(), "timings.json")):
+def update_timings(timing_dict, output_file=os.path.join(os.getcwd(), "timings.json")):  # noqa: B008
     """
     Write dictionary of one or more run step times to a file
     """
@@ -150,9 +149,7 @@ def run_model(model, batch, tag, output_dir):
     with torch.no_grad():
         # Temporarily disable templates if there aren't any in the batch
         template_enabled = model.config.template.enabled
-        model.config.template.enabled = template_enabled and any([
-            "template_" in k for k in batch
-        ])
+        model.config.template.enabled = template_enabled and any("template_" in k for k in batch)
 
         logger.info(f"Running inference for {tag}...")
         t = time.perf_counter()

@@ -11,11 +11,8 @@ positions are local to the chunk (``0..chunk_len``).
 
 from __future__ import annotations
 
-import math
-
 import numpy as np
 import torch
-
 
 # ── Residue label / mask construction ───────────────────────────────────────
 
@@ -85,7 +82,7 @@ def build_residue_labels(
             if right_start < right_end:
                 ambiguous_mask[right_start:right_end] = True
         # Subtract covered residues — covered residues are NOT ambiguous.
-        ambiguous_mask &= label.astype(bool) == False  # noqa: E712
+        ambiguous_mask &= label.astype(bool) == False
 
     far_bg_mask = (label == 0) & (~ambiguous_mask)
 

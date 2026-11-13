@@ -8,11 +8,7 @@ Selects PDB structures for the fixed evaluation cohort with:
 """
 
 import json
-import os
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set
-
-import pandas as pd
 
 
 @dataclass
@@ -29,9 +25,9 @@ class CurationConfig:
 @dataclass
 class CurationLedger:
     """Tracks acceptance and rejection decisions for auditability."""
-    accepted: List[Dict] = field(default_factory=list)
-    rejected: List[Dict] = field(default_factory=list)
-    overlap_excluded: List[Dict] = field(default_factory=list)
+    accepted: list[dict] = field(default_factory=list)
+    rejected: list[dict] = field(default_factory=list)
+    overlap_excluded: list[dict] = field(default_factory=list)
 
     def accept(self, protein_id: str, reason: str = "passed_all_filters"):
         self.accepted.append({"protein_id": protein_id, "reason": reason})
@@ -45,7 +41,7 @@ class CurationLedger:
             "matched_cath_id": matched_cath_id,
         })
 
-    def summary(self) -> Dict:
+    def summary(self) -> dict:
         return {
             "n_accepted": len(self.accepted),
             "n_rejected": len(self.rejected),
@@ -65,8 +61,8 @@ class CurationLedger:
 
 def load_cath_chain_names(
     splits_json_path: str,
-    split_keys: Optional[List[str]] = None,
-) -> Set[str]:
+    split_keys: list[str] | None = None,
+) -> set[str]:
     """Load CATH chain names for overlap checking.
 
     Args:
@@ -87,7 +83,7 @@ def load_cath_chain_names(
     return names
 
 
-def check_overlap(protein_id: str, cath_names: Set[str]) -> Optional[str]:
+def check_overlap(protein_id: str, cath_names: set[str]) -> str | None:
     """Check if a PDB protein_id overlaps with CATH training data.
 
     Checks both exact match and PDB-code-level match (first 4 chars).
@@ -109,7 +105,7 @@ def check_overlap(protein_id: str, cath_names: Set[str]) -> Optional[str]:
 def filter_candidate(
     protein_id: str,
     sequence_length: int,
-    resolution: Optional[float],
+    resolution: float | None,
     n_chains: int,
     cfg: CurationConfig,
     ledger: CurationLedger,
@@ -137,9 +133,9 @@ def filter_candidate(
     return True
 
 
-def _count_reasons(entries: List[Dict]) -> Dict[str, int]:
+def _count_reasons(entries: list[dict]) -> dict[str, int]:
     """Count rejection reasons."""
-    counts: Dict[str, int] = {}
+    counts: dict[str, int] = {}
     for entry in entries:
         reason = entry.get("reason", "unknown")
         # Extract the base reason (before parenthetical details)

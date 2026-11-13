@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-import torch
 
 from inverse_folding.reference_flow.fusion_v2 import policy as pol
 from inverse_folding.reference_flow.fusion_v2 import seeds as sd
@@ -44,20 +43,19 @@ from inverse_folding.reference_flow.fusion_v2_runtime.paired import (
     build_paired_contrasts,
     run_mechanism_views,
 )
+from inverse_folding.reference_flow.sampler import PositionDependentDFMSampler
 from tests.inverse_folding import _v2_fixtures as F
 from tests.inverse_folding.test_fusion_v2_cycle import (
     ALPHABET,
     VOCAB,
-    _FakeHeadOracle,
     _cfg,
     _denoiser,
+    _FakeHeadOracle,
     _module_meter,
     _structure_oracle,
     _support_policy,
     _wide_band_table,
 )
-from inverse_folding.reference_flow.sampler import PositionDependentDFMSampler
-
 
 #: A MATURE source on purpose.  At c=50 this toy world resolves only about one editable position,
 #: and a source intervention cannot bite on one position: ablating it leaves nothing to reopen, and
@@ -67,11 +65,11 @@ C0, R1, C1 = 80, 40, 90
 
 
 def _pair_context(**over):
-    kw = dict(
-        seed_schema=sd.V2_SEED_ENCODING_VERSION, campaign_id="v2-canary", split_role="dev",
-        master_seed=20260805, protein_id="5ZHV_B", depth=0, r_step=R1, c_next_step=C1,
-        pair_ordinal=0, n_forks=2, n_descendant_lookaheads=2,
-    )
+    kw = {
+        "seed_schema": sd.V2_SEED_ENCODING_VERSION, "campaign_id": "v2-canary", "split_role": "dev",
+        "master_seed": 20260805, "protein_id": "5ZHV_B", "depth": 0, "r_step": R1, "c_next_step": C1,
+        "pair_ordinal": 0, "n_forks": 2, "n_descendant_lookaheads": 2,
+    }
     kw.update(over)
     return sd.FeedbackPairSeedContext(**kw)
 
@@ -123,8 +121,8 @@ def test_two_different_points_have_different_kinds():
     ("mechanism_view", "vibes"), ("endpoint_relation", "vibes"), ("policy_variant", "vibes"),
 ])
 def test_an_unknown_level_on_any_axis_is_refused(field, value):
-    kw = dict(mechanism_view="feedback_off", endpoint_relation="as_selected",
-              policy_variant="as_configured")
+    kw = {"mechanism_view": "feedback_off", "endpoint_relation": "as_selected",
+              "policy_variant": "as_configured"}
     kw[field] = value
     with pytest.raises(V2PairedError):
         InterventionAxes(**kw)
@@ -212,29 +210,29 @@ def test_parity_of_a_single_arm_is_trivially_satisfied():
 
 def _exec(**over):
     table = _wide_band_table()
-    kw = dict(
-        context=_pair_context(), fork_index=0,
-        sampler=PositionDependentDFMSampler(mask_token_id=F.MASK, vocab_size=VOCAB),
-        denoiser=_denoiser, config=_cfg(), sequence_length=F.L,
-        h_values=np.zeros(F.L, dtype=np.float32), residue_token_ids=F.AA,
-        alphabet=ALPHABET, fixed_tokens={0: 10}, lineage=F.lineage(),
-        mask_token_id=F.MASK, aa_token_ids=F.AA, conditioning=F.conditioning(
+    kw = {
+        "context": _pair_context(), "fork_index": 0,
+        "sampler": PositionDependentDFMSampler(mask_token_id=F.MASK, vocab_size=VOCAB),
+        "denoiser": _denoiser, "config": _cfg(), "sequence_length": F.L,
+        "h_values": np.zeros(F.L, dtype=np.float32), "residue_token_ids": F.AA,
+        "alphabet": ALPHABET, "fixed_tokens": {0: 10}, "lineage": F.lineage(),
+        "mask_token_id": F.MASK, "aa_token_ids": F.AA, "conditioning": F.conditioning(
             # The kernel refuses a band table the run's own frozen provenance does not
             # name, so the fixture binds the two instead of leaving them unrelated.
             schedule_band_calibration=table.provenance.calibration_content_digest),
-        safety_reference=F.safety_reference(),
-        c_source_step=C0, r_step=R1, c_next_step=C1,
-        source_fork_seeds=(5001, 5002, 5003),
-        head_oracle=_FakeHeadOracle(), structure_oracle=_structure_oracle,
-        support_policy=_support_policy,
-        band_table=table, stratum_key=F.STRATUM, declared_band_id=F.BAND_ID,
-        declared_band_digest=table.provenance.calibration_content_digest,
-        origin_transition_id=F.TXN,
-        safety_gate=F.safety_gate(),
-        declared_policy=F.declared_policy(),
-        feedback_enabled=True,
-        cost_meter=_module_meter(),
-    )
+        "safety_reference": F.safety_reference(),
+        "c_source_step": C0, "r_step": R1, "c_next_step": C1,
+        "source_fork_seeds": (5001, 5002, 5003),
+        "head_oracle": _FakeHeadOracle(), "structure_oracle": _structure_oracle,
+        "support_policy": _support_policy,
+        "band_table": table, "stratum_key": F.STRATUM, "declared_band_id": F.BAND_ID,
+        "declared_band_digest": table.provenance.calibration_content_digest,
+        "origin_transition_id": F.TXN,
+        "safety_gate": F.safety_gate(),
+        "declared_policy": F.declared_policy(),
+        "feedback_enabled": True,
+        "cost_meter": _module_meter(),
+    }
     kw.update(over)
     return run_mechanism_views(**kw)
 
@@ -561,7 +559,9 @@ def test_the_source_ablation_arm_holds_the_support_partition_fixed():
     Two partitions can share an action vector and still act on different positions, which is
     exactly the confound this intervention exists to exclude.
     """
-    from inverse_folding.reference_flow.fusion_v2_runtime.paired import _fixed_support_ablation
+    from inverse_folding.reference_flow.fusion_v2_runtime.paired import (
+        _fixed_support_ablation,
+    )
 
     results = _exec()
     ablation = {r.axes.mechanism_view: r for r in results}["source_change"]

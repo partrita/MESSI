@@ -6,8 +6,7 @@ with downstream pipeline steps.
 """
 
 import json
-from typing import Any, Dict, List, Optional
-
+from typing import Any
 
 # ── Tier 1 ───────────────────────────────────────────────────────────────────
 
@@ -23,12 +22,12 @@ _MAX_RESOLUTION = 2.5
 _MIN_EPITOPES = 2
 
 
-def validate_tier1_candidate(candidate: dict) -> List[str]:
+def validate_tier1_candidate(candidate: dict) -> list[str]:
     """Validate a single Tier 1 candidate entry.
 
     Returns a list of error strings. Empty list means valid.
     """
-    errors: List[str] = []
+    errors: list[str] = []
 
     # Check required keys
     missing = _TIER1_REQUIRED_KEYS - set(candidate.keys())
@@ -63,8 +62,8 @@ def validate_tier1_candidate(candidate: dict) -> List[str]:
 
 def validate_tier1_candidates(
     json_path: str,
-    overlap_results: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    overlap_results: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Validate all candidates in a Tier 1 JSON file.
 
     Args:
@@ -82,7 +81,7 @@ def validate_tier1_candidates(
     valid = []
     invalid = []
     overlap_excluded = []
-    all_errors: Dict[str, List[str]] = {}
+    all_errors: dict[str, list[str]] = {}
 
     for c in candidates:
         pid = c.get("protein_id", "<unknown>")
@@ -130,8 +129,8 @@ _TIER3_MIN_NMP_WINDOWS = 3
 
 def validate_tier3_candidate(
     candidate: dict,
-    nmp_scores: Optional[Dict[str, Any]] = None,
-) -> List[str]:
+    nmp_scores: dict[str, Any] | None = None,
+) -> list[str]:
     """Validate a single Tier 3 candidate entry.
 
     Args:
@@ -142,7 +141,7 @@ def validate_tier3_candidate(
 
     Returns a list of error strings. Empty list means valid.
     """
-    errors: List[str] = []
+    errors: list[str] = []
 
     missing = _TIER3_REQUIRED_KEYS - set(candidate.keys())
     if missing:
@@ -182,8 +181,8 @@ def validate_tier3_candidate(
 
 def validate_tier3_candidates(
     json_path: str,
-    nmp_scores: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    nmp_scores: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Validate all candidates in a Tier 3 JSON file.
 
     Args:
@@ -196,7 +195,7 @@ def validate_tier3_candidates(
 
     valid = []
     invalid = []
-    all_errors: Dict[str, List[str]] = {}
+    all_errors: dict[str, list[str]] = {}
 
     for c in candidates:
         pid = c.get("protein_id", "<unknown>")

@@ -2,14 +2,13 @@ import argparse
 import json
 import os
 
-
 """ Unifies databases created with create_alignment_db.py """
 
 
 def main(args):
     super_index = {}
     for f in os.listdir(args.alignment_db_dir):
-        if(not os.path.splitext(f)[-1] == ".index"):
+        if(os.path.splitext(f)[-1] != ".index"):
             continue
         
         with open(os.path.join(args.alignment_db_dir, f), "r") as fp:

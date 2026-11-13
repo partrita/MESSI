@@ -6,7 +6,6 @@ with per-(protein_id, seq_hash) caching to avoid redundant predictions.
 
 import hashlib
 import os
-from typing import Dict, Optional
 
 
 def seq_hash(sequence: str) -> str:
@@ -33,9 +32,9 @@ def predict_structure(
     sequence: str,
     protein_id: str,
     design_id: str,
-    cache_dir: Optional[str] = None,
+    cache_dir: str | None = None,
     model: object = None,
-) -> Dict:
+) -> dict:
     """Predict structure with ESMFold, returning PDB string and pLDDT.
 
     Args:

@@ -856,7 +856,8 @@ def run_rosetta_alanine_scan(
         command_path.write_text(shlex.join(cmd) + "\n")
         try:
             result = subprocess.run(
-                cmd, cwd=pair_dir, capture_output=True, text=True, timeout=timeout_seconds
+                cmd, cwd=pair_dir, capture_output=True, text=True, timeout=timeout_seconds,
+                check=False,
             )
         except subprocess.TimeoutExpired as exc:
             raise RuntimeError(
@@ -968,7 +969,8 @@ def run_rosetta_interface_analyzer(
     (run_dir / "interface_analyzer.command.txt").write_text(shlex.join(cmd) + "\n")
     try:
         result = subprocess.run(
-            cmd, cwd=run_dir, capture_output=True, text=True, timeout=timeout_seconds
+            cmd, cwd=run_dir, capture_output=True, text=True, timeout=timeout_seconds,
+            check=False,
         )
     except subprocess.TimeoutExpired as exc:
         raise RuntimeError(

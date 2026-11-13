@@ -30,6 +30,9 @@ import pytest
 
 from inverse_folding.reference_flow.fusion_v2 import state as st
 from inverse_folding.reference_flow.fusion_v2.schedule import CoordinateLaw
+from inverse_folding.reference_flow.fusion_v2_runtime.capture import (
+    FullyResolvedRootError,
+)
 from inverse_folding.reference_flow.fusion_v2_runtime.ladder import (
     DepthPlan,
     LadderOutcome,
@@ -38,19 +41,17 @@ from inverse_folding.reference_flow.fusion_v2_runtime.ladder import (
     V2LadderError,
     run_depth_ladder,
 )
-from inverse_folding.reference_flow.fusion_v2_runtime.capture import FullyResolvedRootError
 from inverse_folding.reference_flow.sampler import PositionDependentDFMSampler
 from tests.inverse_folding import _v2_fixtures as F
 from tests.inverse_folding.test_fusion_v2_cycle import (
     ALPHABET,
     VOCAB,
-    _FakeHeadOracle,
     _cfg,
     _denoiser,
-    _structure_oracle,
+    _FakeHeadOracle,
     _module_meter,
+    _structure_oracle,
     _support_policy,
-    _wide_band_table,
 )
 
 #: A LONGER protein than the shared fixture's length 6.
@@ -94,13 +95,13 @@ def _ladder_band_table():
 
 
 def _progressive_plan(**over):
-    kw = dict(
-        law=CoordinateLaw.PROGRESSIVE_CHECKPOINT,
-        depth_cap=2,
-        cycles=((R1, C0, C1), (R2, C1, C2)),
-        lookaheads_per_depth=(3, 2),
-        n_steps=F.N_STEPS,
-    )
+    kw = {
+        "law": CoordinateLaw.PROGRESSIVE_CHECKPOINT,
+        "depth_cap": 2,
+        "cycles": ((R1, C0, C1), (R2, C1, C2)),
+        "lookaheads_per_depth": (3, 2),
+        "n_steps": F.N_STEPS,
+    }
     kw.update(over)
     return DepthPlan(**kw)
 
@@ -111,41 +112,41 @@ def _stationary_plan(**over):
     ``stationary_checkpoint`` means the checkpoint does not move AT ALL: every depth re-enters at
     its own ``r_d`` and returns to the same ``c``.  It is the compact comparator, not a schedule
     that merely happens to repeat a step at the end."""
-    kw = dict(
-        law=CoordinateLaw.STATIONARY_CHECKPOINT,
-        depth_cap=2,
-        cycles=((R_STAT_A, C_STAT, C_STAT), (R_STAT_B, C_STAT, C_STAT)),
-        lookaheads_per_depth=(3, 2),
-        n_steps=F.N_STEPS,
-    )
+    kw = {
+        "law": CoordinateLaw.STATIONARY_CHECKPOINT,
+        "depth_cap": 2,
+        "cycles": ((R_STAT_A, C_STAT, C_STAT), (R_STAT_B, C_STAT, C_STAT)),
+        "lookaheads_per_depth": (3, 2),
+        "n_steps": F.N_STEPS,
+    }
     kw.update(over)
     return DepthPlan(**kw)
 
 
 def _run_kwargs(**over):
     table = _ladder_band_table()
-    kw = dict(
-        plan=_progressive_plan(),
-        sampler=PositionDependentDFMSampler(mask_token_id=F.MASK, vocab_size=VOCAB),
-        denoiser=_denoiser, config=_cfg(), sequence_length=LADDER_L,
-        h_values=np.zeros(LADDER_L, dtype=np.float32), residue_token_ids=F.AA,
-        alphabet=ALPHABET, fixed_tokens={0: 10}, lineage=F.lineage(),
-        mask_token_id=F.MASK, aa_token_ids=F.AA, conditioning=F.conditioning(
+    kw = {
+        "plan": _progressive_plan(),
+        "sampler": PositionDependentDFMSampler(mask_token_id=F.MASK, vocab_size=VOCAB),
+        "denoiser": _denoiser, "config": _cfg(), "sequence_length": LADDER_L,
+        "h_values": np.zeros(LADDER_L, dtype=np.float32), "residue_token_ids": F.AA,
+        "alphabet": ALPHABET, "fixed_tokens": {0: 10}, "lineage": F.lineage(),
+        "mask_token_id": F.MASK, "aa_token_ids": F.AA, "conditioning": F.conditioning(
             # The kernel refuses a band table the run's own frozen provenance does not
             # name, so the fixture binds the two instead of leaving them unrelated.
             schedule_band_calibration=table.provenance.calibration_content_digest),
-        safety_reference=F.safety_reference(length=LADDER_L),
-        head_oracle=_FakeHeadOracle(length=LADDER_L), structure_oracle=_structure_oracle,
-        support_policy=_support_policy,
-        band_table=table, stratum_key=F.STRATUM, declared_band_id=F.BAND_ID,
-        declared_band_digest=table.provenance.calibration_content_digest,
-        safety_gate=F.safety_gate(length=LADDER_L),
-        declared_policy=F.declared_policy(),
-        feedback_enabled=True,
-        cost_meter=_module_meter(),
-        campaign_id="v2-canary", split_role="dev", master_seed=20260805,
-        allow_production_depth_gt_1=True,
-    )
+        "safety_reference": F.safety_reference(length=LADDER_L),
+        "head_oracle": _FakeHeadOracle(length=LADDER_L), "structure_oracle": _structure_oracle,
+        "support_policy": _support_policy,
+        "band_table": table, "stratum_key": F.STRATUM, "declared_band_id": F.BAND_ID,
+        "declared_band_digest": table.provenance.calibration_content_digest,
+        "safety_gate": F.safety_gate(length=LADDER_L),
+        "declared_policy": F.declared_policy(),
+        "feedback_enabled": True,
+        "cost_meter": _module_meter(),
+        "campaign_id": "v2-canary", "split_role": "dev", "master_seed": 20260805,
+        "allow_production_depth_gt_1": True,
+    }
     kw.update(over)
     return kw
 
@@ -582,7 +583,6 @@ def test_a_null_branch_does_not_empty_the_archive():
     the archive behaviour it is about.
     """
     from inverse_folding.reference_flow.fusion_v2.policy import PolicyRejection
-
     from tests.inverse_folding.test_fusion_v2_cycle import _policy_identity
 
     class DecliningPolicy:
@@ -842,7 +842,7 @@ def _constant_denoiser(x_t, t, struct):
     for position in range(length):
         for token in sorted(F.AA):
             logits[position, token] = 0.0
-        logits[position, sorted(F.AA)[0]] = 10.0
+        logits[position, min(F.AA)] = 10.0
     return logits
 
 

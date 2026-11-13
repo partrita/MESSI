@@ -10,11 +10,10 @@ PeptideScore.el_rank from the runner is a 0-1 fraction and must be converted
 before passing to aggregate_nmp_scores.
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 import pandas as pd
-
 
 # ── NetMHCIIpan aggregation ──────────────────────────────────────────────────
 
@@ -51,7 +50,7 @@ def score_protein_all_lengths(
     protein_id: str,
     sequence: str,
     allele: str,
-    pep_lengths: List[int] = None,
+    pep_lengths: list[int] | None = None,
 ) -> pd.DataFrame:
     """Score a protein across all MHC-II peptide lengths using StandaloneRunner.
 
@@ -81,10 +80,10 @@ def score_protein_all_lengths(
 
 def aggregate_nmp_batch_scores(
     runner,
-    entries: List[tuple[str, str]],
+    entries: list[tuple[str, str]],
     allele: str,
-    pep_lengths: List[int] | None = None,
-) -> Dict[str, Dict[str, Any]]:
+    pep_lengths: list[int] | None = None,
+) -> dict[str, dict[str, Any]]:
     """Score multiple proteins in batch and aggregate per-protein NMP metrics.
 
     Uses the runner's batch API so callers can amortize NetMHCIIpan startup
@@ -105,7 +104,7 @@ def aggregate_nmp_batch_scores(
         return {}
 
     batch_scores = runner.score_batch(filtered_entries, allele, pep_lengths)
-    aggregated: Dict[str, Dict[str, Any]] = {}
+    aggregated: dict[str, dict[str, Any]] = {}
 
     # Build per-protein set of applicable lengths (skip lengths > seq length)
     seq_by_id = {pid: seq for pid, seq in filtered_entries}
@@ -119,9 +118,7 @@ def aggregate_nmp_batch_scores(
         applicable = sorted(pl for pl in pep_lengths if pl <= seq_len)
         scored = sorted(by_len.keys())
 
-        if not applicable:
-            status = "complete"
-        elif scored == applicable:
+        if not applicable or scored == applicable:
             status = "complete"
         elif not scored:
             status = "timeout"
@@ -195,7 +192,7 @@ def compute_coverage_fraction(
     return float(covered.sum()) / float(seq_len)
 
 
-def aggregate_nmp_scores(scores: pd.DataFrame) -> Dict[str, Any]:
+def aggregate_nmp_scores(scores: pd.DataFrame) -> dict[str, Any]:
     """Aggregate per-window NetMHCIIpan scores into per-design metrics.
 
     Args:

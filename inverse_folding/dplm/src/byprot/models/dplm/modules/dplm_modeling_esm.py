@@ -2,48 +2,46 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from typing import List, Optional, Tuple, Union
 
 import torch
-import torch.nn as nn
+from byprot.models import register_model
+from torch import nn
 from torch.nn import functional as F
 from tqdm import tqdm
-from transformers import AutoConfig, AutoModelForMaskedLM, AutoTokenizer
+from transformers import AutoTokenizer
 from transformers.modeling_outputs import (
     BaseModelOutputWithPoolingAndCrossAttentions,
 )
 from transformers.models.esm.modeling_esm import *
 from transformers.models.esm.modeling_esm import (
-    EsmSelfAttention,
-    EsmSelfOutput,
     EsmAttention,
-    EsmLayer,
-    EsmEncoder,
-    EsmIntermediate,
-    EsmOutput,
-    EsmEmbeddings,
-    EsmPooler,
     EsmContactPredictionHead,
+    EsmEmbeddings,
+    EsmEncoder,
+    EsmForMaskedLM,
+    EsmIntermediate,
+    EsmLayer,
     EsmLMHead,
     EsmModel,
+    EsmOutput,
+    EsmPooler,
     EsmPreTrainedModel,
-    EsmForMaskedLM,
+    EsmSelfAttention,
+    EsmSelfOutput,
 )
-
-from byprot.models import register_model
 
 
 class ModifiedEsmSelfAttention(EsmSelfAttention):
     def forward(
         self,
         hidden_states: torch.Tensor,
-        attention_mask: Optional[torch.FloatTensor] = None,
-        head_mask: Optional[torch.FloatTensor] = None,
-        encoder_hidden_states: Optional[torch.FloatTensor] = None,
-        encoder_attention_mask: Optional[torch.FloatTensor] = None,
-        past_key_value: Optional[Tuple[Tuple[torch.FloatTensor]]] = None,
-        output_attentions: Optional[bool] = False,
-    ) -> Tuple[torch.Tensor]:
+        attention_mask: torch.FloatTensor | None = None,
+        head_mask: torch.FloatTensor | None = None,
+        encoder_hidden_states: torch.FloatTensor | None = None,
+        encoder_attention_mask: torch.FloatTensor | None = None,
+        past_key_value: tuple[tuple[torch.FloatTensor]] | None = None,
+        output_attentions: bool | None = False,
+    ) -> tuple[torch.Tensor]:
         mixed_query_layer = self.query(hidden_states)
 
         # If this is instantiated as a cross-attention module, the keys
@@ -185,21 +183,19 @@ class ModifiedEsmModel(EsmModel):
 
     def forward(
         self,
-        input_ids: Optional[torch.Tensor] = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        position_ids: Optional[torch.Tensor] = None,
-        head_mask: Optional[torch.Tensor] = None,
-        inputs_embeds: Optional[torch.Tensor] = None,
-        encoder_hidden_states: Optional[torch.Tensor] = None,
-        encoder_attention_mask: Optional[torch.Tensor] = None,
-        past_key_values: Optional[List[torch.FloatTensor]] = None,
-        use_cache: Optional[bool] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        return_dict: Optional[bool] = None,
-    ) -> Union[
-        Tuple[torch.Tensor], BaseModelOutputWithPoolingAndCrossAttentions
-    ]:
+        input_ids: torch.Tensor | None = None,
+        attention_mask: torch.Tensor | None = None,
+        position_ids: torch.Tensor | None = None,
+        head_mask: torch.Tensor | None = None,
+        inputs_embeds: torch.Tensor | None = None,
+        encoder_hidden_states: torch.Tensor | None = None,
+        encoder_attention_mask: torch.Tensor | None = None,
+        past_key_values: list[torch.FloatTensor] | None = None,
+        use_cache: bool | None = None,
+        output_attentions: bool | None = None,
+        output_hidden_states: bool | None = None,
+        return_dict: bool | None = None,
+    ) -> tuple[torch.Tensor] | BaseModelOutputWithPoolingAndCrossAttentions:
         output_attentions = (
             output_attentions
             if output_attentions is not None
@@ -448,13 +444,13 @@ class EsmForDPLM(EsmForMaskedLM):
 
         history.append(output_tokens.clone())
 
-        return dict(
-            output_tokens=output_tokens,
-            output_scores=output_scores,
-            step=step + 1,
-            max_step=max_step,
-            history=history,
-        )
+        return {
+            "output_tokens": output_tokens,
+            "output_scores": output_scores,
+            "step": step + 1,
+            "max_step": max_step,
+            "history": history,
+        }
 
     def generate(
         self,
@@ -465,10 +461,6 @@ class EsmForDPLM(EsmForMaskedLM):
         partial_masks=None,
         sampling_strategy="gumbel_argmax",
     ):
-        tokenizer = tokenizer
-        max_iter = max_iter
-        temperature = temperature
-
         # 0) encoding
         encoder_out = self.forward_encoder(batch)
         # 1) initialized from all mask tokens
@@ -478,16 +470,16 @@ class EsmForDPLM(EsmForMaskedLM):
         ) = self.initialize_output_tokens(
             batch, encoder_out=encoder_out, partial_masks=partial_masks
         )
-        prev_decoder_out = dict(
-            output_tokens=initial_output_tokens,
-            output_scores=initial_output_scores,
-            output_masks=None,
-            attentions=None,
-            step=0,
-            max_step=max_iter,
-            history=[initial_output_tokens.clone()],
-            temperature=temperature,
-        )
+        prev_decoder_out = {
+            "output_tokens": initial_output_tokens,
+            "output_scores": initial_output_scores,
+            "output_masks": None,
+            "attentions": None,
+            "step": 0,
+            "max_step": max_iter,
+            "history": [initial_output_tokens.clone()],
+            "temperature": temperature,
+        }
 
         prev_decoder_out["output_masks"] = self.get_non_special_sym_mask(
             prev_decoder_out["output_tokens"], partial_masks=partial_masks

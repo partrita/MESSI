@@ -27,7 +27,6 @@ from scripts.evaluate_phase_c import (
     resolve_nmp_runtime_params,
 )
 
-
 _AA3 = {
     "A": "ALA",
     "C": "CYS",
@@ -361,13 +360,12 @@ def test_evaluate_structural_rows_emits_expected_schema(tmp_path: Path, monkeypa
     )
     assert failures == []
     assert len(df) == 6
-    assert set(["protein_id", "design_id", "design_idx", "sequence", "scTM", "pLDDT", "bb_RMSD", "scRMSD", "recovery", "foldability", "refold_backend"]).issubset(df.columns)
+    assert {"protein_id", "design_id", "design_idx", "sequence", "scTM", "pLDDT", "bb_RMSD", "scRMSD", "recovery", "foldability", "refold_backend"}.issubset(df.columns)
     assert (df["refold_backend"] == "esmfold").all()
     assert df.loc[(df["protein_id"] == "p1") & (df["design_idx"] == 1), "recovery"].iloc[0] == pytest.approx(0.75)
     assert df["scRMSD"].max() < 1e-5
     assert len(residues_df) == sum(len(seq) for seq in generated["sequence"])
-    assert set(
-        [
+    assert {
             "protein_id",
             "design_id",
             "design_idx",
@@ -377,8 +375,7 @@ def test_evaluate_structural_rows_emits_expected_schema(tmp_path: Path, monkeypa
             "design_aa",
             "sc_ca_distance",
             "aligned_pred_ca_x",
-        ]
-    ).issubset(residues_df.columns)
+        }.issubset(residues_df.columns)
     p1_mut = residues_df[
         (residues_df["protein_id"] == "p1")
         & (residues_df["design_idx"] == 1)
@@ -400,7 +397,7 @@ def test_evaluate_structural_rows_v2_is_complete_and_indexable(
 
     generated = _generated_fixture()
     test_lookup = _test_lookup_fixture(tmp_path)
-    for protein_id, test_row in test_lookup.items():
+    for test_row in test_lookup.values():
         _write_all_atom_pdb(tmp_path / test_row["pdb_path"], test_row["sequence"])
 
     def _fake_refold(sequence, protein_id, design_id, backend, cache_dir=None, model=None):

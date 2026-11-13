@@ -45,13 +45,13 @@ import inspect
 import json
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-__all__ = ["build_parser", "main", "assemble_check", "StubModel", "model_attributes_read"]
+__all__ = ["StubModel", "assemble_check", "build_parser", "main", "model_attributes_read"]
 
 _AA = "ACDEFGHIKLMNPQRSTVWY"
 
@@ -83,7 +83,7 @@ class StubModel:
     failure here rather than a silent agreement between the stub and the bug.
     """
 
-    id_to_aa = {index: residue for index, residue in enumerate(_AA)}
+    id_to_aa: ClassVar[dict[int, str]] = {index: residue for index, residue in enumerate(_AA)}
     aa_token_ids = frozenset(range(len(_AA)))
     mask_token_id = len(_AA)
     tokenizer_digest = "0" * 64
@@ -94,16 +94,16 @@ class StubModel:
     def __init__(self, length: int, fixed: dict | None) -> None:
         self._length, self._fixed = int(length), fixed
 
-    def backbone_and_denoiser(self, protein_id):  # noqa: ARG002
+    def backbone_and_denoiser(self, protein_id):
         return object(), object()
 
-    def sequence_length(self, protein_id):  # noqa: ARG002
+    def sequence_length(self, protein_id):
         return self._length
 
-    def fixed_tokens(self, protein_id):  # noqa: ARG002
+    def fixed_tokens(self, protein_id):
         return self._fixed or None
 
-    def coordinate_mask_digest(self, protein_id):  # noqa: ARG002
+    def coordinate_mask_digest(self, protein_id):
         return "1" * 64
 
     def null_h_values(self, length):
@@ -190,8 +190,12 @@ def _dual_authority(overlay: Any, *, arm: str, incumbent: Any, reference_head_sc
     """
     import copy
 
-    from inverse_folding.reference_flow.fusion_v2.dual_policy import DualSupportAuthority
-    from inverse_folding.reference_flow.fusion_v2.joint_objective import build_arm_objective
+    from inverse_folding.reference_flow.fusion_v2.dual_policy import (
+        DualSupportAuthority,
+    )
+    from inverse_folding.reference_flow.fusion_v2.joint_objective import (
+        build_arm_objective,
+    )
 
     declared_b = overlay.head_b_runtime.evaluator
     if overlay.calibration.window is None:
@@ -227,8 +231,14 @@ def assemble_check(config_path: Any, *, protein_id: str, args_file: Any = None,
     """Everything ``build_v2_oracles`` does except the two torch builds."""
     from inverse_folding.reference_flow.fusion_v2 import identity as ident
     from inverse_folding.reference_flow.fusion_v2.safety import (
-        bind_admission_policy, bind_cumulative_reference, open_lineage_ledger)
-    from inverse_folding.reference_flow.fusion_v2.schedule import load_band_table, lookup_band
+        bind_admission_policy,
+        bind_cumulative_reference,
+        open_lineage_ledger,
+    )
+    from inverse_folding.reference_flow.fusion_v2.schedule import (
+        load_band_table,
+        lookup_band,
+    )
     from inverse_folding.reference_flow.fusion_v2_runtime.admission import SafetyGate
     from scripts import rf_fusion_v2_oracles as oracles
     from scripts.rf_fusion_v2_preflight import load_v2_config_file

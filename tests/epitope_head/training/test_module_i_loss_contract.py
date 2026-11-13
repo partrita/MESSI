@@ -18,7 +18,6 @@ from epitope_head.training.trainer import (
     normalize_loss_cfg,
 )
 
-
 # ── I1: margin_hard_loss ──────────────────────────────────────────────────────
 
 class TestI1MarginHardLoss:

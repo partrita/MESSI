@@ -5,10 +5,10 @@
 import importlib
 import operator
 import os
+from collections.abc import Callable
 
 # from pytorch_lightning.utilities.imports import _RICH_AVAILABLE
 from importlib.util import find_spec
-from typing import Callable, Dict
 
 import pkg_resources
 import pytorch_lightning as pl
@@ -18,9 +18,7 @@ from packaging.version import Version
 from pkg_resources import DistributionNotFound
 from pytorch_lightning import callbacks
 from pytorch_lightning.utilities.rank_zero import (
-    rank_zero_deprecation,
     rank_zero_info,
-    rank_zero_warn,
 )
 from rich import reconfigure
 from torch import Tensor
@@ -207,7 +205,7 @@ class ModelCheckpoint(callbacks.ModelCheckpoint):
     def _format_checkpoint_name(
         self,
         filename,
-        metrics: Dict[str, Tensor],
+        metrics: dict[str, Tensor],
         prefix: str = "",
         auto_insert_metric_name: bool = True,
     ) -> str:
@@ -229,7 +227,7 @@ class ModelCheckpoint(callbacks.ModelCheckpoint):
         self,
         current: Tensor,
         trainer: "pl.Trainer",
-        monitor_candidates: Dict[str, Tensor],
+        monitor_candidates: dict[str, Tensor],
     ) -> None:
         k = (
             len(self.best_k_models) + 1
@@ -289,7 +287,7 @@ class ModelCheckpoint(callbacks.ModelCheckpoint):
             trainer.strategy.remove_checkpoint(del_filepath)
 
     def _save_last_checkpoint(
-        self, trainer: "pl.Trainer", monitor_candidates: Dict[str, Tensor]
+        self, trainer: "pl.Trainer", monitor_candidates: dict[str, Tensor]
     ) -> None:
         if not self.save_last:
             return

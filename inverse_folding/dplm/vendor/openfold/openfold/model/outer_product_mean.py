@@ -14,10 +14,9 @@
 # limitations under the License.
 
 from functools import partial
-from typing import Optional
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 from openfold.model.primitives import Linear
 from openfold.utils.chunk_utils import chunk_layer
@@ -39,7 +38,7 @@ class OuterProductMean(nn.Module):
             c_hidden:
                 Hidden channel dimension
         """
-        super(OuterProductMean, self).__init__()
+        super().__init__()
 
         self.c_m = c_m
         self.c_z = c_z
@@ -96,8 +95,8 @@ class OuterProductMean(nn.Module):
 
     def _forward(self, 
         m: torch.Tensor, 
-        mask: Optional[torch.Tensor] = None,
-        chunk_size: Optional[int] = None,
+        mask: torch.Tensor | None = None,
+        chunk_size: int | None = None,
         inplace_safe: bool = False,
     ) -> torch.Tensor:
         """
@@ -147,8 +146,8 @@ class OuterProductMean(nn.Module):
 
     def forward(self,
                 m: torch.Tensor,
-                mask: Optional[torch.Tensor] = None,
-                chunk_size: Optional[int] = None,
+                mask: torch.Tensor | None = None,
+                chunk_size: int | None = None,
                 inplace_safe: bool = False,
     ) -> torch.Tensor:
         if(is_fp16_enabled()):

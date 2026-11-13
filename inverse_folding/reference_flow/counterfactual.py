@@ -19,16 +19,16 @@ from __future__ import annotations
 
 import hashlib
 import math
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field, replace
 from itertools import product
-from typing import Any, Callable, Sequence
+from typing import Any
 
 import numpy as np
 import torch
 
 from .controller_config import D2Config
 from .self_conditioned_gr import build_probe_samples
-
 
 # ---------------------------------------------------------------------------
 # Position selection (PLAN §D2 step behavior 5-6)
@@ -1035,7 +1035,7 @@ class D2Handler:
         if self.config.completion_ensemble_enabled and len(candidates) > 0:
             shortlist_size = min(
                 int(self.config.completion_ensemble_rescore_top_m),
-                int(len(candidates)),
+                len(candidates),
             )
             candidate_indices = tuple(
                 int(i) for i in np.argsort(delta_R_argmax)[:shortlist_size].tolist()

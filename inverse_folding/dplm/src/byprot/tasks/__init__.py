@@ -2,23 +2,24 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-import copy
-import glob
-import importlib
+import copy  # noqa: F401
+import glob  # noqa: F401
+import importlib  # noqa: F401
 import os
+from collections.abc import Callable, Mapping
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, List, Mapping, Optional, Union
+from typing import Any, Dict, List, Optional, Union  # noqa: F401, UP035
 
-import numpy as np
+import numpy as np  # noqa: F401
 import torch
-from omegaconf import DictConfig
+from omegaconf import DictConfig  # noqa: F401
 from pytorch_lightning import LightningModule
 from pytorch_lightning.utilities.types import _METRIC
 from torch import distributed as dist
 from torch import nn
-from torch.nn import functional as F
-from torchmetrics import MaxMetric, MeanMetric, Metric, MinMetric, SumMetric
-from torchmetrics.text.bleu import BLEUScore as BLEU
+from torch.nn import functional as F  # noqa: F401
+from torchmetrics import MaxMetric, MeanMetric, Metric, MinMetric, SumMetric  # noqa: F401
+from torchmetrics.text.bleu import BLEUScore as BLEU  # noqa: F401
 
 from byprot import utils
 from byprot.utils.lr_scheduler import get_scheduler
@@ -26,7 +27,7 @@ from byprot.utils.optim import get_optimizer
 
 log = utils.get_logger(__name__)
 
-_METRIC_COLLECTION = Union[_METRIC, Mapping[str, _METRIC]]
+_METRIC_COLLECTION = Union[_METRIC, Mapping[str, _METRIC]]  # noqa: UP007
 
 
 @contextmanager
@@ -90,12 +91,10 @@ class TaskLitModule(LightningModule):
 
     def __init__(
         self,
-        model: List[nn.Module],
+        model: list[nn.Module],
         criterion: nn.Module = None,
-        optimizer: Union[Callable, torch.optim.Optimizer] = None,
-        lr_scheduler: Union[
-            Callable, torch.optim.lr_scheduler._LRScheduler
-        ] = None,
+        optimizer: Callable | torch.optim.Optimizer = None,
+        lr_scheduler: Callable | torch.optim.lr_scheduler._LRScheduler = None,
     ):
         super().__init__()
 
@@ -140,8 +139,8 @@ class TaskLitModule(LightningModule):
         value: _METRIC_COLLECTION,
         prog_bar: bool = False,
         logger: bool = True,
-        on_step: Optional[bool] = None,
-        on_epoch: Optional[bool] = None,
+        on_step: bool | None = None,
+        on_epoch: bool | None = None,
         **kwargs,
     ) -> None:
         if on_epoch and not self.training:
@@ -158,8 +157,8 @@ class TaskLitModule(LightningModule):
         raise NotImplementedError
 
     def training_step_end(
-        self, step_output: Union[torch.Tensor, Dict[str, Any]]
-    ) -> Union[torch.Tensor, Dict[str, Any]]:
+        self, step_output: torch.Tensor | dict[str, Any]
+    ) -> torch.Tensor | dict[str, Any]:
         return super().training_step_end(step_output)
 
     # def training_epoch_end(self, outputs: List[Any]):
@@ -173,7 +172,7 @@ class TaskLitModule(LightningModule):
 
     def validation_step_end(
         self, *args, **kwargs
-    ) -> Optional[Union[torch.Tensor, Dict[str, Any]]]:
+    ) -> torch.Tensor | dict[str, Any] | None:
         return super().validation_step_end(*args, **kwargs)
 
     # def validation_epoch_end(self, outputs: List[Any]):
@@ -192,7 +191,7 @@ class TaskLitModule(LightningModule):
 
     def test_step_end(
         self, *args, **kwargs
-    ) -> Optional[Union[torch.Tensor, Dict[str, Any]]]:
+    ) -> torch.Tensor | dict[str, Any] | None:
         return self.validation_step_end(*args, **kwargs)
 
     # def test_epoch_end(self, outputs: List[Any]):
@@ -209,7 +208,7 @@ class TaskLitModule(LightningModule):
     ) -> Any:
         raise NotImplementedError
 
-    def predict_epoch_end(self, results: List[Any], log_pref=None) -> None:
+    def predict_epoch_end(self, results: list[Any], log_pref=None) -> None:
         raise NotImplementedError
 
     # -------# Optimizers & Lr Schedulers #-------- #
@@ -252,12 +251,12 @@ class TaskLitModule(LightningModule):
 
 
 class AutoMetric(nn.Module):
-    _type_shortnames = dict(
-        mean=MeanMetric,
-        sum=SumMetric,
-        max=MaxMetric,
-        min=MinMetric,
-    )
+    _type_shortnames = {  # noqa: RUF012
+        "mean": MeanMetric,
+        "sum": SumMetric,
+        "max": MaxMetric,
+        "min": MinMetric,
+    }
 
     def __init__(self) -> None:
         super().__init__()

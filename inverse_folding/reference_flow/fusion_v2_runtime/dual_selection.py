@@ -14,7 +14,8 @@ missing piece of evidence is a refusal here.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Mapping
+from collections.abc import Callable, Mapping
+from typing import Any
 
 from ..fusion_v2.dual_evidence import DualEndpointEvidence, V2DualEvidenceError
 from ..fusion_v2.reward import JointComparison
@@ -46,7 +47,7 @@ def dual_rank_key(
         )
 
     def key(endpoint: Any) -> tuple[float, str]:
-        endpoint_id = str(getattr(endpoint, "endpoint_id"))
+        endpoint_id = str(endpoint.endpoint_id)
         evidence = evidence_by_endpoint.get(endpoint_id)
         if evidence is None:
             raise V2DualEvidenceError(
@@ -81,7 +82,7 @@ def joint_comparison_for(
     sequence for a joint gate to mean anything at all. Requiring the caller to produce it is what
     keeps that requirement visible instead of letting a missing reference score default to zero.
     """
-    endpoint_id = str(getattr(donor, "endpoint_id"))
+    endpoint_id = str(donor.endpoint_id)
     evidence = evidence_by_endpoint.get(endpoint_id)
     if evidence is None:
         raise V2DualEvidenceError(

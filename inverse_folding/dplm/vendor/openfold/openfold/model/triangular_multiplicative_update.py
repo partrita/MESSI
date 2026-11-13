@@ -14,15 +14,13 @@
 # limitations under the License.
 
 from functools import partialmethod
-from typing import Optional
 
 import torch
-import torch.nn as nn
+from torch import nn
 
-from openfold.model.primitives import Linear, LayerNorm
-from openfold.utils.chunk_utils import chunk_layer
+from openfold.model.primitives import LayerNorm, Linear
 from openfold.utils.precision_utils import is_fp16_enabled
-from openfold.utils.tensor_utils import add, permute_final_dims
+from openfold.utils.tensor_utils import permute_final_dims
 
 
 class TriangleMultiplicativeUpdate(nn.Module):
@@ -37,7 +35,7 @@ class TriangleMultiplicativeUpdate(nn.Module):
             c:
                 Hidden channel dimension
         """
-        super(TriangleMultiplicativeUpdate, self).__init__()
+        super().__init__()
         self.c_z = c_z
         self.c_hidden = c_hidden
         self._outgoing = _outgoing
@@ -57,7 +55,7 @@ class TriangleMultiplicativeUpdate(nn.Module):
     def _combine_projections(self,
         a: torch.Tensor,
         b: torch.Tensor,
-        _inplace_chunk_size: Optional[int] = None
+        _inplace_chunk_size: int | None = None
     ) -> torch.Tensor:
         if(self._outgoing):
             a = permute_final_dims(a, (2, 0, 1))
@@ -86,8 +84,8 @@ class TriangleMultiplicativeUpdate(nn.Module):
 
     def _inference_forward(self,
         z: torch.Tensor,
-        mask: Optional[torch.Tensor] = None,
-        inplace_chunk_size: Optional[int] = None,
+        mask: torch.Tensor | None = None,
+        inplace_chunk_size: int | None = None,
         with_add: bool = True,
     ):
         """
@@ -185,7 +183,7 @@ class TriangleMultiplicativeUpdate(nn.Module):
                 p = pair.new_zeros(out_shape)
                 for i in range(0, pair.shape[-3], inplace_chunk_size):
                     pair_chunk = pair[..., i: i + inplace_chunk_size, :, :]
-                    mask_chunk = mask[..., i: i + inplace_chunk_size, :, :]
+                    mask[..., i: i + inplace_chunk_size, :, :]
                     pair_chunk = compute_projection_helper(
                         pair[..., i: i + inplace_chunk_size, :, :],
                         mask[..., i: i + inplace_chunk_size, :, :], 
@@ -357,10 +355,10 @@ class TriangleMultiplicativeUpdate(nn.Module):
 
     def forward(self, 
         z: torch.Tensor, 
-        mask: Optional[torch.Tensor] = None,
+        mask: torch.Tensor | None = None,
         inplace_safe: bool = False,
         _add_with_inplace: bool = False,
-        _inplace_chunk_size: Optional[int] = 256,
+        _inplace_chunk_size: int | None = 256,
     ) -> torch.Tensor:
         """
         Args:

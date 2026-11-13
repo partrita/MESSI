@@ -36,3 +36,8 @@ Figure/
 # pixi environments
 .pixi/*
 !.pixi/config.toml
+SHA256SUMS
+dplm-inference.tar.*
+dplm/*
+6CUN.pdb
+results/

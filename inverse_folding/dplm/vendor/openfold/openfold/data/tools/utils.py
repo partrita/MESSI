@@ -20,11 +20,10 @@ import logging
 import shutil
 import tempfile
 import time
-from typing import Optional
 
 
 @contextlib.contextmanager
-def tmpdir_manager(base_dir: Optional[str] = None):
+def tmpdir_manager(base_dir: str | None = None):
     """Context manager that deletes a temporary directory on exit."""
     tmpdir = tempfile.mkdtemp(dir=base_dir)
     try:
@@ -35,11 +34,11 @@ def tmpdir_manager(base_dir: Optional[str] = None):
 
 @contextlib.contextmanager
 def timing(msg: str):
-    logging.info("Started %s", msg)
+    logging.info("Started %s", msg)  # noqa: LOG015
     tic = time.perf_counter()
     yield
     toc = time.perf_counter()
-    logging.info("Finished %s in %.3f seconds", msg, toc - tic)
+    logging.info("Finished %s in %.3f seconds", msg, toc - tic)  # noqa: LOG015
 
 
 def to_date(s: str):

@@ -46,20 +46,20 @@ def _endpoint(*, seq="ACDEFG", fork_index=0, fork_seed=4242, risk=-9.0, **over):
     score = dataclasses.replace(
         F.endpoint().head_score, sequence_md5=md5, global_risk=risk,
     )
-    kw = dict(sequence=seq, sequence_md5=md5, head_binding=binding, head_score=score,
-              head_global_risk=risk, fork_index=fork_index, fork_seed=fork_seed,
+    kw = {"sequence": seq, "sequence_md5": md5, "head_binding": binding, "head_score": score,
+              "head_global_risk": risk, "fork_index": fork_index, "fork_seed": fork_seed,
               # The replay stream is bound to the endpoint's OWN fork seed; leaving the fixture's
               # default here would make every sibling claim the same stream.
-              replay=st.ReplayIdentity(mode="fork", rng_state=None, fork_seed=fork_seed,
+              "replay": st.ReplayIdentity(mode="fork", rng_state=None, fork_seed=fork_seed,
                                        replay_state_hash=F.E),
-              feasibility_level=st.FeasibilityLevel.UNVALIDATED, structure_outcome=None)
+              "feasibility_level": st.FeasibilityLevel.UNVALIDATED, "structure_outcome": None}
     kw.update(over)
     return F.endpoint(**kw)
 
 
 def _definitive(**over):
-    kw = dict(feasibility_level=st.FeasibilityLevel.DEFINITIVE,
-              structure_outcome=StructureOutcome(feasible=True, metrics={"scTM": 0.91}))
+    kw = {"feasibility_level": st.FeasibilityLevel.DEFINITIVE,
+              "structure_outcome": StructureOutcome(feasible=True, metrics={"scTM": 0.91})}
     kw.update(over)
     return _endpoint(**kw)
 

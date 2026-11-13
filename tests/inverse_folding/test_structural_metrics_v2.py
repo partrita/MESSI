@@ -8,7 +8,6 @@ from pathlib import Path
 
 import pytest
 
-
 AA3 = {"K": "LYS", "D": "ASP", "F": "PHE", "G": "GLY"}
 SIDECHAIN_ATOMS = {
     "K": ("CB", "CG", "CD", "CE", "NZ"),

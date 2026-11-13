@@ -15,20 +15,25 @@
 import argparse
 import logging
 import math
-import numpy as np
 import os
 
-from openfold.utils.script_utils import load_models_from_command_line, parse_fasta, run_model, prep_output, \
-    update_timings, relax_protein
+import numpy as np
+from openfold.utils.script_utils import (
+    load_models_from_command_line,
+    parse_fasta,
+    prep_output,
+    relax_protein,
+    run_model,
+)
 
 logging.basicConfig()
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
 
 import pickle
-
 import random
 import time
+
 import torch
 
 torch_versions = torch.__version__.split(".")
@@ -44,10 +49,8 @@ if(
 torch.set_grad_enabled(False)
 
 from openfold.config import model_config
-from openfold.data import templates, feature_pipeline, data_pipeline
-from openfold.np import residue_constants, protein
-import openfold.np.relax.relax as relax
-
+from openfold.data import data_pipeline, feature_pipeline, templates
+from openfold.np import protein
 from openfold.utils.tensor_utils import (
     tensor_tree_map,
 )
@@ -57,7 +60,6 @@ from openfold.utils.trace_utils import (
 )
 from scripts.precompute_embeddings import EmbeddingGenerator
 from scripts.utils import add_data_args
-
 
 TRACING_INTERVAL = 50
 
@@ -110,7 +112,7 @@ def precompute_alignments(tags, seqs, alignment_dir, args):
 
 
 def round_up_seqlen(seqlen):
-    return int(math.ceil(seqlen / TRACING_INTERVAL)) * TRACING_INTERVAL
+    return math.ceil(seqlen / TRACING_INTERVAL) * TRACING_INTERVAL
 
 
 def generate_feature_dict(
@@ -159,11 +161,10 @@ def main(args):
         args.use_single_seq_mode = True
     config = model_config(args.config_preset, long_sequence_inference=args.long_sequence_inference)
 
-    if(args.trace_model):
-        if(not config.data.predict.fixed_size):
-            raise ValueError(
-                "Tracing requires that fixed_size mode be enabled in the config"
-            )
+    if(args.trace_model) and (not config.data.predict.fixed_size):
+        raise ValueError(
+            "Tracing requires that fixed_size mode be enabled in the config"
+        )
 
     template_featurizer = templates.TemplateHitFeaturizer(
         mmcif_dir=args.template_mmcif_dir,
@@ -255,7 +256,7 @@ def main(args):
                 for k,v in processed_feature_dict.items()
             }
 
-            if(args.trace_model):
+            if(args.trace_model):  # noqa: SIM102
                 if(rounded_seqlen > cur_tracing_interval):
                     logger.info(
                         f"Tracing model at {rounded_seqlen} residues..."
@@ -414,7 +415,7 @@ if __name__ == "__main__":
         )
 
     if(args.model_device == "cpu" and torch.cuda.is_available()):
-        logging.warning(
+        logging.warning(  # noqa: LOG015
             """The model is being run on CPU. Consider specifying 
             --model_device for better performance"""
         )

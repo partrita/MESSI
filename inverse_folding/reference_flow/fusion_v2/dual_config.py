@@ -21,8 +21,9 @@ the reason a cluster path never appears in a module.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any
 
 from .errors import V2Error
 from .identity import HeadEvaluatorIdentity, canonical_digest, require_digest
@@ -37,16 +38,16 @@ from .joint_objective import (
 )
 
 __all__ = [
-    "V2DualConfigError",
-    "DUAL_OVERLAY_SCHEMA_VERSION",
     "ARM_LABELS",
+    "DUAL_OVERLAY_SCHEMA_VERSION",
     "MATCHED_ARM_BUNDLES",
-    "HeadRuntimeBinding",
     "DualOverlay",
-    "load_dual_overlay",
+    "HeadRuntimeBinding",
+    "V2DualConfigError",
     "dual_overlay_from_mapping",
     "dual_overlay_payload",
     "dual_run_signature_component",
+    "load_dual_overlay",
 ]
 
 #: Bumped whenever the overlay's canonical payload changes, so an old signature can never silently

@@ -5,13 +5,12 @@ validates every row against the frozen schema, and provides
 post-hoc validation for the assembled set.
 """
 
-from typing import Dict, List
 
 import pandas as pd
 
 from inverse_folding.evaluation.schema import (
-    EvalSchemaError,
     TEST_PROTEIN_COLUMNS,
+    EvalSchemaError,
     validate_test_protein_entry,
 )
 
@@ -20,7 +19,7 @@ class AssemblyError(Exception):
     """Raised when test set assembly encounters a fatal error."""
 
 
-def assemble_test_set(entries: List[dict]) -> pd.DataFrame:
+def assemble_test_set(entries: list[dict]) -> pd.DataFrame:
     """Merge tier entries into a single DataFrame.
 
     Validates each entry against the frozen schema and rejects
@@ -66,7 +65,7 @@ def assemble_test_set(entries: List[dict]) -> pd.DataFrame:
     return df
 
 
-def validate_test_set(parquet_path: str) -> List[str]:
+def validate_test_set(parquet_path: str) -> list[str]:
     """Post-hoc validation of an assembled test set parquet.
 
     Checks:
@@ -78,7 +77,7 @@ def validate_test_set(parquet_path: str) -> List[str]:
         List of error strings. Empty means valid.
     """
     df = pd.read_parquet(parquet_path)
-    errors: List[str] = []
+    errors: list[str] = []
 
     # Required columns
     missing_cols = TEST_PROTEIN_COLUMNS - set(df.columns)

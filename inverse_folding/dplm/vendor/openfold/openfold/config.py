@@ -1,5 +1,6 @@
 import copy
 import importlib
+
 import ml_collections as mlc
 
 
@@ -136,13 +137,7 @@ def model_config(
         c.model.template.enabled = True
         c.model.heads.tm.enabled = True
         c.loss.tm.weight = 0.1
-    elif name == "model_3_ptm":
-        c.data.train.max_extra_msa = 5120
-        c.data.predict.max_extra_msa = 5120
-        c.model.template.enabled = False
-        c.model.heads.tm.enabled = True
-        c.loss.tm.weight = 0.1
-    elif name == "model_4_ptm":
+    elif name == "model_3_ptm" or name == "model_4_ptm":
         c.data.train.max_extra_msa = 5120
         c.data.predict.max_extra_msa = 5120
         c.model.template.enabled = False

@@ -11,7 +11,7 @@ setup(
     author="ByteDance Research",
     author_email="zhengzaixiang@bytedance.com",
     # url="https://github.com/bytedance/ByProt",
-    install_requires=open("requirements.txt").readlines(),
+    install_requires=open("requirements.txt").readlines(),  # noqa: SIM115
     package_dir={"": "src"},
     packages=find_packages("src"),
 )

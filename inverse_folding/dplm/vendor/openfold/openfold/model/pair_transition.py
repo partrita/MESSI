@@ -12,12 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Optional
 
 import torch
-import torch.nn as nn
+from torch import nn
 
-from openfold.model.primitives import Linear, LayerNorm
+from openfold.model.primitives import LayerNorm, Linear
 from openfold.utils.chunk_utils import chunk_layer
 
 
@@ -35,7 +34,7 @@ class PairTransition(nn.Module):
                 Factor by which c_z is multiplied to obtain hidden channel
                 dimension
         """
-        super(PairTransition, self).__init__()
+        super().__init__()
 
         self.c_z = c_z
         self.n = n
@@ -74,8 +73,8 @@ class PairTransition(nn.Module):
 
     def forward(self, 
         z: torch.Tensor, 
-        mask: Optional[torch.Tensor] = None,
-        chunk_size: Optional[int] = None,
+        mask: torch.Tensor | None = None,
+        chunk_size: int | None = None,
     ) -> torch.Tensor:
         """
         Args:

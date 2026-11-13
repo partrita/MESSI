@@ -175,7 +175,6 @@ def test_the_factory_names_a_gpu_instrument_that_a_cuda_process_can_actually_use
     """
     import sys
 
-    from scripts import rf_fusion_v2_oracles as mod
 
     fake_torch = types.SimpleNamespace(cuda=types.SimpleNamespace(
         is_available=lambda: True, is_initialized=lambda: True, device_count=lambda: 1))
@@ -219,9 +218,9 @@ def test_the_gpu_clock_scales_with_the_devices_the_allocation_holds():
 def test_a_process_that_never_touched_cuda_truthfully_reports_zero():
     """The guard must not be satisfiable by refusing every run: a CPU process really does burn no
     GPU seconds, and saying so is a measurement rather than a default."""
-    from scripts import rf_fusion_v2_oracles as mod
-
     import sys
+
+    from scripts import rf_fusion_v2_oracles as mod
 
     fake_torch = types.SimpleNamespace(cuda=types.SimpleNamespace(
         is_available=lambda: False, is_initialized=lambda: False))
@@ -250,9 +249,10 @@ def test_importing_the_oracle_stack_loads_no_torch():
 
     result = subprocess.run(
         [sys.executable, "-c",
-         "import sys; import scripts.rf_fusion_v2_oracles as m; m.OracleSeams(); "
-         "print('torch' in sys.modules)"],
+         ("import sys; import scripts.rf_fusion_v2_oracles as m; m.OracleSeams(); "
+         "print('torch' in sys.modules)")],
         capture_output=True, text=True, cwd=str(pathlib.Path(__file__).parents[2]),
+        check=False,
     )
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == "False"
@@ -342,10 +342,10 @@ def test_the_reference_manifest_resolves_a_sequence_per_protein(tmp_path):
     same sequence: at different lengths the Head binding simply fails, and at equal lengths -- the
     dangerous case -- it succeeds while measuring each design against another protein's native.
     """
-    from scripts.rf_fusion_v2_oracles import resolve_reference
-
     import hashlib
     import json
+
+    from scripts.rf_fusion_v2_oracles import resolve_reference
 
     def _write(name, sequence):
         (tmp_path / name).write_text(sequence)
@@ -487,7 +487,7 @@ def test_the_factory_hands_the_realized_constraint_policy_to_the_model(tmp_path)
         "constraint_manifest": str(manifest),
         "schedule_band_calibration": str(tmp_path / "B_r.json"),
     })
-    (tmp_path / "strata.json").write_text('{"5ZHV_B": "%s"}' % F.STRATUM)
+    (tmp_path / "strata.json").write_text(f'{{"5ZHV_B": "{F.STRATUM}"}}')
 
     with pytest.raises(RuntimeError, match="stop after the model call"):
         mod.build_v2_oracles(
@@ -637,7 +637,7 @@ class _Scorer:
 def _oracle(scorer=None, **over):
     from scripts.rf_fusion_v2_oracles import ProductionHeadOracle
 
-    kw = dict(allele="DRB1_0701", score_scale="raw_logit", window_k_min=12, window_k_max=25)
+    kw = {"allele": "DRB1_0701", "score_scale": "raw_logit", "window_k_min": 12, "window_k_max": 25}
     kw.update(over)
     return ProductionHeadOracle(scorer or _Scorer(), **kw)
 
@@ -735,7 +735,7 @@ def _fake_build_oracles(*, metrics=None, raises=None, manifest=None, seen=None):
 def _metrics(**over):
     from inverse_folding.reference_flow.refine import StructureMetrics
 
-    kw = dict(scTM=0.95, pLDDT=88.0, scRMSD=1.2)
+    kw = {"scTM": 0.95, "pLDDT": 88.0, "scRMSD": 1.2}
     kw.update(over)
     return StructureMetrics(**kw)
 
@@ -744,10 +744,10 @@ def _structure_oracle(**over):
     """Only the structure half is exercised; the Head half needs a real scorer in the closure."""
     from scripts.rf_fusion_v2_oracles import build_production_oracles
 
-    kw = dict(structure_config=V0_STRUCTURE_CONFIG, head_config_dir="/nx/cfg",
-              head_checkpoint="/nx/head.pt", test_set_parquet="/nx/t.parquet",
-              pdb_root="/nx/pdbs", refold_cache_dir="/nx/refold", allele="DRB1_0701",
-              score_scale="raw_logit", window_k_min=12, window_k_max=25, head_variant_id="LC1")
+    kw = {"structure_config": V0_STRUCTURE_CONFIG, "head_config_dir": "/nx/cfg",
+              "head_checkpoint": "/nx/head.pt", "test_set_parquet": "/nx/t.parquet",
+              "pdb_root": "/nx/pdbs", "refold_cache_dir": "/nx/refold", "allele": "DRB1_0701",
+              "score_scale": "raw_logit", "window_k_min": 12, "window_k_max": 25, "head_variant_id": "LC1"}
     kw.update(over)
     with pytest.raises(V2OracleError, match="closure"):
         # The fake head_fn closes over no scorer, so the Head half refuses -- which is itself the
@@ -763,14 +763,14 @@ def _structure_only(build_oracles, **over):
 
     def wrapped(args, config):
         oracles, manifest = build_oracles(args, config)
-        head_fn = (lambda *_a, **_k: scorer)          # noqa: ARG005 - closes over the scorer
+        head_fn = (lambda *_a, **_k: scorer)
         return types.SimpleNamespace(head_fn=head_fn, struct_fn=oracles.struct_fn), manifest
 
-    kw = dict(structure_config=V0_STRUCTURE_CONFIG, head_config_dir="/nx/cfg",
-              head_checkpoint="/nx/head.pt", test_set_parquet="/nx/t.parquet",
-              pdb_root="/nx/pdbs", refold_cache_dir="/nx/refold", allele="DRB1_0701",
-              score_scale="raw_logit", window_k_min=12, window_k_max=25, head_variant_id="LC1",
-              build_oracles=wrapped)
+    kw = {"structure_config": V0_STRUCTURE_CONFIG, "head_config_dir": "/nx/cfg",
+              "head_checkpoint": "/nx/head.pt", "test_set_parquet": "/nx/t.parquet",
+              "pdb_root": "/nx/pdbs", "refold_cache_dir": "/nx/refold", "allele": "DRB1_0701",
+              "score_scale": "raw_logit", "window_k_min": 12, "window_k_max": 25, "head_variant_id": "LC1",
+              "build_oracles": wrapped}
     kw.update(over)
     return build_production_oracles(**kw)[1]
 

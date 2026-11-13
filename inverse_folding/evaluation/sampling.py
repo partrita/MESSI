@@ -17,13 +17,12 @@ bin is deterministic given ``seed``. Each call also returns a realized
 histogram so capping is logged, never silent.
 """
 
-from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 
 
-def _assign_bins(values: np.ndarray, n_bins: int) -> Tuple[np.ndarray, np.ndarray]:
+def _assign_bins(values: np.ndarray, n_bins: int) -> tuple[np.ndarray, np.ndarray]:
     """Equal-width binning over [min, max]. Returns (bin_index, edges).
 
     The max value falls in the last bin; degenerate (all-equal) input collapses
@@ -41,7 +40,7 @@ def _assign_bins(values: np.ndarray, n_bins: int) -> Tuple[np.ndarray, np.ndarra
 def _gaussian_weights(
     centers: np.ndarray,
     mu: float,
-    sigma: Optional[float],
+    sigma: float | None,
     peak_to_tail: float,
 ) -> np.ndarray:
     """Gaussian bin weights. If sigma is None, derive it so the farthest bin
@@ -106,7 +105,7 @@ def _draw(
     n_target: int,
     min_per_bin: int,
     seed: int,
-) -> Tuple[List, pd.DataFrame]:
+) -> tuple[list, pd.DataFrame]:
     values = df[value_col].to_numpy(dtype=float)
     bin_idx, edges = _assign_bins(values, n_bins)
     centers = 0.5 * (edges[:-1] + edges[1:])
@@ -117,7 +116,7 @@ def _draw(
     alloc = _allocate(weights, available, n_target, min_per_bin)
 
     rng = np.random.default_rng(seed)
-    selected: List = []
+    selected: list = []
     rows = []
     index = df.index.to_numpy()
     for b in range(n_bins):
@@ -133,7 +132,7 @@ def _draw(
             "bin_lo": float(edges[b]),
             "bin_hi": float(edges[b + 1]),
             "bin_center": float(centers[b]),
-            "n_available": int(len(members)),
+            "n_available": len(members),
             "n_selected": int(take),
         })
     return selected, pd.DataFrame(rows)
@@ -146,7 +145,7 @@ def sample_uniform_bins(
     n_bins: int = 20,
     min_per_bin: int = 0,
     seed: int = 42,
-) -> Tuple[List, pd.DataFrame]:
+) -> tuple[list, pd.DataFrame]:
     """Equal-count-per-bin subsample over ``value_col``.
 
     Returns (selected_index_labels, histogram_df).
@@ -163,12 +162,12 @@ def sample_gaussian_bins(
     value_col: str,
     n_target: int,
     n_bins: int = 20,
-    mu: Optional[float] = None,
-    sigma: Optional[float] = None,
+    mu: float | None = None,
+    sigma: float | None = None,
     peak_to_tail: float = 3.0,
     min_per_bin: int = 40,
     seed: int = 42,
-) -> Tuple[List, pd.DataFrame]:
+) -> tuple[list, pd.DataFrame]:
     """Unimodal-Gaussian subsample over ``value_col``.
 
     ``mu`` defaults to the median of ``value_col``; ``sigma`` (if None) is

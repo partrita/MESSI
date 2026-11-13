@@ -24,12 +24,19 @@ import pytest
 from inverse_folding.reference_flow.fusion_v2 import joint_objective as jo
 from inverse_folding.reference_flow.fusion_v2 import policy as pol
 
-from . import _v2_fixtures as F
 from .test_fusion_v2_dual_select import (
-    EVAL_A, EVAL_B, _authority, _calibration_dual, _coordinate, _score_b,
+    _authority,
+    _calibration_dual,
+    _score_b,
 )
 from .test_fusion_v2_head_directed_policy import (
-    SOURCE_SEQ, _calibration, _coords, _donor, _policy, _score, _source,
+    SOURCE_SEQ,
+    _calibration,
+    _coords,
+    _donor,
+    _policy,
+    _score,
+    _source,
 )
 
 #: Deliberately different, and neither is 1.0: a shared unit scale would let a raw threshold and a

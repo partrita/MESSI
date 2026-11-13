@@ -19,6 +19,7 @@ import io
 import math
 import os
 import tempfile
+import warnings
 
 import numpy as np
 
@@ -59,15 +60,20 @@ def cif_to_single_chain_pdb_text(cif_path: str, *, protein_only: bool = False) -
     while the shared evaluation cache contains only the protein chain expected
     by the structural evaluator.
     """
-    import biotite.structure.io.pdb as pdb
-    import biotite.structure.io.pdbx as pdbx
+    from biotite.structure.io import pdb, pdbx
 
     if not os.path.isfile(cif_path):
         raise FileNotFoundError(f"refold normalize: mmCIF not found: {cif_path}")
     cif = pdbx.CIFFile.read(cif_path)
     # v2 reads per-residue confidence from PDB B-factors. Request the mmCIF
     # confidence column explicitly; Biotite otherwise drops it and writes 0.00.
-    arr = pdbx.get_structure(cif, model=1, extra_fields=["b_factor"])
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message=r"Attribute 'auth_.*_id' not found within 'atom_site' category.*",
+            category=UserWarning,
+        )
+        arr = pdbx.get_structure(cif, model=1, extra_fields=["b_factor"])
     if "b_factor" in arr.get_annotation_categories() and not np.isfinite(arr.b_factor).all():
         # Some generic fixtures/backends have no atom confidence column. Preserve
         # the historical conversion behavior; canonical v2 later rejects the
@@ -156,7 +162,7 @@ def _atomic_write_text(path: str, text: str) -> None:
     previous complete file or the new complete file, never a partial one.
     """
     directory = os.path.dirname(path) or "."
-    handle = tempfile.NamedTemporaryFile(
+    handle = tempfile.NamedTemporaryFile(  # noqa: SIM115
         mode="w", dir=directory, prefix=f".{os.path.basename(path)}.", delete=False
     )
     try:

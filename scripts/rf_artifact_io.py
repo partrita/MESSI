@@ -1,12 +1,15 @@
 """Stable typed tables, atomic manifests, and cost-ledger serialization."""
 from __future__ import annotations
+
 import json
 import os
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, asdict, is_dataclass
+from dataclasses import asdict, dataclass, is_dataclass
 from pathlib import Path
+
 import pyarrow as pa
 import pyarrow.parquet as pq
+
 
 @dataclass(frozen=True)
 class TableSchema:

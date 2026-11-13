@@ -13,13 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
 from functools import partial
+
 import numpy as np
 import torch
-from typing import Union, List
-
 
 _NPZ_KEY_PREFIX = "alphafold/alphafold_iteration/"
 
@@ -36,7 +35,7 @@ class ParamType(Enum):
         lambda w: w.reshape(*w.shape[:-3], -1, w.shape[-1]).transpose(-1, -2)
     )
     LinearBiasMHA = partial(lambda w: w.reshape(*w.shape[:-2], -1))
-    LinearWeightOPM = partial(
+    LinearWeightOPM = partial(  # noqa: PIE796
         lambda w: w.reshape(*w.shape[:-3], -1, w.shape[-1]).transpose(-1, -2)
     )
     Other = partial(lambda w: w)
@@ -47,7 +46,7 @@ class ParamType(Enum):
 
 @dataclass
 class Param:
-    param: Union[torch.Tensor, List[torch.Tensor]]
+    param: torch.Tensor | list[torch.Tensor]
     param_type: ParamType = ParamType.Other
     stacked: bool = False
 
@@ -58,7 +57,7 @@ def process_translation_dict(d, top_layer=True):
         if type(v) == dict:
             prefix = _NPZ_KEY_PREFIX if top_layer else ""
             sub_flat = {
-                (prefix + "/".join([k, k_prime])): v_prime
+                (prefix + f"{k}/{k_prime}"): v_prime
                 for k_prime, v_prime in process_translation_dict(
                     v, top_layer=False
                 ).items()
@@ -83,7 +82,7 @@ def stacked(param_dict_list, out=None):
     if out is None:
         out = {}
     template = param_dict_list[0]
-    for k, _ in template.items():
+    for k in template:
         v = [d[k] for d in param_dict_list]
         if type(v[0]) is dict:
             out[k] = {}
@@ -160,10 +159,7 @@ def generate_translation_dict(model, version):
 
     AttentionGatedParams = lambda att: dict(
         **AttentionParams(att),
-        **{
-            "gating_w": LinearWeightMHA(att.linear_g.weight),
-            "gating_b": LinearBiasMHA(att.linear_g.bias),
-        },
+        gating_w=LinearWeightMHA(att.linear_g.weight), gating_b=LinearBiasMHA(att.linear_g.bias),
     )
 
     GlobalAttentionParams = lambda att: dict(
@@ -227,10 +223,7 @@ def generate_translation_dict(model, version):
 
     MSAAttPairBiasParams = lambda matt: dict(
         **MSAAttParams(matt),
-        **{
-            "feat_2d_norm": LayerNormParams(matt.layer_norm_z),
-            "feat_2d_weights": LinearWeight(matt.linear_z.weight),
-        },
+        feat_2d_norm=LayerNormParams(matt.layer_norm_z), feat_2d_weights=LinearWeight(matt.linear_z.weight),
     )
 
     IPAParams = lambda ipa: {
@@ -444,7 +437,7 @@ def import_jax_weights_(model, npz_path, version="model_1"):
     keys = list(data.keys())
     flat_keys = list(flat.keys())
     incorrect = [k for k in flat_keys if k not in keys]
-    missing = [k for k in keys if k not in flat_keys]
+    [k for k in keys if k not in flat_keys]
     # print(f"Incorrect: {incorrect}")
     # print(f"Missing: {missing}")
 

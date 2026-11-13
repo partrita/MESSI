@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from inverse_folding.evaluation.complex_interfaces import (
+    _reconcile_rosetta_alanine_rows,
     aggregate_homomer_alanine_scan,
     canonical_protein_atoms,
     classify_d2_interface_pairs,
@@ -17,11 +18,11 @@ from inverse_folding.evaluation.complex_interfaces import (
     pair_salt_bridges,
     parse_rosetta_ddg_scan_log,
     parse_rosetta_scorefile,
-    _reconcile_rosetta_alanine_rows,
     summarize_interface_pairs,
 )
 from scripts.eval_complex_gate import add_interface_wt_normalization, tier1_from_summary
-from scripts.eval_tetramer_reference import _paths_overlap, main as reference_main
+from scripts.eval_tetramer_reference import _paths_overlap
+from scripts.eval_tetramer_reference import main as reference_main
 
 
 def _pair_table() -> pd.DataFrame:
@@ -441,7 +442,11 @@ def test_reference_rosetta_requires_separate_run_and_log_roots(tmp_path, capsys)
 # --------------------------------------------------------------------------------------
 
 def test_catalytic_residues_default_to_the_legacy_panel_only_for_q00511():
-    from scripts.eval_complex_gate import CATALYTIC_CORE, XPROT_W1, resolve_catalytic_residues
+    from scripts.eval_complex_gate import (
+        CATALYTIC_CORE,
+        XPROT_W1,
+        resolve_catalytic_residues,
+    )
 
     core, partner = resolve_catalytic_residues("Q00511", None)
     assert core == CATALYTIC_CORE

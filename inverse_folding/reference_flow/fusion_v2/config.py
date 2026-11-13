@@ -22,39 +22,70 @@ the ``ConditioningDigest`` constructor in the identity layer.
 
 from __future__ import annotations
 
+import math
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 from .errors import V2Error
-from .identity import CONTENT_ROLE_TO_FIELD, FROZEN_DIGEST_ROLES, canonical_digest, require_digest
+from .identity import (
+    CONTENT_ROLE_TO_FIELD,
+    FROZEN_DIGEST_ROLES,
+    canonical_digest,
+    require_digest,
+)
 from .policy import (
     DIAGNOSTIC_ALLOWED_PHASES,
     DIAGNOSTIC_POLICY_ID_PREFIX,
-    DIAGNOSTIC_ALLOWED_PHASES as _POLICY_DIAGNOSTIC_ALLOWED_PHASES,
-    DIAGNOSTIC_POLICY_ID_PREFIX,
     DIAGNOSTIC_POLICY_IDS,
     DeclaredPolicy,
-    policy_id_is_diagnostic,
-    V2PolicyError,
     policy_id_is_diagnostic,
 )
 from .schedule import CoordinateLaw, DepthSchedule, make_cycle, make_depth_schedule
 
 __all__ = [
-    "V2ConfigError", "V2_CONFIG_SCHEMA_VERSION", "OMIT", "RUN_PHASES", "ARM_ROLES",
-    "A2_RESOURCE_COMPONENTS", "MASK_LOAD_UNITS", "RETRY_SCOPES", "CALIBRATION_SOURCE_KINDS",
-    "FORBIDDEN_SOURCE_KINDS", "FORBIDDEN_CALIBRATION_SOURCE_IDS",
-    "V2_HOTSPOT_CALIBRATION_SCHEMA_VERSION", "HOTSPOT_GATE_KIND", "HOTSPOT_WINDOW_DOMAIN",
-    "CALIBRATION_SCOPES", "INCREMENTAL_REFERENCE_KIND", "INCREMENTAL_REFERENCE_LABEL",
-    "DIAGNOSTIC_VALUE_PREFIX", "DIAGNOSTIC_ALLOWED_PHASES", "CONTENT_BINDINGS",
-    "HotspotCalibrationArtifact", "CalibratedScalar", "calibration_source_ref",
-    "V2_POLICY_CALIBRATION_SCHEMA_VERSION", "POLICY_MEASUREMENT_KINDS",
-    "PolicyCalibrationArtifact", "PolicyCalibratedScalar", "policy_calibration_source_ref",
+    "A2_RESOURCE_COMPONENTS",
+    "ARM_ROLES",
+    "CALIBRATION_SCOPES",
+    "CALIBRATION_SOURCE_KINDS",
+    "CONTENT_BINDINGS",
+    "DIAGNOSTIC_ALLOWED_PHASES",
+    "DIAGNOSTIC_VALUE_PREFIX",
+    "FORBIDDEN_CALIBRATION_SOURCE_IDS",
+    "FORBIDDEN_SOURCE_KINDS",
+    "HOTSPOT_GATE_KIND",
+    "HOTSPOT_WINDOW_DOMAIN",
+    "INCREMENTAL_REFERENCE_KIND",
+    "INCREMENTAL_REFERENCE_LABEL",
+    "MASK_LOAD_UNITS",
+    "OMIT",
+    "POLICY_MEASUREMENT_KINDS",
+    "RETRY_SCOPES",
+    "RUN_PHASES",
+    "V2_CONFIG_SCHEMA_VERSION",
+    "V2_HOTSPOT_CALIBRATION_SCHEMA_VERSION",
+    "V2_POLICY_CALIBRATION_SCHEMA_VERSION",
+    "CalibratedScalar",
+    "ContentIdentity",
+    "DepthSchedulePoint",
+    "HotspotCalibrationArtifact",
+    "PolicyCalibratedScalar",
+    "PolicyCalibrationArtifact",
+    "V2ArmConfig",
+    "V2CapsConfig",
+    "V2Config",
+    "V2ConfigError",
+    "V2HeadConfig",
     "V2HeadDirectedConfig",
-    "ContentIdentity", "V2IdentityConfig",
-    "V2SubstrateConfig", "V2ArmConfig", "DepthSchedulePoint", "V2ScheduleConfig",
-    "V2ProjectionConfig", "V2HeadConfig", "V2SafetyConfig", "V2CapsConfig", "V2Config",
-    "load_v2_config", "default_content_bindings",
+    "V2IdentityConfig",
+    "V2ProjectionConfig",
+    "V2SafetyConfig",
+    "V2ScheduleConfig",
+    "V2SubstrateConfig",
+    "calibration_source_ref",
+    "default_content_bindings",
+    "load_v2_config",
+    "policy_calibration_source_ref",
 ]
 
 V2_CONFIG_SCHEMA_VERSION = "v2cfg-1"
@@ -126,8 +157,7 @@ DIAGNOSTIC_VALUE_PREFIX = DIAGNOSTIC_POLICY_ID_PREFIX
 
 #: Likewise owned by ``fusion_v2.policy``: PLAN §2.5 admits a diagnostic policy for "deterministic
 #: tests and the first state-transition diagnostic" only, and widening it is an authority edit in
-#: code, never a config key that self-authorizes.
-DIAGNOSTIC_ALLOWED_PHASES = _POLICY_DIAGNOSTIC_ALLOWED_PHASES
+#: code, never a config key that self-authorizes (re-exported via ``__all__``).
 
 
 def default_content_bindings() -> dict[str, str]:
@@ -183,7 +213,7 @@ def _float(node: Mapping[str, Any], key: str, path: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise V2ConfigError(f"{path}.{key} must be a real number, got {type(value).__name__}")
     out = float(value)
-    if out != out or out in (float("inf"), float("-inf")):
+    if not math.isfinite(out):
         raise V2ConfigError(f"{path}.{key} must be finite, got {out!r}")
     return out
 
@@ -315,7 +345,7 @@ class CalibratedScalar:
         if isinstance(self.value, bool) or not isinstance(self.value, (int, float)):
             raise V2ConfigError("calibrated value must be a real number")
         value = float(self.value)
-        if value != value or value in (float("inf"), float("-inf")) or value < 0.0:
+        if not math.isfinite(value) or value < 0.0:
             raise V2ConfigError(f"calibrated value must be finite and >= 0, got {self.value!r}")
         object.__setattr__(self, "value", value)
         if isinstance(self.unit, bool) or not isinstance(self.unit, str) or not self.unit.strip():
@@ -565,7 +595,7 @@ class PolicyCalibratedScalar:
         if isinstance(self.value, bool) or not isinstance(self.value, (int, float)):
             raise V2ConfigError("calibrated value must be a real number")
         value = float(self.value)
-        if value != value or value in (float("inf"), float("-inf")) or value < 0.0:
+        if not math.isfinite(value) or value < 0.0:
             raise V2ConfigError(f"calibrated value must be finite and >= 0, got {self.value!r}")
         object.__setattr__(self, "value", value)
         for name in ("unit", "source_id"):

@@ -11,10 +11,10 @@ from __future__ import annotations
 
 import math
 import shlex
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Mapping
-
+from typing import Any
 
 METRIC_GLOBAL_CA_RMSD = "global_ca_rmsd"
 METRIC_PLDDT = "plddt"

@@ -16,7 +16,8 @@
 """Protein data type."""
 import dataclasses
 import io
-from typing import Any, Mapping, Optional
+from collections.abc import Mapping
+from typing import Any
 
 import numpy as np
 from Bio.PDB import PDBParser
@@ -69,7 +70,7 @@ class Protein:
             )
 
 
-def from_pdb_string(pdb_str: str, chain_id: Optional[str] = None) -> Protein:
+def from_pdb_string(pdb_str: str, chain_id: str | None = None) -> Protein:
     """Takes a PDB string and constructs a Protein object.
 
     WARNING: All non-standard residue types will be converted into UNK. All
@@ -276,7 +277,7 @@ def ideal_atom_mask(prot: Protein) -> np.ndarray:
 def from_prediction(
     features: FeatureDict,
     result: ModelOutput,
-    b_factors: Optional[np.ndarray] = None,
+    b_factors: np.ndarray | None = None,
     remove_leading_feature_dimension: bool = True,
 ) -> Protein:
     """Assembles a protein from a prediction.

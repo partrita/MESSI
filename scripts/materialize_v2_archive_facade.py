@@ -14,10 +14,10 @@ import hashlib
 import json
 import math
 import sys
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Iterable, Sequence
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -26,22 +26,22 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from inverse_folding.reference_flow.fusion.state import sequence_md5  # noqa: E402
-from inverse_folding.reference_flow.fusion.v1_alloc import (  # noqa: E402
+from inverse_folding.reference_flow.constraints import load_constraint_manifest
+from inverse_folding.reference_flow.fusion.state import sequence_md5
+from inverse_folding.reference_flow.fusion.v1_alloc import (
     HeadInputError,
     validate_complete_aa20,
 )
-from inverse_folding.reference_flow.constraints import load_constraint_manifest  # noqa: E402
-from inverse_folding.reference_flow.fusion_v2.errors import V2Error  # noqa: E402
-from inverse_folding.reference_flow.fusion_v2.identity import (  # noqa: E402
+from inverse_folding.reference_flow.fusion_v2.errors import V2Error
+from inverse_folding.reference_flow.fusion_v2.identity import (
     HeadEvaluatorIdentity,
     window_grid_digest,
 )
-from inverse_folding.reference_flow.official_selection import (  # noqa: E402
+from inverse_folding.reference_flow.official_selection import (
     two_axis_pareto_order,
 )
 
-__all__ = ["V2FacadeError", "materialize_archive_facade", "main"]
+__all__ = ["V2FacadeError", "main", "materialize_archive_facade"]
 
 
 class V2FacadeError(V2Error):
@@ -754,8 +754,8 @@ def _candidate_rows(
     eligible_mask = (
         joined["feasibility_level_archive"].eq("definitive")
         & joined["feasibility_level_endpoint"].eq("definitive")
-        & joined["structure_evaluated"].eq(True)  # noqa: E712 - exact evidence value
-        & joined["structure_feasible"].eq(True)  # noqa: E712 - exact evidence value
+        & joined["structure_evaluated"].eq(True)
+        & joined["structure_feasible"].eq(True)
     )
     candidates = joined.loc[eligible_mask].copy()
     terminal_validated: list[bool] = []

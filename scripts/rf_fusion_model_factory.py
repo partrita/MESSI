@@ -3,15 +3,25 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    import numpy as np
+    import torch
+
+    from inverse_folding.reference_flow.fusion.v1_records import (
+        ConditioningDigest,
+        PartialRootPayload,
+    )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-__all__ = ["PreparedModel", "ModelSeams", "build_model_factory"]
+__all__ = ["ModelSeams", "PreparedModel", "build_model_factory"]
 
 
 @dataclass(frozen=True)
@@ -31,7 +41,7 @@ class ModelSeams:
     read_test_rows: Callable[..., Any] | None = None
     load_constraint_manifest: Callable[..., Any] | None = None
 
-    def resolved(self) -> "ModelSeams":
+    def resolved(self) -> ModelSeams:
         """Fill every unset seam with its real implementation, importing torch only now."""
         if all(getattr(self, f.name) is not None for f in self.__dataclass_fields__.values()):
             return self
@@ -211,7 +221,11 @@ def payload_from_checkpoint(
     the unresolved count comes from the checkpoint's recomputed maturity (and is re-derived from
     x_t by the payload itself), and the content-addressed conditioning digests are attached."""
     import numpy as np
-    from inverse_folding.reference_flow.fusion.v1_records import SCHEMA_VERSION, PartialRootPayload
+
+    from inverse_folding.reference_flow.fusion.v1_records import (
+        SCHEMA_VERSION,
+        PartialRootPayload,
+    )
 
     x_t = tuple(int(v) for v in checkpoint.x_t.detach().cpu().tolist())
     scores = tuple(float(v) for v in np.asarray(checkpoint.scores, dtype=float).tolist())
@@ -230,7 +244,7 @@ def payload_from_checkpoint(
     )
 
 
-def decode_tokens_to_aa(tokens: "torch.Tensor", id_to_aa: Mapping[int, str]) -> str:
+def decode_tokens_to_aa(tokens: torch.Tensor, id_to_aa: Mapping[int, str]) -> str:
     """Decode a complete token vector to an AA string via the tokenizer's id->AA map."""
     return "".join(id_to_aa[int(t)] for t in tokens.detach().cpu().tolist())
 
@@ -240,10 +254,13 @@ def resume_from_payload(payload: PartialRootPayload, *, fork_seed: int):
     completer can materialize a fresh completion of that exact root under ``fork_seed``. The
     ``state_hash`` is computed with the sampler's own ``_replay_state_hash`` so the resume passes
     the tamper gate before any denoiser call (PLAN §2.6)."""
-    from inverse_folding.reference_flow.sampler import ContinuationResume, _replay_state_hash
-
-    import torch
     import numpy as np
+    import torch
+
+    from inverse_folding.reference_flow.sampler import (
+        ContinuationResume,
+        _replay_state_hash,
+    )
 
     x_t = torch.tensor(payload.x_t, dtype=torch.long)
     scores = np.asarray(payload.scores, dtype=np.float64)
@@ -312,7 +329,7 @@ def assert_null_amplification(rf_config) -> None:
         )
 
 
-def null_h_values(sequence_length: int) -> "np.ndarray":
+def null_h_values(sequence_length: int) -> np.ndarray:
     """The h vector handed to the sampler under the frozen null kernel: ZEROS.
 
     Matching the C1 driver's absent-h convention, ``amplification_factor(constant_one, h)`` returns

@@ -8,9 +8,9 @@ from pathlib import Path
 import pandas as pd
 
 from epitope_head.data.cv_folds import (
-    partition_clusters_into_folds,
-    build_fold_splits,
     assert_no_cluster_leakage,
+    build_fold_splits,
+    partition_clusters_into_folds,
 )
 
 

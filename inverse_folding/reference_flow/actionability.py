@@ -23,10 +23,9 @@ All residue arrays are shape ``(L,)`` with ``L`` the protein length.
 from __future__ import annotations
 
 import math
-from typing import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 
 import numpy as np
-
 
 # ---------------------------------------------------------------------------
 # Projection + SoftOR (Task B1)

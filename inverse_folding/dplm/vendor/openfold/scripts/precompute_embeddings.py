@@ -4,12 +4,11 @@ import logging
 import os
 
 import torch
-
 from openfold.data import parsers
 
 logging.basicConfig(level=logging.INFO)
 
-class SequenceDataset(object):
+class SequenceDataset:
     def __init__(self, labels, sequences) -> None:
         self.labels = labels
         self.sequences = sequences
@@ -64,7 +63,7 @@ class EmbeddingGenerator:
     def __init__(self,
         toks_per_batch: int = 4096,
         truncate: bool = True,
-        use_local_esm: str = None,
+        use_local_esm: str | None = None,
         nogpu: bool = False,
     ):
         self.toks_per_batch = toks_per_batch
@@ -88,7 +87,7 @@ class EmbeddingGenerator:
         for f in os.listdir(fasta_dir):
             f_name, ext = os.path.splitext(f)
             if ext != '.fasta' and ext != '.fa':
-                logging.warning(f"Ignoring non-FASTA file: {f}")
+                logging.warning(f"Ignoring non-FASTA file: {f}")  # noqa: LOG015
                 continue
             with open(os.path.join(fasta_dir, f), 'r') as infile:
                 seq = infile.readlines()[1].strip()
@@ -116,12 +115,12 @@ class EmbeddingGenerator:
         data_loader = torch.utils.data.DataLoader(
             dataset, collate_fn=self.alphabet.get_batch_converter(), batch_sampler=batches
         )
-        logging.info("Loaded all sequences")
+        logging.info("Loaded all sequences")  # noqa: LOG015
         repr_layers = [33]
 
         with torch.no_grad():
             for batch_idx, (labels, strs, toks) in enumerate(data_loader):
-                logging.info(f"Processing {batch_idx + 1} of {len(batches)} batches ({toks.size(0)} sequences)")
+                logging.info(f"Processing {batch_idx + 1} of {len(batches)} batches ({toks.size(0)} sequences)")  # noqa: LOG015
                 if torch.cuda.is_available() and not self.nogpu:
                     toks = toks.to(device="cuda", non_blocking=True)
                 
@@ -149,13 +148,13 @@ class EmbeddingGenerator:
         
 
 def main(args):
-    logging.info("Loading the model...")
+    logging.info("Loading the model...")  # noqa: LOG015
     embedding_generator = EmbeddingGenerator(
         args.toks_per_batch,
         args.truncate,
         args.use_local_esm,
         args.nogpu)
-    logging.info("Loading the sequences and running the inference...")
+    logging.info("Loading the sequences and running the inference...")  # noqa: LOG015
     temp_fasta_file = embedding_generator.parse_sequences(
         args.fasta_dir,
         args.output_dir
@@ -165,7 +164,7 @@ def main(args):
         args.output_dir
     )
     os.remove(temp_fasta_file)
-    logging.info("Completed.")
+    logging.info("Completed.")  # noqa: LOG015
 
 
 if __name__ == "__main__":

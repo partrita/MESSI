@@ -31,7 +31,6 @@ import math
 import os
 import sys
 import time
-from typing import Optional
 
 import torch
 
@@ -87,7 +86,7 @@ def parse_args() -> argparse.Namespace:
 
 def _read_fasta(path: str) -> dict[str, str]:
     seqs: dict[str, str] = {}
-    cid: Optional[str] = None
+    cid: str | None = None
     cseq: list[str] = []
     with open(path) as f:
         for line in f:

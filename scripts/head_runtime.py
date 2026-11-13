@@ -1,7 +1,9 @@
 """Shared Head configuration identity and production scorer construction."""
 from __future__ import annotations
+
 import hashlib
 from pathlib import Path
+
 
 def _compute_head_config_hash(config_dir: Path) -> str:
     """SHA-256 over the three head config YAMLs in order (model/ablation/inference)."""
@@ -34,9 +36,8 @@ def build_head_scorer(
         load_inference_config,
         load_model_config,
     )
-    from scripts.score_head import build_predictor
-
     from inverse_folding.reference_flow.head_scoring import OnlineHeadScorer
+    from scripts.score_head import build_predictor
 
     predictor = build_predictor(
         model_cfg=load_model_config(setup.head_config_dir / "model.yaml"),
@@ -68,7 +69,9 @@ def build_head_scorer(
 def load_epitope_predictor(config_dir: str, checkpoint_path: str, variant_id: str, device: str):
     """Use the canonical checkpoint constructor for benchmark and inference paths."""
     from epitope_head.configs import (
-        load_ablation_config, load_inference_config, load_model_config,
+        load_ablation_config,
+        load_inference_config,
+        load_model_config,
     )
     from scripts.score_head import build_predictor
 

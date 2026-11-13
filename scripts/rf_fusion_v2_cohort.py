@@ -17,17 +17,23 @@ from __future__ import annotations
 import dataclasses
 import functools
 import sys
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from inverse_folding.reference_flow.fusion_v2.errors import V2Error  # noqa: E402
+from inverse_folding.reference_flow.fusion_v2.errors import V2Error
 
-__all__ = ["V2CohortError", "ShardInputs", "assert_runtime_substrate_matches",
-           "build_depth_plan", "run_v2_shard"]
+__all__ = [
+    "ShardInputs",
+    "V2CohortError",
+    "assert_runtime_substrate_matches",
+    "build_depth_plan",
+    "run_v2_shard",
+]
 
 #: Cycle arguments the RUN owns, never the oracle factory.  ``feedback_enabled`` is the arm
 #: identity and ``cost_meter`` is the compute journal: a factory able to set either could make a
@@ -289,7 +295,7 @@ def _terminal_records(outcome, admissions: Mapping[str, Any]) -> list[dict]:
             continue
         structure = archive.structure_outcome(endpoint_id)
         verdict = getattr(admissions.get(endpoint_id), "verdict", None)
-        from inverse_folding.reference_flow.fusion_v2.safety import (  # noqa: PLC0415
+        from inverse_folding.reference_flow.fusion_v2.safety import (
             IncrementalInapplicable,
         )
 
@@ -348,7 +354,9 @@ def _ledger_rows(journal_path: Path) -> list[dict]:
     attempt that was opened and never closed is reported as ``unknown_after_start`` (PLAN §5.4)
     instead of vanishing from the run's own account of what it burned.
     """
-    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import events_from_journal
+    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (
+        events_from_journal,
+    )
 
     if not journal_path.exists():
         return []
@@ -457,7 +465,7 @@ def run_v2_shard(
     plan = build_depth_plan(config)
     # Passed only when a Dual overlay was actually resolved, so the long-standing three-argument
     # factory surface is untouched for every legacy run and every injected fake.
-    factory_kwargs = dict(protein_id=protein_id, config=config, inputs=inputs)
+    factory_kwargs = {"protein_id": protein_id, "config": config, "inputs": inputs}
     if dual is not None:
         factory_kwargs["dual"] = dual
     oracles = oracles_factory(**factory_kwargs)
@@ -529,12 +537,12 @@ def run_v2_shard(
         endpoint_rows.extend(complete_endpoint_rows(by_depth[depth], depth=depth))
 
     events = [
-        dict(source=record.cycle.source, endpoint=record.cycle.selected_endpoint,
-             projected=record.cycle.projected, propagated=record.cycle.propagated,
-             policy=_policy_identity(record, config=config),
-             policy_evidence=getattr(record.cycle, "policy_evidence", None),
-             outcome=record.cycle.outcome.value, detail=record.cycle.detail,
-             pair_id=None, arm_slot=None, treatment_identity=config.arm.arm_role)
+        {"source": record.cycle.source, "endpoint": record.cycle.selected_endpoint,
+             "projected": record.cycle.projected, "propagated": record.cycle.propagated,
+             "policy": _policy_identity(record, config=config),
+             "policy_evidence": getattr(record.cycle, "policy_evidence", None),
+             "outcome": record.cycle.outcome.value, "detail": record.cycle.detail,
+             "pair_id": None, "arm_slot": None, "treatment_identity": config.arm.arm_role}
         for record in outcome.cycles
     ]
     admissions = _admissions(outcome)
@@ -658,7 +666,7 @@ MECHANISM_SEED_NAMESPACE = "v2_mechanism_source"
 class _ArmRecord:
     """The two fields ``_endpoints_by_depth`` / ``_partial_states`` / ``_admissions`` read."""
 
-    __slots__ = ("depth", "cycle")
+    __slots__ = ("cycle", "depth")
 
     def __init__(self, depth: int, cycle: Any) -> None:
         self.depth, self.cycle = int(depth), cycle
@@ -672,7 +680,7 @@ class _ArmOutcome:
     parallel implementation is how two tables that claim the same thing start to disagree.
     """
 
-    __slots__ = ("cycles", "archive")
+    __slots__ = ("archive", "cycles")
 
     def __init__(self, cycle: Any) -> None:
         self.cycles = (_ArmRecord(0, cycle),)
@@ -723,7 +731,7 @@ def _last_improving_depth(by_depth, evidence_by_endpoint) -> int | None:
     best_by_depth: dict[int, float] = {}
     for depth, endpoints in by_depth.items():
         values = [float(evidence_by_endpoint[key].risk.value) for key in
-                  (str(getattr(e, "endpoint_id")) for e in endpoints)
+                  (str(e.endpoint_id) for e in endpoints)
                   if key in evidence_by_endpoint]
         if values:
             best_by_depth[int(depth)] = min(values)
@@ -762,17 +770,6 @@ def run_v2_mechanism_shard(
     produced no scorable contrast still emits a row saying why: a silently absent prefix is
     indistinguishable from one that was never attempted.
     """
-    from scripts.rf_fusion_v2_artifacts import (
-        MECHANISM_CONTRAST_VIEWS,
-        POLICY_QUALIFICATION_CONTRAST_VIEWS,
-        a2_view_rows,
-        archive_rows,
-        complete_endpoint_rows,
-        feedback_event_rows,
-        mechanism_contrast_rows,
-        partial_state_rows,
-        structure_evaluation_rows,
-    )
     from inverse_folding.reference_flow.fusion_v2.identity import (
         canonical_digest,
         make_transition_id,
@@ -785,6 +782,17 @@ def run_v2_mechanism_shard(
     from inverse_folding.reference_flow.fusion_v2_runtime.paired import (
         run_mechanism_views,
         run_policy_qualification_view,
+    )
+    from scripts.rf_fusion_v2_artifacts import (
+        MECHANISM_CONTRAST_VIEWS,
+        POLICY_QUALIFICATION_CONTRAST_VIEWS,
+        a2_view_rows,
+        archive_rows,
+        complete_endpoint_rows,
+        feedback_event_rows,
+        mechanism_contrast_rows,
+        partial_state_rows,
+        structure_evaluation_rows,
     )
     from scripts.rf_fusion_v2_oracles import build_source_geometry_control
 
@@ -901,10 +909,10 @@ def run_v2_mechanism_shard(
             n_descendant_lookaheads=int(point.n_lookaheads),
         )
 
-        common = dict(
-            protein_id=str(protein_id), source_index=prefix_index, source_seed=source_seed,
-            source_state_id=None, source_unresolved_editable=None,
-        )
+        common = {
+            "protein_id": str(protein_id), "source_index": prefix_index, "source_seed": source_seed,
+            "source_state_id": None, "source_unresolved_editable": None,
+        }
         # One transition per PREFIX: every view and every arm of this prefix acts on the same
         # coordinate, and giving them separate ids would claim they were separate transitions.
         # This is why `feedback_events` keys on arm_slot/treatment_identity as well.
@@ -994,14 +1002,14 @@ def run_v2_mechanism_shard(
                     structure_rows_by_id.setdefault(row["endpoint_id"], row)
                 if arm.cycle.a2_view is not None:
                     a2_views.append(arm.cycle.a2_view)
-                events.append(dict(
-                    source=arm.cycle.source, endpoint=arm.cycle.selected_endpoint,
-                    projected=arm.cycle.projected, propagated=arm.cycle.propagated,
-                    policy=_policy_identity(_ArmRecord(0, arm.cycle), config=config),
-                    policy_evidence=getattr(arm.cycle, "policy_evidence", None),
-                    outcome=arm.cycle.outcome.value, detail=arm.cycle.detail,
-                    pair_id=context.pair_id, arm_slot=arm.arm_slot,
-                    treatment_identity=arm.treatment_identity))
+                events.append({
+                    "source": arm.cycle.source, "endpoint": arm.cycle.selected_endpoint,
+                    "projected": arm.cycle.projected, "propagated": arm.cycle.propagated,
+                    "policy": _policy_identity(_ArmRecord(0, arm.cycle), config=config),
+                    "policy_evidence": getattr(arm.cycle, "policy_evidence", None),
+                    "outcome": arm.cycle.outcome.value, "detail": arm.cycle.detail,
+                    "pair_id": context.pair_id, "arm_slot": arm.arm_slot,
+                    "treatment_identity": arm.treatment_identity})
 
     ledger_events = _ledger_rows(journal_path)
     verdict = check_caps(

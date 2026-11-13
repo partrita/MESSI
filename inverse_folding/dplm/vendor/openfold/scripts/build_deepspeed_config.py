@@ -15,7 +15,6 @@
 import argparse
 import json
 
-
 parser = argparse.ArgumentParser(description='''Outputs a DeepSpeed 
                                                 configuration file to 
                                                 stdout''')

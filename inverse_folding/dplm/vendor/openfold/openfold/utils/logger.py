@@ -11,15 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 import operator
+import os
 import time
 
 import dllogger as logger
-from dllogger import JSONStreamBackend, StdOutBackend, Verbosity
 import numpy as np
+from dllogger import JSONStreamBackend, StdOutBackend, Verbosity
 from pytorch_lightning import Callback
-import torch.cuda.profiler as profiler
+from torch.cuda import profiler
 
 
 def is_main_process():
@@ -55,8 +55,8 @@ class PerformanceLoggingCallback(Callback):
         throughput_imgps = _round3(self.global_batch_size / np.mean(deltas))
         timestamps_ms = 1000 * deltas
         stats = {
-            f"throughput": throughput_imgps,
-            f"latency_mean": _round3(timestamps_ms.mean()),
+            "throughput": throughput_imgps,
+            "latency_mean": _round3(timestamps_ms.mean()),
         }
         for level in [90, 95, 99]:
             stats.update({f"latency_{level}": _round3(np.percentile(timestamps_ms, level))})

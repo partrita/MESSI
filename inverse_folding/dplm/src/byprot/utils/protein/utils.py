@@ -15,7 +15,6 @@ import glob
 import logging
 import math
 import os
-import random
 import re
 import shutil
 import subprocess
@@ -29,7 +28,6 @@ import torch.distributed as dist
 from biotite.sequence.io import fasta
 from openfold.np import residue_constants
 from openfold.utils import rigid_utils
-from openfold.utils import rigid_utils as ru
 from openfold.utils.superimposition import superimpose
 from pytorch_lightning.utilities.rank_zero import rank_zero_only
 from torch.nn import functional as F
@@ -126,7 +124,7 @@ def run_easy_cluster(designable_dir, output_dir):
     process = subprocess.Popen(
         easy_cluster_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
-    stdout, stderr = process.communicate()
+    stdout, _stderr = process.communicate()
     # print(stdout, stderr)
     del stdout  # We don't actually need the stdout, we will read the number of clusters from the output files
     rep_seq_fasta = fasta.FastaFile.read(
@@ -169,7 +167,7 @@ def calculate_diversity(
 
 
 def add_diversity_metrics(designable_dir, designable_csv, designable_csv_path):
-    designable_txt = os.path.join(designable_dir, "designable.txt")
+    os.path.join(designable_dir, "designable.txt")
     clusters = run_easy_cluster(designable_dir, designable_dir)
     designable_csv["Clusters"] = clusters
     designable_csv.to_csv(designable_csv_path, index=False)
@@ -242,7 +240,7 @@ def calculate_pmpnn_designability(
             >= 0.5
         )
         designable_csv.to_csv(designable_csv_path, index=False)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         # TODO i think it breaks when one process gets here first
         print(f"calculate pmpnn designability didnt work: {e}")
 
@@ -388,8 +386,6 @@ def get_dataset_cfg(cfg):
         raise ValueError(f"Unrecognized dataset {cfg.data.dataset}")
 
 
-import os
-import re
 
 import numpy as np
 
@@ -804,7 +800,7 @@ def calc_mdtraj_metrics(pdb_path):
         pdb_ss_percent = pdb_helix_percent + pdb_strand_percent
         pdb_rg = md.compute_rg(traj)[0]
     except IndexError as e:
-        print("Error in calc_mdtraj_metrics: {}".format(e))
+        print(f"Error in calc_mdtraj_metrics: {e}")
         pdb_ss_percent = 0.0
         pdb_coil_percent = 0.0
         pdb_helix_percent = 0.0

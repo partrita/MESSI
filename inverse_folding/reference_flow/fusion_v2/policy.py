@@ -35,7 +35,6 @@ from typing import Any, Protocol, runtime_checkable
 from .errors import V2Error
 from .evidence import (
     AlignedWindowEvidence,
-    LeaveOneOutContribution,
     V2EvidenceError,
     build_window_evidence,
     score_leave_one_out,
@@ -43,8 +42,8 @@ from .evidence import (
 from .identity import HeadEvaluatorIdentity, ProjectionPolicyIdentity, require_digest
 from .reward import (
     DEPTH0_BOOTSTRAP_RULE,
-    DonorGateVerdict,
     INCUMBENT_UPDATE_LAWS,
+    DonorGateVerdict,
     LineageIncumbent,
     advance_incumbent,
     bind_incumbent_from_endpoint,
@@ -64,36 +63,36 @@ from .schedule import (
 from .state import CompleteEndpoint, LivePartialState
 
 __all__ = [
-    "V2PolicyError",
-    "SupportReason",
+    "DIAGNOSTIC_ALLOWED_PHASES",
+    "DIAGNOSTIC_POLICY_IDS",
+    "DIAGNOSTIC_POLICY_ID_PREFIX",
+    "EXPLICIT_PROBE_POLICY_ID",
+    "HEAD_DIRECTED_CAPPED_POLICY_ID",
+    "REOPEN_COUNT_LAW",
+    "REOPEN_PRIORITY_LAW",
+    "SOURCE_GEOMETRY_CONTROL_POLICY_ID",
+    "STATE_DERIVED_PROBE_POLICY_ID",
+    "WRITE_WINDOW_RULE",
+    "DeclaredPolicy",
+    "ExplicitProbePolicy",
+    "FeedbackSupportPolicy",
+    "HeadDirectedCalibration",
+    "HeadDirectedCappedPolicy",
+    "HeadDirectedDecisionEvidence",
     "PolicyDecision",
     "PolicyRejection",
     "PolicyResult",
     "PolicyRuntime",
-    "FeedbackSupportPolicy",
-    "ExplicitProbePolicy",
-    "EXPLICIT_PROBE_POLICY_ID",
-    "STATE_DERIVED_PROBE_POLICY_ID",
-    "HEAD_DIRECTED_CAPPED_POLICY_ID",
-    "SOURCE_GEOMETRY_CONTROL_POLICY_ID",
-    "StateDerivedProbePolicy",
-    "HeadDirectedCappedPolicy",
-    "SourceGeometryControlPolicy",
-    "HeadDirectedCalibration",
-    "SourceView",
-    "HeadDirectedDecisionEvidence",
-    "WriteCandidateEvidence",
     "ReopenCandidateEvidence",
+    "SourceGeometryControlPolicy",
+    "SourceView",
     "StallReason",
-    "REOPEN_PRIORITY_LAW",
-    "REOPEN_COUNT_LAW",
-    "WRITE_WINDOW_RULE",
-    "DIAGNOSTIC_POLICY_ID_PREFIX",
-    "DIAGNOSTIC_POLICY_IDS",
-    "DIAGNOSTIC_ALLOWED_PHASES",
-    "policy_id_is_diagnostic",
+    "StateDerivedProbePolicy",
+    "SupportReason",
+    "V2PolicyError",
+    "WriteCandidateEvidence",
     "assert_identity_vocabulary",
-    "DeclaredPolicy",
+    "policy_id_is_diagnostic",
 ]
 
 
@@ -836,7 +835,7 @@ class SourceView:
         return -1 if commit is None else int(commit)
 
     @classmethod
-    def of(cls, source: LivePartialState) -> "SourceView":
+    def of(cls, source: LivePartialState) -> SourceView:
         editable = tuple(int(p) for p in source.editable_positions)
         masked = tuple(p for p in editable if source.tokens[p] == source.mask_token_id)
         resolved = tuple(p for p in editable if source.tokens[p] != source.mask_token_id)
@@ -934,7 +933,7 @@ def _finite_number(value: Any, name: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise V2PolicyError(f"{name} must be a real number, got {type(value).__name__}")
     out = float(value)
-    if out != out or out in (float("inf"), float("-inf")):
+    if not math.isfinite(out):
         raise V2PolicyError(f"{name} must be finite, got {value!r}")
     return out
 
@@ -1284,7 +1283,7 @@ class HeadDirectedCappedPolicy:
             is_diagnostic_only=False,
         )
 
-    def with_dual_donor_scores(self, scores: Mapping[str, Any]) -> "HeadDirectedCappedPolicy":
+    def with_dual_donor_scores(self, scores: Mapping[str, Any]) -> HeadDirectedCappedPolicy:
         """Rebind role B's verdicts on the pool this cycle is about to decide over.
 
         The ladder advances the policy one depth at a time and the advance CLEARS the donor score
@@ -1304,7 +1303,7 @@ class HeadDirectedCappedPolicy:
 
     def advance_lineage_incumbent(
         self, *, donor: Any, verdict: DonorGateVerdict | None, accepted_at_depth: int,
-    ) -> "HeadDirectedCappedPolicy":
+    ) -> HeadDirectedCappedPolicy:
         """Return the policy for the next rung after adopting one accepted donor.
 
         The policy is immutable, so replacing its incumbent makes the depth boundary explicit and
@@ -1346,7 +1345,7 @@ class HeadDirectedCappedPolicy:
         return self.select(source_view=SourceView.of(source), donor=endpoint,
                            r_step=int(coordinates.r_step), runtime=runtime)
 
-    def select(self, *, source_view: "SourceView", donor: Any, r_step: int,
+    def select(self, *, source_view: SourceView, donor: Any, r_step: int,
                runtime: PolicyRuntime | None = None) -> PolicyResult:
         """The law itself, over the FACTS it reads rather than over a live state object.
 
@@ -1376,25 +1375,25 @@ class HeadDirectedCappedPolicy:
         dual_block: dict[str, Any] = {}
 
         def evidence(**over: Any) -> HeadDirectedDecisionEvidence:
-            base = dict(
-                policy_id=HEAD_DIRECTED_CAPPED_POLICY_ID, stall_reason=None, donor_gate=None,
-                incumbent_id=(None if bootstrap else self.incumbent.incumbent_id),
-                incumbent_sequence_md5=(None if bootstrap else self.incumbent.sequence_md5),
-                safety_reference_sequence_md5=self.incumbent.safety_reference_sequence_md5,
-                donor_endpoint_id=str(endpoint.endpoint_id),
-                donor_sequence_md5=str(endpoint.sequence_md5),
-                incumbent_window_evidence_digest=None, safety_window_evidence_digest=None,
-                calibration=self.calibration.canonical_payload(),
-                n_editable=n_editable, n_unresolved_source=len(masked), u_target=None,
-                band_center_rule=self.calibration.band_center_rule.value,
-                write_cap=self._write_cap(n_editable), n_legal_write_candidates=0,
-                n_positive_contributions=0, m_band_min=None, m_band_max=None,
-                realized_writes=0, required_reopen=None, realized_reopen=0,
-                n_legal_reopen_candidates=len(resolved), write_candidates=(),
-                reopen_candidates=(), head_calls=0, head_evidence_consulted=True,
-                reward_gate_kind=(DEPTH0_BOOTSTRAP_RULE if bootstrap else "strict_improvement"),
-                attribution_reference_sequence_md5=self.incumbent.sequence_md5,
-            )
+            base = {
+                "policy_id": HEAD_DIRECTED_CAPPED_POLICY_ID, "stall_reason": None, "donor_gate": None,
+                "incumbent_id": (None if bootstrap else self.incumbent.incumbent_id),
+                "incumbent_sequence_md5": (None if bootstrap else self.incumbent.sequence_md5),
+                "safety_reference_sequence_md5": self.incumbent.safety_reference_sequence_md5,
+                "donor_endpoint_id": str(endpoint.endpoint_id),
+                "donor_sequence_md5": str(endpoint.sequence_md5),
+                "incumbent_window_evidence_digest": None, "safety_window_evidence_digest": None,
+                "calibration": self.calibration.canonical_payload(),
+                "n_editable": n_editable, "n_unresolved_source": len(masked), "u_target": None,
+                "band_center_rule": self.calibration.band_center_rule.value,
+                "write_cap": self._write_cap(n_editable), "n_legal_write_candidates": 0,
+                "n_positive_contributions": 0, "m_band_min": None, "m_band_max": None,
+                "realized_writes": 0, "required_reopen": None, "realized_reopen": 0,
+                "n_legal_reopen_candidates": len(resolved), "write_candidates": (),
+                "reopen_candidates": (), "head_calls": 0, "head_evidence_consulted": True,
+                "reward_gate_kind": (DEPTH0_BOOTSTRAP_RULE if bootstrap else "strict_improvement"),
+                "attribution_reference_sequence_md5": self.incumbent.sequence_md5,
+            }
             base.update(dual_block)
             base.update(over)
             return HeadDirectedDecisionEvidence(**base)
@@ -1603,13 +1602,13 @@ class HeadDirectedCappedPolicy:
                 write_candidates=tuple(WriteCandidateEvidence(**row) for row in rows.values()),
             )
 
-        common = dict(
-            donor_gate=gate,
-            incumbent_window_evidence_digest=incumbent_windows.evidence_digest,
-            safety_window_evidence_digest=safety_windows.evidence_digest,
-            n_legal_write_candidates=len(candidates), n_positive_contributions=len(positive),
-            u_target=centre.u_target, head_calls=len(contributions),
-        )
+        common = {
+            "donor_gate": gate,
+            "incumbent_window_evidence_digest": incumbent_windows.evidence_digest,
+            "safety_window_evidence_digest": safety_windows.evidence_digest,
+            "n_legal_write_candidates": len(candidates), "n_positive_contributions": len(positive),
+            "u_target": centre.u_target, "head_calls": len(contributions),
+        }
         band_min, band_max = _band_compatible_write_interval(
             u_target=centre.u_target, n_unresolved_source=len(masked), n_editable=n_editable,
             n_legal_reopen=len(resolved),
@@ -1733,8 +1732,8 @@ class HeadDirectedCappedPolicy:
         computed on length would authorize more writes than the domain contains and the "cap" would
         stop binding on a heavily constrained protein.
         """
-        return int(math.ceil(float(self.calibration.write_cap_editable_fraction)
-                             * int(n_editable)))
+        return math.ceil(float(self.calibration.write_cap_editable_fraction)
+                             * int(n_editable))
 
     def _score_contributions(
         self, *, protein_id: str, donor_sequence: str, donor_global_risk: float,
@@ -1772,15 +1771,14 @@ class HeadDirectedCappedPolicy:
         return score_joint_leave_one_out(
             scorer_a=scorer, scorer_b=scorer_b, protein_id=protein_id,
             donor_sequence=donor_sequence, donor_raw_a=donor_global_risk,
-            donor_raw_b=float(getattr(
-                self.dual.donor_score_b(donor), "global_risk")),
+            donor_raw_b=float(self.dual.donor_score_b(donor).global_risk),
             incumbent_sequence=incumbent_sequence, positions=positions,
             evaluator_a=self.evaluator, evaluator_b=self.dual.evaluator_b,
             window_grid_digest=self.window_grid_digest, objective=self.dual.objective,
         )
 
     def _reopen_priority(
-        self, *, view: "SourceView", resolved: Sequence[int],
+        self, *, view: SourceView, resolved: Sequence[int],
         incumbent_windows: AlignedWindowEvidence, safety_windows: AlignedWindowEvidence,
     ) -> tuple[list[ReopenCandidateEvidence], tuple[Any, ...]]:
         """PLAN §2.5's frozen reopen order, applied to every legal candidate.
@@ -2016,25 +2014,25 @@ class SourceGeometryControlPolicy:
         resolved = [p for p in editable if source.tokens[p] != source.mask_token_id]
 
         def evidence(stall_reason: str | None, **over: Any) -> HeadDirectedDecisionEvidence:
-            base = dict(
-                policy_id=SOURCE_GEOMETRY_CONTROL_POLICY_ID, stall_reason=stall_reason,
-                donor_gate=None, incumbent_id=self.incumbent.incumbent_id,
-                incumbent_sequence_md5=self.incumbent.sequence_md5,
-                safety_reference_sequence_md5=self.incumbent.safety_reference_sequence_md5,
-                donor_endpoint_id=str(endpoint.endpoint_id),
-                donor_sequence_md5=str(endpoint.sequence_md5),
-                incumbent_window_evidence_digest=None, safety_window_evidence_digest=None,
-                calibration=self.calibration.canonical_payload(),
-                n_editable=len(editable), n_unresolved_source=len(masked), u_target=None,
-                band_center_rule=self.calibration.band_center_rule.value,
-                write_cap=int(self.required_writes), n_legal_write_candidates=len(masked),
-                n_positive_contributions=0, m_band_min=None, m_band_max=None,
-                realized_writes=0, required_reopen=int(self.required_reopens), realized_reopen=0,
-                n_legal_reopen_candidates=len(resolved), write_candidates=(),
-                reopen_candidates=(), head_calls=0,
+            base = {
+                "policy_id": SOURCE_GEOMETRY_CONTROL_POLICY_ID, "stall_reason": stall_reason,
+                "donor_gate": None, "incumbent_id": self.incumbent.incumbent_id,
+                "incumbent_sequence_md5": self.incumbent.sequence_md5,
+                "safety_reference_sequence_md5": self.incumbent.safety_reference_sequence_md5,
+                "donor_endpoint_id": str(endpoint.endpoint_id),
+                "donor_sequence_md5": str(endpoint.sequence_md5),
+                "incumbent_window_evidence_digest": None, "safety_window_evidence_digest": None,
+                "calibration": self.calibration.canonical_payload(),
+                "n_editable": len(editable), "n_unresolved_source": len(masked), "u_target": None,
+                "band_center_rule": self.calibration.band_center_rule.value,
+                "write_cap": int(self.required_writes), "n_legal_write_candidates": len(masked),
+                "n_positive_contributions": 0, "m_band_min": None, "m_band_max": None,
+                "realized_writes": 0, "required_reopen": int(self.required_reopens), "realized_reopen": 0,
+                "n_legal_reopen_candidates": len(resolved), "write_candidates": (),
+                "reopen_candidates": (), "head_calls": 0,
                 # The claim this arm exists to make.
-                head_evidence_consulted=False,
-            )
+                "head_evidence_consulted": False,
+            }
             base.update(over)
             return HeadDirectedDecisionEvidence(**base)
 

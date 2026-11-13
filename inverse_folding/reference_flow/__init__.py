@@ -13,13 +13,14 @@ from .config import (
     reference_flow_config_to_dict,
     with_reference_flow_overrides,
 )
+
 # The torch-backed sampler is imported LAZILY (PEP 562) so importing lightweight submodules
 # (e.g. reference_flow.fusion.config / .state) does not eagerly pull torch. Accessing any of the
 # names below still works exactly as before — the import fires on first attribute access.
 _LAZY_SAMPLER = {"PositionDependentDFMSampler", "SamplerBatchLane", "SamplerOutput"}
 
 
-def __getattr__(name):  # noqa: D401 - module-level lazy attribute hook
+def __getattr__(name):
     if name in _LAZY_SAMPLER:
         import importlib
 
@@ -35,8 +36,8 @@ __all__ = [
     "ReferenceFlowConfig",
     "ReferenceFlowConfigError",
     "RemaskConfig",
-    "SamplerConfig",
     "SamplerBatchLane",
+    "SamplerConfig",
     "SamplerOutput",
     "ScheduleConfig",
     "amplification_factor",

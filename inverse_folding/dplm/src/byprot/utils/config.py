@@ -1,10 +1,7 @@
 import importlib
 import logging
 import os
-from contextlib import contextmanager
-from copy import deepcopy
-from pathlib import Path
-from typing import Any, List, Sequence
+from typing import Any
 
 import hydra
 from omegaconf import DictConfig, OmegaConf
@@ -135,7 +132,7 @@ def instantiate_from_config(cfg: OmegaConf, group=None, **override_kwargs):
         target_cls = get_obj_from_str(target)
         try:
             return target_cls(**cfg, **override_kwargs)
-        except:
+        except:  # noqa: E722
             cfg = merge_config(cfg, override_kwargs)
             return target_cls(cfg)
 
@@ -147,4 +144,4 @@ def instantiate_from_config2(config):
         raise KeyError("Expected key `target` to instantiate.")
     module, cls = config["target"].rsplit(".", 1)
     cls = getattr(importlib.import_module(module, package=None), cls)
-    return cls(**config.get("params", dict()))
+    return cls(**config.get("params", {}))

@@ -8,7 +8,7 @@ def main(args):
     index_path = os.path.join(
         args.output_db_path, f"{args.output_db_name}.index"
     )
-    db_fp = open(db_path, "wb")
+    db_fp = open(db_path, "wb")  # noqa: SIM115
     index = {}
     db_offset = 0
     for chain_alignment_dir in os.listdir(args.alignment_dir):

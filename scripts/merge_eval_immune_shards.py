@@ -50,7 +50,7 @@ def main() -> None:
             df = df.sort_values(["protein_id", "design_idx"]).reset_index(drop=True)
         df.to_parquet(merged_dir / f"{table}.parquet", index=False)
         npro = int(df["protein_id"].nunique()) if "protein_id" in df.columns else None
-        summary[table] = {"rows": int(len(df)), "proteins": npro}
+        summary[table] = {"rows": len(df), "proteins": npro}
         print(f"[merge] {table}: rows={len(df)} proteins={npro}")
 
     # failures.json — concat the per-shard failure lists

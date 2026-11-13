@@ -4,7 +4,11 @@
 For a homo-oligomer, Protenix pairing MSA = query-only (identical chains self-pair);
 non_pairing MSA = the full ColabFold a3m. Validated on design_0000 (pairing=1, non_pairing=3076).
 """
-import argparse, json, os, sys
+import argparse
+import json
+import os
+import sys
+
 import pandas as pd
 
 LIGAND_SMILES = "O=C1NC(=O)C2=C(N1)NC(=O)N2"  # uric acid (CCD URC)

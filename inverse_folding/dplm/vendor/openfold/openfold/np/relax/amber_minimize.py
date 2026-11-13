@@ -17,21 +17,22 @@
 
 import io
 import time
-from typing import Collection, Optional, Sequence
+from collections.abc import Collection, Sequence
 
+import ml_collections
+import numpy as np
+import openmm
 from absl import logging
+from openmm import app as openmm_app
+from openmm import unit
+from openmm.app.internal.pdbstructure import PdbStructure
+
 from openfold.np import (
     protein,
     residue_constants,
 )
-import openfold.utils.loss as loss
 from openfold.np.relax import cleanup, utils
-import ml_collections
-import numpy as np
-import openmm
-from openmm import unit
-from openmm import app as openmm_app
-from openmm.app.internal.pdbstructure import PdbStructure
+from openfold.utils import loss
 
 ENERGY = unit.kilocalories_per_mole
 LENGTH = unit.angstroms
@@ -136,14 +137,13 @@ def _check_cleaned_atoms(pdb_cleaned_string: str, pdb_ref_string: str):
         assert ref_res.name == cl_res.name
         for rat in ref_res.atoms():
             for cat in cl_res.atoms():
-                if cat.name == rat.name:
-                    if not np.array_equal(
-                        cl_xyz[cat.index], ref_xyz[rat.index]
-                    ):
-                        raise ValueError(
-                            f"Coordinates of cleaned atom {cat} do not match "
-                            f"coordinates of reference atom {rat}."
-                        )
+                if cat.name == rat.name and not np.array_equal(
+                    cl_xyz[cat.index], ref_xyz[rat.index]
+                ):
+                    raise ValueError(
+                        f"Coordinates of cleaned atom {cat} do not match "
+                        f"coordinates of reference atom {rat}."
+                    )
 
 
 def _check_residues_are_well_defined(prot: protein.Protein):
@@ -221,7 +221,7 @@ def make_atom14_positions(prot):
         atom_name_to_idx14 = {name: i for i, name in enumerate(atom_names)}
         restype_atom37_to_atom14.append(
             [
-                (atom_name_to_idx14[name] if name in atom_name_to_idx14 else 0)
+                (atom_name_to_idx14.get(name, 0))
                 for name in residue_constants.atom_types
             ]
         )
@@ -416,7 +416,7 @@ def _run_one_iteration(
     stiffness: float,
     restraint_set: str,
     max_attempts: int,
-    exclude_residues: Optional[Collection[int]] = None,
+    exclude_residues: Collection[int] | None = None,
     use_gpu: bool,
 ):
     """Runs the minimization pipeline.
@@ -461,7 +461,7 @@ def _run_one_iteration(
                 use_gpu=use_gpu,
             )
             minimized = True
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except  # noqa: BLE001
             print(e)
             logging.info(e)
     if not minimized:
@@ -482,7 +482,7 @@ def run_pipeline(
     restraint_set: str = "non_hydrogen",
     max_attempts: int = 100,
     checks: bool = True,
-    exclude_residues: Optional[Sequence[int]] = None,
+    exclude_residues: Sequence[int] | None = None,
 ):
     """Run iterative amber relax.
 
@@ -569,7 +569,7 @@ def get_initial_energies(
     pdb_strs: Sequence[str],
     stiffness: float = 0.0,
     restraint_set: str = "non_hydrogen",
-    exclude_residues: Optional[Sequence[int]] = None,
+    exclude_residues: Sequence[int] | None = None,
 ):
     """Returns initial potential energies for a sequence of PDBs.
 
@@ -614,7 +614,7 @@ def get_initial_energies(
             simulation.context.setPositions(pdb.positions)
             state = simulation.context.getState(getEnergy=True)
             energies.append(state.getPotentialEnergy().value_in_unit(ENERGY))
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except  # noqa: BLE001
             logging.error(
                 "Error getting initial energy, returning large value %s", e
             )

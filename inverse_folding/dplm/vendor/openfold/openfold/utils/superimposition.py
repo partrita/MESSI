@@ -11,9 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from Bio.SVDSuperimposer import SVDSuperimposer
-import numpy as np
 import torch
+from Bio.SVDSuperimposer import SVDSuperimposer
 
 
 def _superimpose_np(reference, coords):

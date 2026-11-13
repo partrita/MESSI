@@ -12,7 +12,7 @@ seed already used by another.
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 # Bump when the canonical encoding changes so old seeds are never silently reproduced.
@@ -207,13 +207,13 @@ def realized_seed_manifest(
     ctx: SeedContext,
     *,
     root_count: int,
-    unique_root_hashes: "Sequence[str]",
+    unique_root_hashes: Sequence[str],
     k_est: int,
     k_eval: int,
     final_count: int,
     #: The roots that ACTUALLY ran a final completion (the ranked beam). Defaults to every unique
     #: root only for callers that materialize all of them.
-    final_root_hashes: "Sequence[str] | None" = None,
+    final_root_hashes: Sequence[str] | None = None,
     independent_full_count: int = 0,
     terminal_count: int = 0,
     include_random_membership: bool = False,

@@ -17,7 +17,7 @@ import pytest
 
 from inverse_folding.reference_flow.fusion_v2 import joint_objective as jo
 
-from .test_fusion_v2_dual_execution import _calibration, _runtime, _run
+from .test_fusion_v2_dual_execution import _calibration, _run, _runtime
 
 ARMS = ("joint", "a_only", "b_only")
 

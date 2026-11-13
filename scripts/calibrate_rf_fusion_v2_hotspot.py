@@ -55,32 +55,33 @@ import dataclasses
 import json
 import math
 import sys
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from inverse_folding.reference_flow.fusion_v2.errors import V2Error  # noqa: E402
+from inverse_folding.reference_flow.fusion_v2.errors import V2Error
 
 __all__ = [
-    "V2HotspotCalibrationError",
+    "RESUMED_SAMPLING_UNIT",
+    "SEED_NAMESPACE",
     "THRESHOLD_STATISTIC",
     "THRESHOLD_STATISTIC_BY_POPULATION",
-    "RESUMED_SAMPLING_UNIT",
-    "Draw",
-    "full_trajectory_draws",
-    "resumed_draws",
-    "source_variance",
-    "SEED_NAMESPACE",
     "CalibrationSeams",
-    "q90_higher_order_statistic",
-    "source_id_for",
-    "summarize",
+    "Draw",
+    "V2HotspotCalibrationError",
     "build_parser",
+    "full_trajectory_draws",
     "main",
+    "q90_higher_order_statistic",
+    "resumed_draws",
+    "source_id_for",
+    "source_variance",
+    "summarize",
 ]
 
 #: The ONE admissible value PER POPULATION.  A closed map rather than a free-form label: the
@@ -210,7 +211,6 @@ class CalibrationSeams:
 
     def resolved(self) -> dict:
         from inverse_folding.reference_flow.fusion_v2.seeds import derive_seed
-
         from scripts.rf_fusion_model_factory import build_model_factory
         from scripts.rf_fusion_v2_oracles import build_production_oracles
 
@@ -373,8 +373,12 @@ def resumed_draws(*, protein_id, n_sources, completions_per_source, c_source, ma
     A capture that fails costs its whole fork group, and every lost endpoint is recorded as a draw
     with a reason rather than silently shrinking the sample.
     """
-    from inverse_folding.reference_flow.fusion_v2_runtime.capture import capture_depth_zero
-    from inverse_folding.reference_flow.fusion_v2_runtime.lookahead import generate_lookaheads
+    from inverse_folding.reference_flow.fusion_v2_runtime.capture import (
+        capture_depth_zero,
+    )
+    from inverse_folding.reference_flow.fusion_v2_runtime.lookahead import (
+        generate_lookaheads,
+    )
 
     draws, replicate = [], 0
     for source_index in range(int(n_sources)):
@@ -472,7 +476,7 @@ def source_variance(rows) -> dict:
 def calibrate_protein(
     *, protein_id: str, min_head_valid: int,
     reference_sequence: str, reference_digest: str, head_identity: Any, model: Any, seams: dict,
-    draws: Sequence["Draw"] | None = None,
+    draws: Sequence[Draw] | None = None,
     n_completions: int | None = None, master_seed: Any = None,
     population: str = "full_trajectory", native_structure: Any = None,
 ) -> tuple[list[dict], dict]:
@@ -792,7 +796,7 @@ class _ModelView:
         self.id_to_aa = cycle_kwargs["alphabet"]
         self._fixed = cycle_kwargs["fixed_tokens"]
 
-    def fixed_tokens(self, protein_id: str):        # noqa: ARG002 - one protein per invocation
+    def fixed_tokens(self, protein_id: str):
         return self._fixed
 
 

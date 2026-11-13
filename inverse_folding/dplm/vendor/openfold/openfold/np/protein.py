@@ -16,21 +16,22 @@
 """Protein data type."""
 import dataclasses
 import io
-from typing import Any, Sequence, Mapping, Optional
 import re
 import string
+from collections.abc import Mapping, Sequence
+from typing import Any
+
+import modelcif
+import modelcif.alignment
+import modelcif.dumper
+import modelcif.model
+import modelcif.protocol
+import modelcif.qa_metric
+import modelcif.reference
+import numpy as np
+from Bio.PDB import PDBParser
 
 from openfold.np import residue_constants
-from Bio.PDB import PDBParser
-import numpy as np
-import modelcif
-import modelcif.model
-import modelcif.dumper
-import modelcif.reference
-import modelcif.protocol
-import modelcif.alignment
-import modelcif.qa_metric
-
 
 FeatureDict = Mapping[str, np.ndarray]
 ModelOutput = Mapping[str, Any]  # Is a nested dict.
@@ -61,20 +62,20 @@ class Protein:
     b_factors: np.ndarray  # [num_res, num_atom_type]
 
     # Chain indices for multi-chain predictions
-    chain_index: Optional[np.ndarray] = None
+    chain_index: np.ndarray | None = None
 
     # Optional remark about the protein. Included as a comment in output PDB
     # files
-    remark: Optional[str] = None
+    remark: str | None = None
 
     # Templates used to generate this protein (prediction-only)
-    parents: Optional[Sequence[str]] = None
+    parents: Sequence[str] | None = None
 
     # Chain corresponding to each parent
-    parents_chain_index: Optional[Sequence[int]] = None
+    parents_chain_index: Sequence[int] | None = None
 
 
-def from_pdb_string(pdb_str: str, chain_id: Optional[str] = None) -> Protein:
+def from_pdb_string(pdb_str: str, chain_id: str | None = None) -> Protein:
     """Takes a PDB string and constructs a Protein object.
 
     WARNING: All non-standard residue types will be converted into UNK. All
@@ -155,7 +156,7 @@ def from_pdb_string(pdb_str: str, chain_id: Optional[str] = None) -> Protein:
                     ])
                 chain_id += 1
 
-    unique_chain_ids = np.unique(chain_ids)
+    np.unique(chain_ids)
     chain_id_mapping = {cid: n for n, cid in enumerate(string.ascii_uppercase)}
     chain_index = np.array([chain_id_mapping[cid] for cid in chain_ids])
 
@@ -261,7 +262,7 @@ def add_pdb_headers(prot: Protein, pdb_str: str) -> str:
     if(prot.parents is not None and len(prot.parents) > 0):
         parents_per_chain = []
         if(prot.parents_chain_index is not None):
-            cur_chain = prot.parents_chain_index[0]
+            prot.parents_chain_index[0]
             parent_dict = {}
             for p, i in zip(prot.parents, prot.parents_chain_index):
                 parent_dict.setdefault(str(i), [])
@@ -365,7 +366,7 @@ def to_pdb(prot: Protein) -> str:
             atom_index += 1
 
         should_terminate = (i == n - 1)
-        if(chain_index is not None):
+        if(chain_index is not None):  # noqa: SIM102
             if(i != n - 1 and chain_index[i + 1] != prev_chain_index):
                 should_terminate = True
                 prev_chain_index = chain_index[i + 1]
@@ -454,7 +455,7 @@ def to_modelcif(prot: Protein) -> str:
     for chain_idx in set(chain_index):
         # Define the model assembly
         chain_id = chain_tags[chain_idx]
-        asym = modelcif.AsymUnit(entities_map[chain_idx], details='Model subunit %s' % chain_id, id=chain_id)
+        asym = modelcif.AsymUnit(entities_map[chain_idx], details=f'Model subunit {chain_id}', id=chain_id)
         asym_unit_map[chain_idx] = asym
     modeled_assembly = modelcif.Assembly(asym_unit_map.values(), name='Modeled assembly')
 
@@ -498,14 +499,14 @@ def to_modelcif(prot: Protein) -> str:
                     if residue_index[i] not in plddt_per_residue[chain_index[i]]:
                         plddt_per_residue[chain_index[i]][residue_index[i]] = b_factor
             plddts = []
-            for chain_idx in plddt_per_residue:
+            for chain_idx in plddt_per_residue:  # noqa: PLC0206
                 for residue_idx in plddt_per_residue[chain_idx]:
                     plddt = plddt_per_residue[chain_idx][residue_idx]
                     plddts.append(plddt)
                     self.qa_metrics.append(
                         _LocalPLDDT(asym_unit_map[chain_idx].residue(residue_idx), plddt))
             # global score
-            self.qa_metrics.append((_GlobalPLDDT(np.mean(plddts))))
+            self.qa_metrics.append(_GlobalPLDDT(np.mean(plddts)))
 
     # Add the model and modeling protocol to the file and write them out:
     model = _MyModel(assembly=modeled_assembly, name='Best scoring model')
@@ -538,11 +539,11 @@ def ideal_atom_mask(prot: Protein) -> np.ndarray:
 def from_prediction(
     features: FeatureDict,
     result: ModelOutput,
-    b_factors: Optional[np.ndarray] = None,
-    chain_index: Optional[np.ndarray] = None,
-    remark: Optional[str] = None,
-    parents: Optional[Sequence[str]] = None,
-    parents_chain_index: Optional[Sequence[int]] = None
+    b_factors: np.ndarray | None = None,
+    chain_index: np.ndarray | None = None,
+    remark: str | None = None,
+    parents: Sequence[str] | None = None,
+    parents_chain_index: Sequence[int] | None = None
 ) -> Protein:
     """Assembles a protein from a prediction.
 

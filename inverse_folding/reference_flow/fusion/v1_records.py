@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
@@ -43,7 +44,7 @@ def content_digest(path: Any) -> str:
 
 
 def verify_payload_integrity(
-    payload: "PartialRootPayload", expected_snapshot_payload_hash: str
+    payload: PartialRootPayload, expected_snapshot_payload_hash: str
 ) -> None:
     """Fail-fast if a payload's recomputed integrity hash does not match the expected one, so a
     tampered persisted root never enters replay (PLAN §2.4/§4.2)."""
@@ -91,7 +92,7 @@ class ConditioningDigest:
                 )
         for name in ("controller_enabled", "h_maps_present"):
             if not isinstance(getattr(self, name), bool):
-                raise ValueError(f"{name} must be an explicit bool")
+                raise ValueError(f"{name} must be an explicit bool")  # noqa: TRY004
         if self.controller_enabled or self.h_maps_present:
             raise ValueError(
                 "V1-A conditioning must declare controller_enabled=False and h_maps_present=False; "
@@ -115,7 +116,7 @@ def _require_int_token(value: Any, field_name: str) -> int:
     """An x_t / fixed-token entry must be an exact integer (PLAN §2.4). A bool or a
     non-integral float is a hard failure; an integral float is coerced."""
     if isinstance(value, bool):
-        raise ValueError(f"{field_name} token must be an int, not bool")
+        raise ValueError(f"{field_name} token must be an int, not bool")  # noqa: TRY004
     if isinstance(value, float):
         if not value.is_integer():
             raise ValueError(f"{field_name} token {value!r} is not an integer")
@@ -127,7 +128,7 @@ def _norm_score(value: Any) -> float:
     """Canonicalize a committed-token score: coerce to float, reject NaN, and normalize -0.0 to
     0.0 so numerically-identical scores hash identically (-inf for masked positions is kept)."""
     number = float(value)
-    if number != number:  # NaN
+    if math.isnan(number):
         raise ValueError("scores must not be NaN")
     return 0.0 if number == 0.0 else number
 
@@ -319,7 +320,7 @@ class PartialRootPayload:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "PartialRootPayload":
+    def from_dict(cls, data: Mapping[str, Any]) -> PartialRootPayload:
         return cls(
             schema_version=data["schema_version"],
             root_id=data["root_id"],

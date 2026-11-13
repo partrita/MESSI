@@ -1,6 +1,7 @@
 """Config loader for Epitope Head."""
 
 from pathlib import Path
+
 import yaml
 
 _CONFIG_DIR = Path(__file__).parent
@@ -51,7 +52,7 @@ def _validate_and_default_near_positive(cfg: dict | None) -> dict:
         return dict(NEAR_POSITIVE_DEFAULTS)
 
     if not isinstance(cfg, dict):
-        raise ValueError("train.near_positive must be a dict")
+        raise ValueError("train.near_positive must be a dict")  # noqa: TRY004
 
     unknown = set(cfg.keys()) - set(NEAR_POSITIVE_DEFAULTS.keys())
     if unknown:
@@ -63,7 +64,7 @@ def _validate_and_default_near_positive(cfg: dict | None) -> dict:
     out.update(cfg)
 
     if not isinstance(out["enabled"], bool):
-        raise ValueError("train.near_positive.enabled must be a bool")
+        raise ValueError("train.near_positive.enabled must be a bool")  # noqa: TRY004
 
     near_gap_max = out["near_gap_max"]
     if not isinstance(near_gap_max, int) or isinstance(near_gap_max, bool) or near_gap_max < 0:
@@ -78,7 +79,7 @@ def _validate_and_default_near_positive(cfg: dict | None) -> dict:
         )
 
     if not isinstance(out["schedule_params"], dict):
-        raise ValueError(
+        raise ValueError(  # noqa: TRY004
             f"train.near_positive.schedule_params must be a dict, "
             f"got {type(out['schedule_params']).__name__}"
         )
@@ -90,9 +91,9 @@ def _validate_and_default_near_positive(cfg: dict | None) -> dict:
         )
 
     if not isinstance(out["apply_to_span_negatives"], bool):
-        raise ValueError("train.near_positive.apply_to_span_negatives must be a bool")
+        raise ValueError("train.near_positive.apply_to_span_negatives must be a bool")  # noqa: TRY004
     if not isinstance(out["apply_to_residue_labels"], bool):
-        raise ValueError("train.near_positive.apply_to_residue_labels must be a bool")
+        raise ValueError("train.near_positive.apply_to_residue_labels must be a bool")  # noqa: TRY004
 
     return out
 
@@ -108,7 +109,7 @@ def _validate_and_default_residue(cfg: dict | None) -> dict:
         return dict(RESIDUE_DEFAULTS)
 
     if not isinstance(cfg, dict):
-        raise ValueError("train.residue must be a dict")
+        raise ValueError("train.residue must be a dict")  # noqa: TRY004
 
     unknown = set(cfg.keys()) - set(RESIDUE_DEFAULTS.keys())
     if unknown:
@@ -120,7 +121,7 @@ def _validate_and_default_residue(cfg: dict | None) -> dict:
     out.update(cfg)
 
     if not isinstance(out["enabled"], bool):
-        raise ValueError("train.residue.enabled must be a bool")
+        raise ValueError("train.residue.enabled must be a bool")  # noqa: TRY004
 
     lam = out["lambda_residue"]
     if not isinstance(lam, (int, float)) or isinstance(lam, bool) or lam < 0:
@@ -141,7 +142,7 @@ def _validate_and_default_residue(cfg: dict | None) -> dict:
         )
 
     if not isinstance(out["aggregation_params"], dict):
-        raise ValueError(
+        raise ValueError(  # noqa: TRY004
             f"train.residue.aggregation_params must be a dict, "
             f"got {type(out['aggregation_params']).__name__}"
         )
@@ -193,7 +194,7 @@ def validate_himp_train_blocks(train_cfg: dict) -> dict:
     Returns the same ``train_cfg`` for chaining.
     """
     if not isinstance(train_cfg, dict):
-        raise ValueError("train_cfg must be a dict")
+        raise ValueError("train_cfg must be a dict")  # noqa: TRY004
     train_cfg["near_positive"] = _validate_and_default_near_positive(
         train_cfg.get("near_positive")
     )
@@ -287,7 +288,7 @@ def load_train_config(path: Path | str | None = None) -> dict:
     # ── loss.* sub-keys ──
     loss = train["loss"]
     if not isinstance(loss, dict):
-        raise ValueError("train.loss must be a dict")
+        raise ValueError("train.loss must be a dict")  # noqa: TRY004
     required_loss = ["tau", "T_mp", "lambda_mp", "lambda_smooth"]
     missing_loss = [k for k in required_loss if k not in loss]
     if missing_loss:
@@ -296,7 +297,7 @@ def load_train_config(path: Path | str | None = None) -> dict:
     # ── chunking.* sub-keys ──
     chunking = train["chunking"]
     if not isinstance(chunking, dict):
-        raise ValueError("train.chunking must be a dict")
+        raise ValueError("train.chunking must be a dict")  # noqa: TRY004
     required_chunking = [
         "enabled", "context_len", "stride", "margin",
         "stitch_mode", "window_mode", "enable_reliability",
@@ -347,7 +348,6 @@ def load_ablation_config(path: Path | str | None = None) -> dict:
                            "hidden_channels", "branch_channels", "block_dropout"},
     }
 
-    OPTIONAL_PROFILE_KEYS = {"loss_overrides"}
 
     for profile_id, profile in profiles.items():
         missing = REQUIRED_PROFILE_KEYS - set(profile.keys())
@@ -364,7 +364,7 @@ def load_ablation_config(path: Path | str | None = None) -> dict:
 
         enc_cfg = profile["encoder_cfg"]
         if not isinstance(enc_cfg, dict):
-            raise ValueError(f"Profile '{profile_id}': encoder_cfg must be a dict")
+            raise ValueError(f"Profile '{profile_id}': encoder_cfg must be a dict")  # noqa: TRY004
 
         expected_keys = ENCODER_CFG_KEYS[enc_type]
         missing_enc = expected_keys - set(enc_cfg.keys())
@@ -402,7 +402,7 @@ def load_inference_config(path: Path | str | None = None) -> dict:
         raise ValueError(f"Inference config missing required keys: {missing}")
 
     if not isinstance(inference["min_k"], int) or not isinstance(inference["max_k"], int):
-        raise ValueError("inference.min_k and inference.max_k must be integers")
+        raise ValueError("inference.min_k and inference.max_k must be integers")  # noqa: TRY004
     if inference["min_k"] > inference["max_k"]:
         raise ValueError("inference.min_k must be <= inference.max_k")
     if inference["min_k"] != 12:
@@ -424,7 +424,7 @@ def load_inference_config(path: Path | str | None = None) -> dict:
 
     chunking = inference["chunking"]
     if not isinstance(chunking, dict):
-        raise ValueError("inference.chunking must be a dict")
+        raise ValueError("inference.chunking must be a dict")  # noqa: TRY004
 
     required_chunking = [
         "enabled",

@@ -166,7 +166,7 @@ def validate_checkpoint_consistency(row: dict) -> list[str]:
 
     try:
         ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         errors.append(f"Failed to load checkpoint: {exc}")
         return errors
 
@@ -493,7 +493,7 @@ def backfill_registry(
         try:
             with open(summary_path) as f:
                 summary = json.load(f)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             skipped.append({"run_dir": str(run_dir), "reason": f"invalid run_summary.json: {exc}"})
             continue
 

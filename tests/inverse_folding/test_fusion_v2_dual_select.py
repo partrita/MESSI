@@ -19,8 +19,19 @@ from inverse_folding.reference_flow.fusion_v2 import policy as pol
 
 from . import _v2_fixtures as F
 from .test_fusion_v2_head_directed_policy import (
-    CANONICAL_AA20, INCUMBENT_SEQ, MASKED, SOURCE_SEQ, WINDOW_K, _Result, _calibration, _coords,
-    _decide, _donor, _evaluator, _incumbent, _policy, _score, _scorer, _source, _windows,
+    CANONICAL_AA20,
+    INCUMBENT_SEQ,
+    SOURCE_SEQ,
+    WINDOW_K,
+    _calibration,
+    _coords,
+    _donor,
+    _evaluator,
+    _policy,
+    _Result,
+    _score,
+    _scorer,
+    _source,
 )
 
 L = F.L

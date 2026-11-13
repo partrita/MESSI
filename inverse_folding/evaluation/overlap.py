@@ -15,7 +15,6 @@ import shutil
 import subprocess
 import tempfile
 from dataclasses import dataclass
-from typing import Dict, Optional
 
 
 class MMseqs2NotFoundError(RuntimeError):
@@ -27,7 +26,7 @@ class OverlapResult:
     """Per-query overlap decision from MMseqs2 search."""
 
     query_id: str
-    best_target: Optional[str]
+    best_target: str | None
     best_identity: float
     exclude: bool
 
@@ -80,7 +79,7 @@ def _materialize_cath_train_fasta(
 def parse_mmseqs_results(
     raw_output: str,
     threshold: float = 0.3,
-) -> Dict[str, OverlapResult]:
+) -> dict[str, OverlapResult]:
     """Parse MMseqs2 easy-search tab-separated output into overlap decisions.
 
     Output format (BLAST-tab): query, target, fident, alnlen, mismatch,
@@ -95,7 +94,7 @@ def parse_mmseqs_results(
         Dict mapping query_id → OverlapResult. Queries with no hits
         are not included (caller treats absence as pass).
     """
-    best: Dict[str, tuple] = {}  # query_id → (identity, target_id)
+    best: dict[str, tuple] = {}  # query_id → (identity, target_id)
 
     for line in raw_output.strip().splitlines():
         if not line:
@@ -110,7 +109,7 @@ def parse_mmseqs_results(
         if query_id not in best or identity > best[query_id][0]:
             best[query_id] = (identity, target_id)
 
-    results: Dict[str, OverlapResult] = {}
+    results: dict[str, OverlapResult] = {}
     for query_id, (identity, target_id) in best.items():
         results[query_id] = OverlapResult(
             query_id=query_id,
@@ -165,7 +164,7 @@ def run_mmseqs_overlap(
     min_seq_id: float = 0.3,
     cov_mode: int = 0,
     coverage: float = 0.8,
-) -> Dict[str, OverlapResult]:
+) -> dict[str, OverlapResult]:
     """Run MMseqs2 overlap detection end-to-end.
 
     Args:

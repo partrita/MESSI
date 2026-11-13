@@ -43,7 +43,7 @@ def main() -> None:
         "run_id": args.run_id or out.stem,
         "source_test_set": str(Path(args.if_ready).resolve()),
         "output_parquet": str(out.resolve()),
-        "n_rows": int(len(facade)),
+        "n_rows": len(facade),
         "n_proteins": int(facade["protein_id"].nunique()),
         "design_idx": 0,
         "n_shards": int(args.n_shards),
@@ -57,7 +57,7 @@ def main() -> None:
     if args.n_shards and args.n_shards > 0:
         n = args.n_shards
         ids = facade["protein_id"].tolist()  # already sorted
-        base = str(out)[: -len(".parquet")] if str(out).endswith(".parquet") else str(out)
+        base = str(out).removesuffix(".parquet")
         counts = []
         for k in range(n):
             shard_ids = ids[k::n]  # round-robin on sorted ids

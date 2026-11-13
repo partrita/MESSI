@@ -28,8 +28,8 @@ map is identical to ``b_cur`` up to the ensemble + aggregator differences.
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Mapping, Sequence
 
 import numpy as np
 
@@ -37,7 +37,6 @@ from inverse_folding.reference_flow.actionability import (
     excess_over_tau,
     max_covering_window_projection,
 )
-
 
 # ---------------------------------------------------------------------------
 # Dataclasses
@@ -399,7 +398,7 @@ def summarize_probe_refresh(
 
 
 def reduce_residue_excess_over_k(
-    per_sample: "Sequence[tuple[SCGRProbeSample, SCGRRiskAggregates]]",
+    per_sample: Sequence[tuple[SCGRProbeSample, SCGRRiskAggregates]],
     *,
     arm: str,
 ) -> np.ndarray:

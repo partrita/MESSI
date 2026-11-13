@@ -1,7 +1,7 @@
 import logging
-from typing import Dict, List, Union
 
 import torch
+
 try:
     from lightning_fabric.strategies.fsdp import (
         _has_meta_device_parameters,
@@ -11,6 +11,8 @@ try:
 except ImportError:
     from lightning_fabric.strategies.fsdp import (
         _has_meta_device_parameters_or_buffers as _has_meta_device_parameters,
+    )
+    from lightning_fabric.strategies.fsdp import (
         _move_torchmetrics_to_device,
         _setup_activation_checkpointing,
     )
@@ -18,15 +20,12 @@ except ImportError:
 # from pytorch_lightning.strategies.fully_sharded import DDPFullyShardedStrategy
 # from pytorch_lightning.strategies.sharded import DDPShardedStrategy
 from pytorch_lightning.strategies import (
-    DDPStrategy,
     FSDPStrategy,
-    StrategyRegistry,
 )
 from pytorch_lightning.utilities.rank_zero import rank_zero_warn
 from torch.nn import Module
 
 # from pytorch_lightning.utilities.imports import _FAIRSCALE_AVAILABLE
-from torch.optim import Optimizer
 from typing_extensions import override
 
 log = logging.getLogger(__name__)

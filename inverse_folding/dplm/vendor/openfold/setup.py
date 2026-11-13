@@ -13,14 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from setuptools import setup, Extension, find_packages
 import subprocess
 
 import torch
-from torch.utils.cpp_extension import BuildExtension, CppExtension, CUDAExtension, CUDA_HOME
-
 from scripts.utils import get_nvidia_cc
-
+from setuptools import find_packages, setup
+from torch.utils.cpp_extension import (
+    CUDA_HOME,
+    BuildExtension,
+    CppExtension,
+    CUDAExtension,
+)
 
 version_dependent_macros = [
     '-DVERSION_GE_1_1',
@@ -51,11 +54,11 @@ def get_cuda_bare_metal_version(cuda_dir):
         
         return raw_output, bare_metal_major, bare_metal_minor
 
-compute_capabilities = set([
+compute_capabilities = {
     (3, 7), # K80, e.g.
     (5, 2), # Titan X
     (6, 1), # GeForce 1000-series
-])
+}
 
 compute_capabilities.add((7, 0))
 _, bare_metal_major, _ = get_cuda_bare_metal_version(CUDA_HOME)
@@ -64,10 +67,10 @@ if int(bare_metal_major) >= 11:
 
 compute_capability, _ = get_nvidia_cc()
 if compute_capability is not None:
-    compute_capabilities = set([compute_capability])
+    compute_capabilities = {compute_capability}
 
 cc_flag = []
-for major, minor in list(compute_capabilities):
+for major, minor in compute_capabilities:
     cc_flag.extend([
         '-gencode',
         f'arch=compute_{major}{minor},code=sm_{major}{minor}',
@@ -128,7 +131,7 @@ setup(
     classifiers=[
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python :: 3.9,'
-        'Topic :: Scientific/Engineering :: Artificial Intelligence',
+        ('Programming Language :: Python :: 3.9,'
+        'Topic :: Scientific/Engineering :: Artificial Intelligence'),
     ],
 )

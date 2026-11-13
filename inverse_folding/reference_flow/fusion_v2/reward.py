@@ -39,21 +39,21 @@ from .identity import (
 )
 
 __all__ = [
-    "V2RewardError",
-    "IncumbentIdentityError",
-    "IncumbentAliasError",
     "DEPTH0_BOOTSTRAP_RULE",
     "DEPTH0_INCUMBENT_RULES",
     "INCUMBENT_UPDATE_LAWS",
-    "LineageIncumbentKind",
-    "LineageIncumbent",
     "DonorGateReason",
     "DonorGateVerdict",
+    "IncumbentAliasError",
+    "IncumbentIdentityError",
     "JointComparison",
-    "bind_incumbent_from_safety_reference",
-    "bind_incumbent_from_endpoint",
-    "donor_gate",
+    "LineageIncumbent",
+    "LineageIncumbentKind",
+    "V2RewardError",
     "advance_incumbent",
+    "bind_incumbent_from_endpoint",
+    "bind_incumbent_from_safety_reference",
+    "donor_gate",
 ]
 
 
@@ -310,7 +310,9 @@ def bind_incumbent_from_endpoint(
     Refuses an endpoint that is not definitively feasible: PLAN §4.2 forbids a non-definitive
     endpoint from becoming ancestry, and an incumbent is what ancestry is measured against.
     """
-    from .state import FeasibilityLevel  # local: state imports nothing this module needs at import
+    from .state import (
+        FeasibilityLevel,  # local: state imports nothing this module needs at import
+    )
 
     if getattr(endpoint, "feasibility_level", None) is not FeasibilityLevel.DEFINITIVE:
         raise V2RewardError(

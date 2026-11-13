@@ -9,9 +9,8 @@ outside the scorer, so it cannot be bypassed by a fail-open predictor.
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Callable
 
 from .state import sequence_md5
 from .v1_seeds import derive_seed

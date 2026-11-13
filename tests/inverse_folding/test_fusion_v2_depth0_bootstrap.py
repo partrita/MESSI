@@ -8,12 +8,12 @@ from inverse_folding.reference_flow.fusion_v2 import policy as pol
 from inverse_folding.reference_flow.fusion_v2 import reward as rw
 from inverse_folding.reference_flow.fusion_v2_runtime.cycle import run_one_cycle
 from tests.inverse_folding.test_fusion_v2_head_directed_policy import (
-    _cycle_kwargs,
+    SOURCE_SEQ,
     _coords,
+    _cycle_kwargs,
     _donor,
     _policy,
     _source,
-    SOURCE_SEQ,
 )
 
 
@@ -43,7 +43,9 @@ class _GloballyShiftedHead:
     """Keep local differences fixed while making every generated design worse than WT."""
 
     def __init__(self, offset: float):
-        from tests.inverse_folding.test_fusion_v2_head_directed_policy import _ScriptedHead
+        from tests.inverse_folding.test_fusion_v2_head_directed_policy import (
+            _ScriptedHead,
+        )
 
         self._delegate = _ScriptedHead()
         self.offset = float(offset)

@@ -30,8 +30,9 @@ import argparse
 import hashlib
 import json
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 import pandas as pd
 
@@ -96,8 +97,15 @@ class _ScoreView:
     calibration and the gate it feeds start measuring different quantities.
     """
 
-    __slots__ = ("protein_id", "sequence_md5", "sequence_length", "window_grid_digest",
-                 "allele", "score_scale", "global_risk")
+    __slots__ = (
+        "allele",
+        "global_risk",
+        "protein_id",
+        "score_scale",
+        "sequence_length",
+        "sequence_md5",
+        "window_grid_digest",
+    )
 
     def __init__(self, result: Any) -> None:
         binding = getattr(result, "binding", None)

@@ -29,8 +29,8 @@ TABLES = ("complete_endpoints", "feedback_events")
 
 
 def _sig(**over):
-    kw = dict(config_digest="c" * 64, campaign_id="v2-canary", split_role="dev", arm_role="v2",
-              protein_id="5ZHV_B", input_signature="i" * 64, code_revision="deadbeef")
+    kw = {"config_digest": "c" * 64, "campaign_id": "v2-canary", "split_role": "dev", "arm_role": "v2",
+              "protein_id": "5ZHV_B", "input_signature": "i" * 64, "code_revision": "deadbeef"}
     kw.update(over)
     return RunSignature(**kw)
 

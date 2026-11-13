@@ -2,22 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-import importlib
 import os
 from dataclasses import dataclass, field
-from pathlib import Path
 
 import torch
-import torch.nn as nn
-from huggingface_hub import snapshot_download
-from transformers import AutoConfig, AutoModelForMaskedLM, AutoTokenizer
-
-from byprot.utils import load_yaml_config
+from transformers import AutoConfig, AutoModelForMaskedLM
 
 try:
     from peft import LoraConfig, TaskType, get_peft_model
-    from peft.peft_model import PeftModel
-except:
+except:  # noqa: E722, S110
     pass
 
 

@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 import torch
-import torch.nn as nn
 import yaml
+from torch import nn
 
 from epitope_head.configs import load_inference_config
 from epitope_head.inference.export import (
@@ -382,7 +382,7 @@ class TestF3WindowEnumeration:
         predictor = self._build_predictor(tmp_path)
         seq = "ACDEFGHIKLMNPQRSTVWY" * 3  # 60 aa
         G, _ = predictor.encode_sequence(seq)
-        entries, z = predictor.enumerate_and_score(G, len(seq), 12, 25)
+        _entries, z = predictor.enumerate_and_score(G, len(seq), 12, 25)
         assert torch.isfinite(z).all(), "Found NaN or Inf in logits"
 
     def test_batched_matches_unbatched(self, tmp_path: Path):
@@ -417,7 +417,7 @@ class TestF4Aggregation:
         seq = "A" * 50
         G, _ = predictor.encode_sequence(seq)
         entries, z = predictor.enumerate_and_score(G, len(seq), 12, 25)
-        h_raw, h_proc, R = predictor.aggregate_hotspot_and_risk(
+        h_raw, h_proc, _R = predictor.aggregate_hotspot_and_risk(
             entries, z, len(seq), "median", "none",
         )
         assert h_raw.shape[0] == len(seq)

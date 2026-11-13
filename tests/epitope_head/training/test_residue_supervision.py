@@ -97,7 +97,7 @@ class TestResidueLabelBuilder:
             positives=positives, chunk_len=50, central_start=0,
             near_positive_cfg=np_cfg,
         )
-        label = out["label"]
+        out["label"]
         ambiguous = out["ambiguous_mask"]
         far_bg = out["far_bg_mask"]
 
@@ -215,7 +215,7 @@ class TestAggregateWindowLogitsToResidues:
             mode="log_mean_exp", params={"beta": 1.0},
         )
         # All covered residues should be 3.0; uncovered residues -inf.
-        for i in range(0, 5):
+        for i in range(5):
             assert scores[i].item() == pytest.approx(3.0, abs=1e-6)
         assert torch.all(torch.isinf(scores[5:]) & (scores[5:] < 0))
 
@@ -228,7 +228,7 @@ class TestAggregateWindowLogitsToResidues:
             mode="log_mean_exp", params={"beta": 1.0},
         )
         expected = math.log((math.exp(0.0) + math.exp(2.0)) / 2.0)
-        for i in range(0, 4):
+        for i in range(4):
             assert scores[i].item() == pytest.approx(expected, abs=1e-6)
 
     # TDD Gate #2: residues outside coverage are explicitly invalidated.

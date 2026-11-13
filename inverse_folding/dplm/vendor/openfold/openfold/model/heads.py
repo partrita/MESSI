@@ -14,20 +14,20 @@
 # limitations under the License.
 
 import torch
-import torch.nn as nn
+from torch import nn
 
-from openfold.model.primitives import Linear, LayerNorm
+from openfold.model.primitives import LayerNorm, Linear
 from openfold.utils.loss import (
     compute_plddt,
-    compute_tm,
     compute_predicted_aligned_error,
+    compute_tm,
 )
 from openfold.utils.precision_utils import is_fp16_enabled
 
 
 class AuxiliaryHeads(nn.Module):
     def __init__(self, config):
-        super(AuxiliaryHeads, self).__init__()
+        super().__init__()
 
         self.plddt = PerResidueLDDTCaPredictor(
             **config["lddt"],
@@ -91,7 +91,7 @@ class AuxiliaryHeads(nn.Module):
 
 class PerResidueLDDTCaPredictor(nn.Module):
     def __init__(self, no_bins, c_in, c_hidden):
-        super(PerResidueLDDTCaPredictor, self).__init__()
+        super().__init__()
 
         self.no_bins = no_bins
         self.c_in = c_in
@@ -131,7 +131,7 @@ class DistogramHead(nn.Module):
             no_bins:
                 Number of distogram bins
         """
-        super(DistogramHead, self).__init__()
+        super().__init__()
 
         self.c_z = c_z
         self.no_bins = no_bins
@@ -172,7 +172,7 @@ class TMScoreHead(nn.Module):
             no_bins:
                 Number of bins
         """
-        super(TMScoreHead, self).__init__()
+        super().__init__()
 
         self.c_z = c_z
         self.no_bins = no_bins
@@ -205,7 +205,7 @@ class MaskedMSAHead(nn.Module):
             c_out:
                 Output channel dimension
         """
-        super(MaskedMSAHead, self).__init__()
+        super().__init__()
 
         self.c_m = c_m
         self.c_out = c_out
@@ -239,7 +239,7 @@ class ExperimentallyResolvedHead(nn.Module):
             c_out:
                 Number of distogram bins
         """
-        super(ExperimentallyResolvedHead, self).__init__()
+        super().__init__()
 
         self.c_s = c_s
         self.c_out = c_out

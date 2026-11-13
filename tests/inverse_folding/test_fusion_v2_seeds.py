@@ -19,32 +19,32 @@ from inverse_folding.reference_flow.fusion_v2.errors import V2Error
 
 
 def _ctx(**over):
-    kw = dict(seed_schema="v2seed-1", campaign_id="v2_mech_dev", split_role="v2_dev",
-              master_seed=20260804, protein_id="5ZHV_B")
+    kw = {"seed_schema": "v2seed-1", "campaign_id": "v2_mech_dev", "split_role": "v2_dev",
+              "master_seed": 20260804, "protein_id": "5ZHV_B"}
     kw.update(over)
     return sd.V2SeedContext(**kw)
 
 
 def _pair(**over):
-    kw = dict(seed_schema="v2seed-1", campaign_id="v2_mech_dev", split_role="v2_dev",
-              master_seed=20260804, protein_id="5ZHV_B", depth=0, r_step=40, c_next_step=60,
-              pair_ordinal=0, n_forks=4, n_descendant_lookaheads=2)
+    kw = {"seed_schema": "v2seed-1", "campaign_id": "v2_mech_dev", "split_role": "v2_dev",
+              "master_seed": 20260804, "protein_id": "5ZHV_B", "depth": 0, "r_step": 40, "c_next_step": 60,
+              "pair_ordinal": 0, "n_forks": 4, "n_descendant_lookaheads": 2}
     kw.update(over)
     return sd.FeedbackPairSeedContext(**kw)
 
 
 def _record(ctx=None, *, fork_index=0, arm_slot="arm_a", treatment="endpoint:A", **over):
     ctx = ctx or _pair()
-    kw = dict(
-        context=ctx, fork_index=fork_index, arm_slot=arm_slot,
-        intervention_kind="endpoint_change", treatment_identity=treatment,
-        shared_match_identity="support:abc|horizon:40-60", c_source_step=50,
-        realized_propagation_seed=ctx.matched_descendant_seed(fork_index),
-        realized_lookahead_seeds=tuple(
+    kw = {
+        "context": ctx, "fork_index": fork_index, "arm_slot": arm_slot,
+        "intervention_kind": "endpoint_change", "treatment_identity": treatment,
+        "shared_match_identity": "support:abc|horizon:40-60", "c_source_step": 50,
+        "realized_propagation_seed": ctx.matched_descendant_seed(fork_index),
+        "realized_lookahead_seeds": tuple(
             ctx.matched_descendant_lookahead_seed(fork_index, j)
             for j in range(ctx.n_descendant_lookaheads)
         ),
-    )
+    }
     kw.update(over)
     return sd.MatchedPairSeedRecord(**kw)
 

@@ -35,7 +35,7 @@ from ..fusion_v2.state import (
     advance_archive_entry,
 )
 
-__all__ = ["V2ArchiveError", "ExactArchive", "legacy_rank_key", "select_family_representatives"]
+__all__ = ["ExactArchive", "V2ArchiveError", "legacy_rank_key", "select_family_representatives"]
 
 #: Ordered weakest to strongest.  Promotion may only move right (PLAN §4.2).
 _ORDER = {
@@ -148,12 +148,14 @@ class ExactArchive:
                 f"feasibility may only advance, never regress: {row.entry.feasibility_level.value}"
                 f" -> {feasibility_level.value}"
             )
-        if feasibility_level is FeasibilityLevel.DEFINITIVE:
-            if structure_outcome is None or not getattr(structure_outcome, "evaluated", False):
-                raise V2ArchiveError(
-                    "promotion to definitive requires an EVALUATED structure outcome; "
-                    "'definitive' without a measurement behind it is a claim, not a result"
-                )
+        if (
+            feasibility_level is FeasibilityLevel.DEFINITIVE
+            and (structure_outcome is None or not getattr(structure_outcome, "evaluated", False))
+        ):
+            raise V2ArchiveError(
+                "promotion to definitive requires an EVALUATED structure outcome; "
+                "'definitive' without a measurement behind it is a claim, not a result"
+            )
         row.entry = advance_archive_entry(
             row.entry, feasibility_level=feasibility_level, depth=int(depth),
         )
@@ -207,7 +209,7 @@ class ExactArchive:
             raise V2ArchiveError(f"unknown endpoint {endpoint_id}: not in the archive")
         return _is_feasible_definitive(row.entry.feasibility_level, row.structure_outcome)
 
-    def fork_view(self) -> "ExactArchive":
+    def fork_view(self) -> ExactArchive:
         """A separate archive holding exactly the rows this one holds right now.
 
         Two treatment arms defined over ONE realized pre-feedback pool still generate their own

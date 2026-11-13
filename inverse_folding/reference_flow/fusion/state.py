@@ -20,7 +20,6 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from collections.abc import Mapping, Sequence
 
-    from inverse_folding.reference_flow.refine import StructureMetrics
 
 CANONICAL_AA20 = "ACDEFGHIKLMNPQRSTVWY"
 _AA20 = frozenset(CANONICAL_AA20)
@@ -133,7 +132,7 @@ class Proposal:
     halo_start_0b: int
     halo_end_0b: int
     proposal_seed: int
-    diagnostics: "Mapping[str, Any] | None" = None
+    diagnostics: Mapping[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.move_family not in MOVE_FAMILIES:
@@ -242,7 +241,7 @@ class PopulationState:
             raise FusionStateError("population slot_idx must be exactly 0..N-1")
 
 
-def uniform_population(*, round_idx: int, particles: "Sequence[ParticleState]",
+def uniform_population(*, round_idx: int, particles: Sequence[ParticleState],
                       elite: EliteState) -> PopulationState:
     """Build a population with weights reset to ``1/N`` (post-resample / control reset)."""
     particles = list(particles)

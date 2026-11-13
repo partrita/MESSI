@@ -38,6 +38,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
+from . import state as st
 from .errors import V2Error
 from .identity import LineageRef, canonical_digest
 from .policy import (
@@ -61,10 +62,13 @@ from .schedule import (
     observe_maturity,
     validate_realized_mask_load,
 )
-from . import state as st
 
 __all__ = [
-    "V2ProjectionError", "ProjectionContext", "ProjectionOutcome", "source_writeback",
+    "ProjectionContext",
+    "ProjectionOutcome",
+    "V2ProjectionError",
+    "canonical_digest",
+    "source_writeback",
 ]
 
 
@@ -356,7 +360,7 @@ def source_writeback(
         raise V2ProjectionError("decision must be a PolicyDecision or a PolicyRejection")
 
     reasons = _reason_strings(decision.reason_by_pos)
-    reject = lambda detail: _null(  # noqa: E731 - a local alias keeps the checks readable
+    reject = lambda detail: _null(
         st.TransitionOutcome.NULL_INVALID_POLICY_RESULT, detail, reasons, (), policy_identity,
         context)
 

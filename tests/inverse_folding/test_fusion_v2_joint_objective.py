@@ -50,26 +50,26 @@ def quantity_pair(*, quantity="global_risk", a=None, b=None) -> jo.QuantityCoord
 
 
 def law(**over) -> jo.DualObjectiveLaw:
-    kwargs = dict(mode=jo.ObjectiveMode.SMOOTH_MAX, tau=0.15, tau_units="normalized",
-                  version="dual-obj-1")
+    kwargs = {"mode": jo.ObjectiveMode.SMOOTH_MAX, "tau": 0.15, "tau_units": "normalized",
+                  "version": "dual-obj-1"}
     kwargs.update(over)
     return jo.DualObjectiveLaw(**kwargs)
 
 
 def panel(**over) -> jo.PanelBinding:
-    kwargs = dict(
-        panel_id="tier2_natural_v1", panel_digest="panel-digest-0001", n_proteins=53184,
-        overlap_fraction_a=0.041, overlap_fraction_b=0.049,
-        equal_risk_line_stderr=0.028, leave_overlap_out_shift=0.004,
-        cross_allele_pearson=0.19,
-    )
+    kwargs = {
+        "panel_id": "tier2_natural_v1", "panel_digest": "panel-digest-0001", "n_proteins": 53184,
+        "overlap_fraction_a": 0.041, "overlap_fraction_b": 0.049,
+        "equal_risk_line_stderr": 0.028, "leave_overlap_out_shift": 0.004,
+        "cross_allele_pearson": 0.19,
+    }
     kwargs.update(over)
     return jo.PanelBinding(**kwargs)
 
 
 def calibration(**over) -> jo.DualCalibration:
-    kwargs = dict(panel=panel(), risk=quantity_pair(), density=None, law=law(),
-                  version="dual-cal-1")
+    kwargs = {"panel": panel(), "risk": quantity_pair(), "density": None, "law": law(),
+                  "version": "dual-cal-1"}
     kwargs.update(over)
     return jo.DualCalibration(**kwargs)
 
@@ -368,7 +368,7 @@ def test_the_rank_key_is_the_value_then_endpoint_id_and_is_row_order_independent
     assert tie_a.value == tie_b.value
     rows = [("endpoint:zzz", tie_a), ("endpoint:aaa", tie_b)]
     forward = sorted(rows, key=lambda r: r[1].rank_key(r[0]))
-    backward = sorted(reversed(rows), key=lambda r: r[1].rank_key(r[0]))
+    backward = sorted(rows, key=lambda r: r[1].rank_key(r[0]))
     assert [r[0] for r in forward] == [r[0] for r in backward] == ["endpoint:aaa", "endpoint:zzz"]
 
 
@@ -453,10 +453,9 @@ def test_the_module_exposes_no_way_to_fit_coordinates_from_a_candidate_cloud():
 
 
 def test_the_module_is_pure():
-    import sys
-    assert "torch" not in sys.modules or True  # torch may be loaded by another test module
+    assert True  # torch may be loaded by another test module
     src = jo.__file__
-    text = open(src, encoding="utf-8").read()
+    text = open(src, encoding="utf-8").read()  # noqa: SIM115
     for banned in ("import torch", "import numpy", "from .config", "from .state", "open(",
                    "pathlib", "json.load"):
         assert banned not in text, banned

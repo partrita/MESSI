@@ -20,15 +20,15 @@ def main(args):
                 file_id=basename, mmcif_string=mmcif_str
             )
             if(mmcif.mmcif_object is None):
-                logging.warning(f'Failed to parse {fname}...')
+                logging.warning(f'Failed to parse {fname}...')  # noqa: LOG015
                 if(args.raise_errors):
-                    raise list(mmcif.errors.values())[0]
+                    raise next(iter(mmcif.errors.values()))
                 else:
                     continue
 
             mmcif = mmcif.mmcif_object
             for chain, seq in mmcif.chain_to_seqres.items():
-                chain_id = '_'.join([basename, chain])
+                chain_id = f"{basename}_{chain}"
                 fasta.append(f">{chain_id}")
                 fasta.append(seq)
         elif(ext == ".core"):

@@ -127,7 +127,7 @@ class FoldingModel:
                     af2_model_4_pdbs[seq_name] = x
             else:
                 os.remove(x)
-        for header, _ in fasta_seqs.items():
+        for header in fasta_seqs:
             af2_folded_path = af2_model_4_pdbs[header]
             af2_json_path = af2_model_4_jsons[header]
             with open(af2_json_path, "r") as f:

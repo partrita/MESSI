@@ -43,12 +43,12 @@ from tests.inverse_folding import _v2_fixtures as F
 
 
 def _pair_context(**over):
-    kw = dict(
-        seed_schema=sd.V2_SEED_ENCODING_VERSION,
-        campaign_id="v2-canary", split_role="dev", master_seed=20260805, protein_id="5ZHV_B",
-        depth=0, r_step=F.R_STEP, c_next_step=F.C_NEXT, pair_ordinal=0,
-        n_forks=2, n_descendant_lookaheads=3,
-    )
+    kw = {
+        "seed_schema": sd.V2_SEED_ENCODING_VERSION,
+        "campaign_id": "v2-canary", "split_role": "dev", "master_seed": 20260805, "protein_id": "5ZHV_B",
+        "depth": 0, "r_step": F.R_STEP, "c_next_step": F.C_NEXT, "pair_ordinal": 0,
+        "n_forks": 2, "n_descendant_lookaheads": 3,
+    }
     kw.update(over)
     return sd.FeedbackPairSeedContext(**kw)
 
@@ -301,7 +301,9 @@ def test_the_policy_source_off_comparator_lives_on_its_own_axis():
 def test_the_reward_ordered_endpoint_pair_lives_on_its_own_axis():
     """PLAN V2F5 asks for a reward-ordered endpoint pair, which is a claim about SELECTION rather
     than about the mechanism -- so it is a level of the endpoint-relation axis."""
-    from inverse_folding.reference_flow.fusion_v2_runtime.paired import ENDPOINT_RELATIONS
+    from inverse_folding.reference_flow.fusion_v2_runtime.paired import (
+        ENDPOINT_RELATIONS,
+    )
 
     assert "reward_ordered" in ENDPOINT_RELATIONS
     assert "reward_ordered" not in INTERVENTIONS

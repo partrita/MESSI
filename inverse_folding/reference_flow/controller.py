@@ -29,8 +29,8 @@ Public surface:
 from __future__ import annotations
 
 import math
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from typing import Callable, Sequence
 
 import numpy as np
 import torch
@@ -49,6 +49,13 @@ from .actionability import (
     smoothstep_pressure,
     update_memory,
 )
+from .allocation import (
+    allocation_mass,
+    reweight_by_allocation,
+    stable_seed,
+    terminal_union_field,
+    triage_field,
+)
 from .commit import (
     D3Handler,
     compute_stage_a_rank_score,
@@ -63,13 +70,6 @@ from .counterfactual import (
     compute_context_pnll_from_log_probs,
 )
 from .head_scoring import HeadScore, OnlineHeadScorer, WindowRiskRecord
-from .allocation import (
-    allocation_mass,
-    reweight_by_allocation,
-    stable_seed,
-    terminal_union_field,
-    triage_field,
-)
 from .self_conditioned_gr import (
     SCGRProbeSample,
     SCGRRiskAggregates,
@@ -529,7 +529,7 @@ class ReferenceFlowController:
 
         return list(self._d3_resolved)
 
-    def actionability_states(self) -> list["UnifiedActionabilityState"]:
+    def actionability_states(self) -> list[UnifiedActionabilityState]:
         """Per-refresh typed actionability snapshots (Stage B telemetry).
 
         Empty in ``static_excess`` mode; the script-level telemetry writer uses
@@ -811,7 +811,6 @@ class ReferenceFlowController:
         # the same addendum.
         if d2_outcome is not None:
             block_diagnostics: list[dict] = []
-            cum_kl = 0.0
             max_abs_shift = 0.0
             for block in d2_outcome.block_outcomes:
                 dl_max = (
@@ -1124,7 +1123,7 @@ class ReferenceFlowController:
                 "m_i": outcome.m_i,
                 "rho_i": outcome.rho_i,
                 "commit_score": outcome.commit_score,
-                "grace_positions": set(int(p) for p in outcome.grace_positions),
+                "grace_positions": {int(p) for p in outcome.grace_positions},
                 # Stage C.1 global-pressure attribution for the D3 event row (C1.6).
                 "lambda_base": outcome.lambda_base,
                 "lambda_eff": outcome.lambda_eff,
@@ -1666,7 +1665,7 @@ class ReferenceFlowController:
     # ---------- Stage B typed actionability (PLAN_RF_UNI_CTRL.md Task B4) ----------
 
     def _update_pressure_state(
-        self, actionability: "UnifiedActionabilityState"
+        self, actionability: UnifiedActionabilityState
     ) -> None:
         """Stage C.1: fold this refresh's ``G`` into the trajectory pressure state.
 
@@ -2713,7 +2712,7 @@ def _reduce_scgr_window(values: list[float], reduce: str) -> float | None:
     raise ValueError(f"unknown actuation_reduce {reduce!r}")
 
 
-def _pressure_refresh_reliable(actionability: "UnifiedActionabilityState") -> bool:
+def _pressure_refresh_reliable(actionability: UnifiedActionabilityState) -> bool:
     """Stage C.1 reliability gate for a refresh's contribution to ``B_GR``.
 
     PLAN_RF_UNI_CTRL.md Stage C.1 Runtime Definitions: a refresh is reliable iff

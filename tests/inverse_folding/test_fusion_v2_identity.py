@@ -23,10 +23,10 @@ D = "a" * 64  # a stand-in 64-hex content digest
 
 
 def _conditioning(**over):
-    kw = dict(
-        dplm_checkpoint=D, tokenizer=D, backbone_row=D, coordinate_mask=D,
-        entry_config=D, fixed_token_policy=D,
-    )
+    kw = {
+        "dplm_checkpoint": D, "tokenizer": D, "backbone_row": D, "coordinate_mask": D,
+        "entry_config": D, "fixed_token_policy": D,
+    }
     kw.update(over)
     return ident.make_v2_conditioning(**kw)
 
@@ -38,29 +38,29 @@ def _identity_bundle(**over):
 
 
 def _evaluator(**over):
-    kw = dict(
-        allele="DRB1_0701", score_scale="nats", window_k_min=13, window_k_max=25,
-        head_config_hash=D, head_checkpoint_digest=D,
-    )
+    kw = {
+        "allele": "DRB1_0701", "score_scale": "nats", "window_k_min": 13, "window_k_max": 25,
+        "head_config_hash": D, "head_checkpoint_digest": D,
+    }
     kw.update(over)
     return ident.HeadEvaluatorIdentity(**kw)
 
 
 def _binding(**over):
-    kw = dict(
-        protein_id="5ZHV_B", sequence_md5="0" * 32, sequence_length=244,
-        window_grid_digest=D, evaluator=_evaluator(),
-    )
+    kw = {
+        "protein_id": "5ZHV_B", "sequence_md5": "0" * 32, "sequence_length": 244,
+        "window_grid_digest": D, "evaluator": _evaluator(),
+    }
     kw.update(over)
     return ident.HeadScoreBinding(**kw)
 
 
 def _safety_ref(**over):
-    kw = dict(
-        reference_id="ref:5ZHV_B:wt", reference_label="wt_native", sequence_md5="0" * 32,
-        sequence_length=244, reference_content_digest=D, head_binding=_binding(),
-        head_score_digest=D, bound_at_depth=0, source_kind="predeclared_external",
-    )
+    kw = {
+        "reference_id": "ref:5ZHV_B:wt", "reference_label": "wt_native", "sequence_md5": "0" * 32,
+        "sequence_length": 244, "reference_content_digest": D, "head_binding": _binding(),
+        "head_score_digest": D, "bound_at_depth": 0, "source_kind": "predeclared_external",
+    }
     kw.update(over)
     return ident.SafetyReferenceBinding(**kw)
 
@@ -163,12 +163,12 @@ E = "b" * 64
 #: (minter, baseline kwargs) -- every keyword is a declared component of the ID grammar.
 _MINTERS = {
     "live": (ident.make_live_state_id,
-             dict(protein_id="5ZHV_B", family_id="fam0", depth=1, step=95, content_digest=D)),
+             {"protein_id": "5ZHV_B", "family_id": "fam0", "depth": 1, "step": 95, "content_digest": D}),
     "proj": (ident.make_projected_state_id,
-             dict(protein_id="5ZHV_B", family_id="fam0", depth=1, r_step=90, content_digest=D)),
+             {"protein_id": "5ZHV_B", "family_id": "fam0", "depth": 1, "r_step": 90, "content_digest": D}),
     "txn": (ident.make_transition_id,
-            dict(protein_id="5ZHV_B", family_id="fam0", depth=1, r_step=90, c_next_step=97,
-                 content_digest=D)),
+            {"protein_id": "5ZHV_B", "family_id": "fam0", "depth": 1, "r_step": 90, "c_next_step": 97,
+                 "content_digest": D}),
 }
 _ALT = {"protein_id": "9L2Q_A", "family_id": "fam1", "depth": 2, "step": 96, "r_step": 91,
         "c_next_step": 98, "content_digest": E}
@@ -283,10 +283,10 @@ def test_depth_zero_lineage_must_have_no_parent_edges():
     "missing", ["parent_state_id", "parent_transition_id", "origin_endpoint_id"]
 )
 def test_depth_positive_lineage_requires_every_parent_edge(missing):
-    kw = dict(
-        protein_id="5ZHV_B", root_id="r", family_id="fam0", depth=1,
-        parent_state_id="s", parent_transition_id="t", origin_endpoint_id="e",
-    )
+    kw = {
+        "protein_id": "5ZHV_B", "root_id": "r", "family_id": "fam0", "depth": 1,
+        "parent_state_id": "s", "parent_transition_id": "t", "origin_endpoint_id": "e",
+    }
     kw[missing] = None
     with pytest.raises(ident.V2IdentityError):
         ident.LineageRef(**kw)
@@ -386,8 +386,8 @@ def test_safety_reference_binding_fails_closed(field, bad):
     ],
 )
 def test_projection_policy_identity_fails_closed(field, bad):
-    kw = dict(policy_id="p", policy_version="1", policy_config_digest=D,
-              policy_spec_digest=D, is_diagnostic_only=False)
+    kw = {"policy_id": "p", "policy_version": "1", "policy_config_digest": D,
+              "policy_spec_digest": D, "is_diagnostic_only": False}
     kw[field] = bad
     with pytest.raises(ident.V2IdentityError):
         ident.ProjectionPolicyIdentity(**kw)
@@ -420,8 +420,8 @@ def test_depth_positive_lineage_rejects_an_empty_or_mistyped_edge(edge):
     txn = ident.make_transition_id("5ZHV_B", "fam0", depth=0, r_step=40, c_next_step=50,
                                    content_digest=D)
     endpoint = ident.make_endpoint_id(live, fork_index=0, sequence_md5_hex="0" * 32)
-    good = dict(protein_id="5ZHV_B", root_id="r", family_id="fam0", depth=1,
-                parent_state_id=live, parent_transition_id=txn, origin_endpoint_id=endpoint)
+    good = {"protein_id": "5ZHV_B", "root_id": "r", "family_id": "fam0", "depth": 1,
+                "parent_state_id": live, "parent_transition_id": txn, "origin_endpoint_id": endpoint}
     ident.LineageRef(**good)  # the well-typed lineage constructs
     for bad in ("", live if edge != "parent_state_id" else txn):
         with pytest.raises(ident.V2IdentityError):
@@ -578,10 +578,10 @@ def test_every_safety_reference_field_reaches_its_digest(field, other):
      ("is_diagnostic_only", True)],
 )
 def test_every_projection_policy_field_reaches_its_digest(field, other):
-    base = dict(
-        policy_id="p", policy_version="1", policy_config_digest=D,
-        policy_spec_digest=D, is_diagnostic_only=False,
-    )
+    base = {
+        "policy_id": "p", "policy_version": "1", "policy_config_digest": D,
+        "policy_spec_digest": D, "is_diagnostic_only": False,
+    }
     assert ident.ProjectionPolicyIdentity(**{**base, field: other}).digest() != (
         ident.ProjectionPolicyIdentity(**base).digest()
     )

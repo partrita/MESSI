@@ -8,13 +8,13 @@ schemas plus a killable core reaching count 0.
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
 import pytest
-import scripts.refine_rf_designs as refine_driver
-from types import SimpleNamespace
 
+import scripts.refine_rf_designs as refine_driver
 from inverse_folding.reference_flow.refine import StructureMetrics
 from scripts.refine_rf_designs import (
     Oracles,
@@ -22,8 +22,8 @@ from scripts.refine_rf_designs import (
     _canonical_allele,
     _load_catalytic_indices_by_protein,
     _load_sharded,
-    _run_final_metrics,
     _retain_official_head_rows,
+    _run_final_metrics,
     build_arg_parser,
     build_oracles,
     run_refinement,
@@ -247,7 +247,7 @@ def test_head_ceiling_scores_all_singles_then_capped_round_robin_doubles(tmp_pat
         "single": 38,
         "double": 1,
     }
-    assert set(position for row in candidates["positions"] for position in row) == {12, 20}
+    assert {position for row in candidates["positions"] for position in row} == {12, 20}
     assert list(candidates.iloc[-1]["positions"]) == [12, 20]
 
 

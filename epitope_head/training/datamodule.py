@@ -10,16 +10,20 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
 
 import numpy as np
 import pandas as pd
 import torch
-from torch.utils.data import Dataset, DataLoader, Sampler
+from torch.utils.data import DataLoader, Dataset, Sampler
 
-from epitope_head.training.chunking import assign_span_to_chunk, build_chunk_plan, ChunkPlan
+from epitope_head.training.chunking import (
+    ChunkPlan,
+    assign_span_to_chunk,
+    build_chunk_plan,
+)
 
 logger = logging.getLogger(__name__)
 

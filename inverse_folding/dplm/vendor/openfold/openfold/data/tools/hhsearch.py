@@ -18,7 +18,7 @@ import glob
 import logging
 import os
 import subprocess
-from typing import Sequence
+from collections.abc import Sequence
 
 from openfold.data.tools import utils
 
@@ -55,7 +55,7 @@ class HHSearch:
 
         for database_path in self.databases:
             if not glob.glob(database_path + "_*"):
-                logging.error(
+                logging.error(  # noqa: LOG015
                     "Could not find HHsearch database %s", database_path
                 )
                 raise ValueError(
@@ -86,7 +86,7 @@ class HHSearch:
                 str(self.n_cpu),
             ] + db_cmd
 
-            logging.info('Launching subprocess "%s"', " ".join(cmd))
+            logging.info('Launching subprocess "%s"', " ".join(cmd))  # noqa: LOG015
             process = subprocess.Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
@@ -97,8 +97,7 @@ class HHSearch:
             if retcode:
                 # Stderr is truncated to prevent proto size errors in Beam.
                 raise RuntimeError(
-                    "HHSearch failed:\nstdout:\n%s\n\nstderr:\n%s\n"
-                    % (stdout.decode("utf-8"), stderr[:100_000].decode("utf-8"))
+                    "HHSearch failed:\nstdout:\n{}\n\nstderr:\n{}\n".format(stdout.decode("utf-8"), stderr[:100_000].decode("utf-8"))
                 )
 
             with open(hhr_path) as f:

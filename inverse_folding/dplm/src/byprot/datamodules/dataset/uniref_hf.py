@@ -1,8 +1,6 @@
-import json
 import math
-import os
-import pickle as pkl
-from typing import Iterable, Sequence, TypeVar, Union
+from collections.abc import Iterable, Sequence
+from typing import TypeVar
 
 import numpy as np
 import torch
@@ -34,9 +32,7 @@ class SortishSampler(Sampler):
             rank = dist.get_rank()
         self.data = np.argsort(sequence_lengths)
         self.num_replicas = num_replicas
-        self.num_samples = int(
-            math.ceil(len(self.data) * 1.0 / self.num_replicas)
-        )
+        self.num_samples = math.ceil(len(self.data) * 1.0 / self.num_replicas)
         self.bucket_size = bucket_size
         n_buckets = int(np.ceil(len(self.data) / self.bucket_size))
         self.data = [
@@ -166,8 +162,7 @@ class ApproxBatchSampler(BatchSampler):
         return len(self.batches)
 
     def __iter__(self):
-        for batch in self.batches:
-            yield batch
+        yield from self.batches
 
 
 class UniRefHFDataset(Dataset):
@@ -262,7 +257,7 @@ class Subset(Dataset[T_co]):
         return len(self.indices)
 
 
-class DPLMCollater(object):
+class DPLMCollater:
     """Wrapped for OA Collater to operate on ESM w/ ESM alphabet and batch
     converter/tokens."""
 

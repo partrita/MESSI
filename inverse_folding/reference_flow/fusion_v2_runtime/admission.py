@@ -18,8 +18,9 @@ to "off", and a run with it off is indistinguishable in its outputs from a run w
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, Sequence
+from typing import Any
 
 from ..fusion_v2.errors import V2Error
 from ..fusion_v2.identity import SafetyReferenceBinding
@@ -29,13 +30,13 @@ from ..fusion_v2.safety import (
     SafetyAdmissionPolicy,
     SelfReferentialReference,
     apply_threshold,
+    incremental_inapplicable,
     make_admissibility_verdict,
     measure_cumulative,
-    incremental_inapplicable,
     measure_incremental,
 )
 
-__all__ = ["V2AdmissionError", "SafetyGate", "EndpointAdmission", "admit_endpoint"]
+__all__ = ["EndpointAdmission", "SafetyGate", "V2AdmissionError", "admit_endpoint"]
 
 
 class V2AdmissionError(V2Error):

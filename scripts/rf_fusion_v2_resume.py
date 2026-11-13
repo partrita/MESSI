@@ -36,30 +36,31 @@ import hashlib
 import json
 import os
 import sys
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from inverse_folding.reference_flow.fusion_v2.errors import V2Error  # noqa: E402
+from inverse_folding.reference_flow.fusion_v2.errors import V2Error
 
 __all__ = [
-    "V2ResumeError",
-    "RunSignature",
-    "FragmentVerdict",
-    "AggregateReport",
+    "FRAGMENT_RESULT_STATUSES",
     "FRAGMENT_SCHEMA",
     "FRAGMENT_STATUSES",
-    "FRAGMENT_RESULT_STATUSES",
     "FRAGMENT_SUCCESS_STATUSES",
-    "write_fragment",
-    "read_fragment",
-    "validate_fragment",
-    "scan_fragments",
+    "AggregateReport",
+    "FragmentVerdict",
+    "RunSignature",
+    "V2ResumeError",
     "aggregate_fragments",
+    "read_fragment",
+    "scan_fragments",
+    "validate_fragment",
+    "write_fragment",
 ]
 
 
@@ -305,7 +306,7 @@ def _table_shape_problem(payload: Any, *, table_names: Sequence[str] = ()) -> st
         if key in tuple(table_names) and not isinstance(value, (list, tuple)):
             return (f"payload[{key!r}] is declared a table but holds {type(value).__name__}; "
                     "aggregation would spread it row by row")
-        if isinstance(value, (str, bytes)) or isinstance(value, Mapping):
+        if isinstance(value, (str, bytes, Mapping)):
             continue
         if isinstance(value, Sequence):
             for index, row in enumerate(value):

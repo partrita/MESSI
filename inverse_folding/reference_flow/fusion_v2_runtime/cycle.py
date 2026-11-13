@@ -58,7 +58,7 @@ from .segment import (
     segment_is_terminal,
 )
 
-__all__ = ["V2CycleError", "CycleCost", "CycleOutcome", "run_one_cycle"]
+__all__ = ["CycleCost", "CycleOutcome", "V2CycleError", "run_one_cycle"]
 
 
 class V2CycleError(V2Error):

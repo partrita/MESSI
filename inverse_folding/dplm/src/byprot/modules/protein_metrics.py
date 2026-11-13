@@ -102,11 +102,11 @@ def rigid_transform_3D(A, B, verbose=False):
 
     num_rows, num_cols = A.shape
     if num_rows != 3:
-        raise Exception(f"matrix A is not 3xN, it is {num_rows}x{num_cols}")
+        raise Exception(f"matrix A is not 3xN, it is {num_rows}x{num_cols}")  # noqa: TRY002
 
     num_rows, num_cols = B.shape
     if num_rows != 3:
-        raise Exception(f"matrix B is not 3xN, it is {num_rows}x{num_cols}")
+        raise Exception(f"matrix B is not 3xN, it is {num_rows}x{num_cols}")  # noqa: TRY002
 
     # find mean column wise
     centroid_A = np.mean(A, axis=1)
@@ -127,7 +127,7 @@ def rigid_transform_3D(A, B, verbose=False):
     #    raise ValueError("rank of H = {}, expecting 3".format(linalg.matrix_rank(H)))
 
     # find rotation
-    U, S, Vt = np.linalg.svd(H)
+    U, _S, Vt = np.linalg.svd(H)
     R = Vt.T @ U.T
 
     # special reflection case
@@ -166,8 +166,8 @@ def protein_metrics(
     mdtraj_metrics = calc_mdtraj_metrics(pdb_path)
     atom37_mask = np.any(atom37_pos, axis=-1)
     atom37_diffuse_mask = diffuse_mask[..., None] * atom37_mask
-    prot = au.create_full_prot(atom37_pos, atom37_diffuse_mask)
-    violation_metrics = amber_minimize.get_violation_metrics(prot)
+    prot = au.create_full_prot(atom37_pos, atom37_diffuse_mask)  # noqa: F821
+    violation_metrics = amber_minimize.get_violation_metrics(prot)  # noqa: F821
     struct_violations = violation_metrics["structural_violations"]
     inter_violations = struct_violations["between_residues"]
 
@@ -181,7 +181,7 @@ def protein_metrics(
     bb_diffuse_mask = (diffuse_mask * bb_mask).astype(bool)
     unpad_gt_scaffold_pos = gt_atom37_pos[..., CA_IDX, :][bb_diffuse_mask]
     unpad_pred_scaffold_pos = atom37_pos[..., CA_IDX, :][bb_diffuse_mask]
-    seq = du.aatype_to_seq(gt_aatype[bb_diffuse_mask])
+    seq = du.aatype_to_seq(gt_aatype[bb_diffuse_mask])  # noqa: F821
     _, tm_score = calc_tm_score(
         unpad_pred_scaffold_pos, unpad_gt_scaffold_pos, seq, seq
     )

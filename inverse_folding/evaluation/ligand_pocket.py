@@ -28,7 +28,7 @@ import pandas as pd
 
 BACKBONE = frozenset({"N", "CA", "C", "O"})
 STANDARD_AA = frozenset(
-    "ALA ARG ASN ASP CYS GLN GLU GLY HIS ILE LEU LYS MET PHE PRO SER THR TRP TYR VAL".split()
+    ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
 )
 
 
@@ -112,7 +112,7 @@ def ligand_site_metrics(
         lxyz = _heavy(arr, lch)
         if not len(lxyz):
             continue
-        rec: dict = {"ligand_chain": lch, "n_ligand_heavy_atoms": int(len(lxyz))}
+        rec: dict = {"ligand_chain": lch, "n_ligand_heavy_atoms": len(lxyz)}
         d = np.linalg.norm(prot.coord[:, None, :] - lxyz[None, :, :], axis=-1)
         close = d.min(axis=1) < contact_cutoff
         rec["n_pocket_contacts"] = int(close.sum())

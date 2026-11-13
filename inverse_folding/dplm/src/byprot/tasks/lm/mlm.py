@@ -2,24 +2,18 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-import copy
-import os
-from typing import Any, Callable, List, Union
+from typing import Any
 
-import numpy as np
 import torch
-from lightning.pytorch.utilities import grad_norm
-from omegaconf import DictConfig
-from torch import nn
-from torch.nn import functional as F
-from torchmetrics import CatMetric, MaxMetric, MeanMetric, MinMetric, SumMetric
-
 from byprot import utils
 from byprot.models.utils import get_net
 from byprot.modules import metrics
 from byprot.tasks import TaskLitModule, register_task
 from byprot.utils.config import compose_config as Cfg
-from byprot.utils.config import merge_config
+from lightning.pytorch.utilities import grad_norm
+from omegaconf import DictConfig
+from torch import nn
+from torchmetrics import MaxMetric, MeanMetric, MinMetric
 
 log = utils.get_logger(__name__)
 
@@ -51,8 +45,8 @@ class MLMTrainingTask(TaskLitModule):
 
     def __init__(
         self,
-        model: Union[nn.Module, DictConfig],
-        criterion: Union[nn.Module, DictConfig],
+        model: nn.Module | DictConfig,
+        criterion: nn.Module | DictConfig,
         optimizer: DictConfig,
         lr_scheduler: DictConfig = None,
         *,
@@ -87,7 +81,6 @@ class MLMTrainingTask(TaskLitModule):
             self.log_dict(grad_norm_dict)
 
     def build_model(self):
-        wxy = 1
         self.model = get_net(cfg=self.hparams.model)
 
     def build_criterion(self):
@@ -282,7 +275,7 @@ class MLMTrainingTask(TaskLitModule):
         )
         batch["input_ids"] = noised_tokens
 
-        output_tokens, output_scores = self.model.generate(
+        output_tokens, _output_scores = self.model.generate(
             batch=batch,
             max_iter=self.hparams.generator.max_iter,
             temperature=self.hparams.generator.temperature,

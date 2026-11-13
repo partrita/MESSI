@@ -6,9 +6,8 @@ import torch
 from torch.optim.adamw import adamw
 
 try:
-    import deepspeed
-    from deepspeed.ops.adam import DeepSpeedCPUAdam, FusedAdam
-except:
+    from deepspeed.ops.adam import FusedAdam
+except:  # noqa: E722, S110
     pass
 
 
@@ -46,7 +45,7 @@ def get_optimizer(cfg, params):
         # )
 
     else:
-        raise NotImplementedError("Optimizer not supported: %s" % cfg.type)
+        raise NotImplementedError(f"Optimizer not supported: {cfg.type}")
 
 
 class AdamW(torch.optim.AdamW):

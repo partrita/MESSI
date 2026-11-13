@@ -12,40 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional, Sequence, Tuple
+from collections.abc import Sequence
 
 import torch
-import torch.nn as nn
+from torch import nn
 
-from openfold.model.dropout import (
-    DropoutRowwise,
-    DropoutColumnwise,
-)
 from openfold.model.evoformer import (
     EvoformerBlock,
-    EvoformerStack,
+)
+from openfold.model.msa import (
+    MSAColumnAttention,
+    MSARowAttentionWithPairBias,
 )
 from openfold.model.outer_product_mean import OuterProductMean
-from openfold.model.msa import (
-    MSARowAttentionWithPairBias, 
-    MSAColumnAttention,
-    MSAColumnGlobalAttention,
-)
-from openfold.model.pair_transition import PairTransition
 from openfold.model.primitives import Attention, GlobalAttention
-from openfold.model.structure_module import (
-    InvariantPointAttention,
-    BackboneUpdate,
-)
-from openfold.model.template import TemplatePairStackBlock
-from openfold.model.triangular_attention import (
-    TriangleAttentionStartingNode,
-    TriangleAttentionEndingNode,
-)
-from openfold.model.triangular_multiplicative_update import (
-    TriangleMultiplicationOutgoing,
-    TriangleMultiplicationIncoming,
-)
 
 
 def script_preset_(model: torch.nn.Module):
@@ -158,11 +138,11 @@ def _script_submodules_helper_(
                 scripted = torch.jit.script(child)
                 setattr(model, name, scripted)
                 continue
-            except (RuntimeError, torch.jit.frontend.NotSupportedError) as e:
+            except (RuntimeError, torch.jit.frontend.NotSupportedError):
                 if(attempt_trace):
                     to_trace.add(type(child))
                 else:
-                    raise e
+                    raise
         
         _script_submodules_helper_(child, types, attempt_trace, to_trace)
 
@@ -182,9 +162,9 @@ def _trace_submodules_(
 
 def script_submodules_(
     model: nn.Module,
-    types: Optional[Sequence[type]] = None,
-    attempt_trace: Optional[bool] = True,
-    batch_dims: Optional[Tuple[int]] = None,
+    types: Sequence[type] | None = None,
+    attempt_trace: bool | None = True,
+    batch_dims: tuple[int] | None = None,
 ):
     """
     Convert all submodules whose types match one of those in the input 

@@ -27,7 +27,9 @@ import pytest
 import torch
 
 from inverse_folding.reference_flow.fusion_v2_runtime.scoring import token_logprob
-from inverse_folding.reference_flow.sampler import _sample_categorical  # read-only: V1 is pristine
+from inverse_folding.reference_flow.sampler import (
+    _sample_categorical,  # read-only: V1 is pristine
+)
 
 VOCAB = 33
 

@@ -69,6 +69,6 @@ def resolve_structure_path(entry: Mapping[str, Any], pdb_root: str | Path) -> Pa
         if candidate.exists():
             return candidate
     raise FileNotFoundError(
-        f"could not resolve structure for protein_id={str(dict(entry)['protein_id'])} "
+        f"could not resolve structure for protein_id={dict(entry)['protein_id']!s} "
         f"under pdb_root={Path(pdb_root)}"
     )

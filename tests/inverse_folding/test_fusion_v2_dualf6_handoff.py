@@ -19,8 +19,6 @@ from __future__ import annotations
 import dataclasses
 import inspect
 
-import pytest
-
 from inverse_folding.reference_flow.fusion_v2 import identity as ident
 from inverse_folding.reference_flow.fusion_v2 import joint_objective as jo
 from inverse_folding.reference_flow.fusion_v2 import policy as pol
@@ -29,13 +27,22 @@ from inverse_folding.reference_flow.fusion_v2 import seeds as sd
 
 from . import _v2_fixtures as F
 from .test_fusion_v2_dual_select import (
-    EVAL_A, EVAL_B, _ScriptedHeadB, _authority, _score_b,
+    EVAL_B,
+    _authority,
+    _score_b,
+    _ScriptedHeadB,
 )
 from .test_fusion_v2_head_directed_policy import (
-    INCUMBENT_SEQ, L, SOURCE_SEQ, _calibration, _coords, _donor, _incumbent, _policy, _score,
-    _scorer, _source,
+    INCUMBENT_SEQ,
+    SOURCE_SEQ,
+    L,
+    _calibration,
+    _coords,
+    _donor,
+    _policy,
+    _scorer,
+    _source,
 )
-
 
 # ------------------------------------------------------------------------------------------
 # 1. Dual-off golden equivalence, beyond the digests
@@ -82,7 +89,9 @@ def test_a_legacy_bundle_gains_no_file_when_the_dual_tables_are_not_supplied():
 
 def test_the_legacy_head_cost_event_id_is_unchanged_and_dual_namespaces_beside_it():
     from inverse_folding.reference_flow.fusion_v2_runtime import cycle as cyc
-    from inverse_folding.reference_flow.fusion_v2_runtime.dual_lookahead import dual_head_event_id
+    from inverse_folding.reference_flow.fusion_v2_runtime.dual_lookahead import (
+        dual_head_event_id,
+    )
 
     assert 'event_id=f"{event_prefix}:head"' in inspect.getsource(cyc)
     for role in (jo.AlleleRole.A, jo.AlleleRole.B):
@@ -248,10 +257,15 @@ def test_the_dual_layer_imports_no_external_immune_predictor():
     being a property of the objective it declares.
     """
     from inverse_folding.reference_flow.fusion_v2 import (
-        dual_config, dual_evidence, dual_policy, joint_objective,
+        dual_config,
+        dual_evidence,
+        dual_policy,
+        joint_objective,
     )
     from inverse_folding.reference_flow.fusion_v2_runtime import (
-        dual_lookahead, dual_runtime, dual_selection,
+        dual_lookahead,
+        dual_runtime,
+        dual_selection,
     )
 
     # ``dual_runtime`` is the module the wiring repair added and the one the kernel actually calls;

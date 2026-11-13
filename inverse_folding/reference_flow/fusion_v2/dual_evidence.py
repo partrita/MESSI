@@ -21,8 +21,9 @@ torch, no config, no I/O.
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 from .errors import V2Error
 from .identity import HeadScoreBinding, canonical_digest
@@ -34,15 +35,15 @@ from .joint_objective import (
 )
 
 __all__ = [
-    "V2DualEvidenceError",
-    "positive_mass_density",
-    "role_b_hotspot_telemetry",
-    "AlleleHotspotTelemetry",
-    "HeadResult",
     "AlleleEndpointScore",
+    "AlleleHotspotTelemetry",
     "DualEndpointEvidence",
+    "HeadResult",
+    "V2DualEvidenceError",
     "bind_dual_evidence",
     "bind_dual_evidence_batch",
+    "positive_mass_density",
+    "role_b_hotspot_telemetry",
 ]
 
 #: The endpoint fields a Dual sidecar binds itself to. All four must agree across both Heads.
@@ -131,7 +132,7 @@ class HeadResult:
 
     @property
     def raw_risk(self) -> float:
-        return float(getattr(self.score, "global_risk"))
+        return float(self.score.global_risk)
 
     @property
     def allele(self) -> str:
@@ -389,10 +390,10 @@ def bind_dual_evidence(
         density = density_obj.evaluate(raw_a=left.density, raw_b=right.density)
 
     return DualEndpointEvidence(
-        endpoint_id=str(getattr(endpoint, "endpoint_id")),
-        protein_id=str(getattr(endpoint, "protein_id")),
-        sequence_md5=str(getattr(endpoint, "sequence_md5")),
-        sequence_length=int(getattr(endpoint, "sequence_length")),
+        endpoint_id=str(endpoint.endpoint_id),
+        protein_id=str(endpoint.protein_id),
+        sequence_md5=str(endpoint.sequence_md5),
+        sequence_length=int(endpoint.sequence_length),
         window_grid_digest=endpoint_binding.window_grid_digest,
         a=AlleleEndpointScore(
             role=AlleleRole.A, allele=left.allele, raw_risk=left.raw_risk,
@@ -440,7 +441,7 @@ def bind_dual_evidence_batch(
     """
     by_a = _index_by_sequence(results_a, AlleleRole.A)
     by_b = _index_by_sequence(results_b, AlleleRole.B)
-    expected = {str(getattr(endpoint, "sequence_md5")) for endpoint in endpoints}
+    expected = {str(endpoint.sequence_md5) for endpoint in endpoints}
 
     for role, indexed in ((AlleleRole.A, by_a), (AlleleRole.B, by_b)):
         unexpected = set(indexed) - expected
@@ -461,8 +462,8 @@ def bind_dual_evidence_batch(
     return tuple(
         bind_dual_evidence(
             endpoint=endpoint,
-            result_a=by_a[str(getattr(endpoint, "sequence_md5"))],
-            result_b=by_b[str(getattr(endpoint, "sequence_md5"))],
+            result_a=by_a[str(endpoint.sequence_md5)],
+            result_b=by_b[str(endpoint.sequence_md5)],
             objective=objective, density_objective=density_objective)
         for endpoint in endpoints
     )

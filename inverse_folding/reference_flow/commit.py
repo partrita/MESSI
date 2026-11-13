@@ -17,14 +17,13 @@ Conventions
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
 
 import numpy as np
 import torch
 
 from .controller_config import D3Config
-
 
 # ---------------------------------------------------------------------------
 # Window → residue projection (PLAN §D3-3)
@@ -49,11 +48,10 @@ def project_window_excess_to_residue(
     for w, exc in zip(windows, window_excess):
         if float(exc) <= 0.0:
             continue
-        s = max(0, int(getattr(w, "start_0b")))
-        e = min(L, int(getattr(w, "end_0b")))
+        s = max(0, int(w.start_0b))
+        e = min(L, int(w.end_0b))
         for i in range(s, e):
-            if float(exc) > out[i]:
-                out[i] = float(exc)
+            out[i] = max(out[i], float(exc))
     return out
 
 
@@ -100,12 +98,11 @@ def compute_residue_reliability(
     L = int(sequence_length)
     out = np.zeros(L, dtype=np.float64)
     for blk in active_blocks:
-        s = max(0, int(getattr(blk, "residue_start_0b")))
-        e = min(L, int(getattr(blk, "residue_end_0b")))
-        rho = float(getattr(blk, "rho_B"))
+        s = max(0, int(blk.residue_start_0b))
+        e = min(L, int(blk.residue_end_0b))
+        rho = float(blk.rho_B)
         for i in range(s, e):
-            if rho > out[i]:
-                out[i] = rho
+            out[i] = max(out[i], rho)
     return out
 
 

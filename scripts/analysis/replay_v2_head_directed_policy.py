@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import statistics
 import sys
 from dataclasses import dataclass
@@ -48,15 +49,15 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from inverse_folding.reference_flow.fusion.state import sequence_md5  # noqa: E402
-from inverse_folding.reference_flow.fusion_v2 import identity as ident  # noqa: E402
-from inverse_folding.reference_flow.fusion_v2 import policy as pol  # noqa: E402
-from inverse_folding.reference_flow.fusion_v2 import reward as rw  # noqa: E402
-from inverse_folding.reference_flow.fusion_v2.config import load_v2_config  # noqa: E402
-from inverse_folding.reference_flow.fusion_v2.schedule import load_band_table  # noqa: E402
-from inverse_folding.reference_flow.fusion_v2.state import FeasibilityLevel  # noqa: E402
+from inverse_folding.reference_flow.fusion.state import sequence_md5
+from inverse_folding.reference_flow.fusion_v2 import identity as ident
+from inverse_folding.reference_flow.fusion_v2 import policy as pol
+from inverse_folding.reference_flow.fusion_v2 import reward as rw
+from inverse_folding.reference_flow.fusion_v2.config import load_v2_config
+from inverse_folding.reference_flow.fusion_v2.schedule import load_band_table
+from inverse_folding.reference_flow.fusion_v2.state import FeasibilityLevel
 
-__all__ = ["ReplayDonor", "source_views", "replay_bundle", "main"]
+__all__ = ["ReplayDonor", "main", "replay_bundle", "source_views"]
 
 
 # --------------------------------------------------------------------------------------------
@@ -172,8 +173,8 @@ def _donors(endpoints: pd.DataFrame, *, evaluator, binding_of) -> dict[str, list
             head_global_risk=float(row["head_global_risk"]), head_score=score,
             head_binding=binding_of(score), feasibility_level=FeasibilityLevel.DEFINITIVE,
         ))
-    for state_id in out:
-        out[state_id].sort(key=lambda donor: (donor.head_global_risk, donor.endpoint_id))
+    for donors in out.values():
+        donors.sort(key=lambda donor: (donor.head_global_risk, donor.endpoint_id))
     return out
 
 
@@ -200,12 +201,12 @@ def replay_bundle(
 ) -> dict:
     """Replay the policy over every recorded source state and summarize its coverage."""
     frames = {name: [] for name in ("partial_states", "complete_endpoints", "feedback_events")}
-    for bundle in bundles:
-        for name in frames:
+    for name, frame_list in frames.items():
+        for bundle in bundles:
             table = Path(bundle) / f"{name}.parquet"
             if not table.exists():
                 raise SystemExit(f"{bundle} has no {name}.parquet")
-            frames[name].append(pd.read_parquet(table))
+            frame_list.append(pd.read_parquet(table))
     states = pd.concat(frames["partial_states"], ignore_index=True).drop_duplicates("state_id")
     endpoints = pd.concat(frames["complete_endpoints"],
                           ignore_index=True).drop_duplicates("endpoint_id")
@@ -434,7 +435,7 @@ def _r_step_by_state(events: pd.DataFrame, config) -> dict[str, int]:
     out: dict[str, int] = {}
     for _, row in events.iterrows():
         value = row.get("r_step")
-        if value is None or (isinstance(value, float) and value != value):
+        if value is None or (isinstance(value, float) and math.isnan(value)):
             continue
         out[str(row["source_state_id"])] = int(value)
     return _Defaulted(out, declared)
@@ -447,7 +448,7 @@ class _Defaulted(dict):
         super().__init__(values)
         self._default = int(default)
 
-    def get(self, key, default=None):  # noqa: D102 - dict contract
+    def get(self, key, default=None):
         return super().get(key, self._default)
 
 
@@ -536,9 +537,9 @@ def _load_head(args):
         return None
     from types import SimpleNamespace
 
+    from scripts.head_runtime import build_head_scorer
     from scripts.rf_fusion_v2_oracles import ProductionHeadOracle
     from scripts.rf_shared_oracles import _build_head_scorer_from_args
-    from scripts.head_runtime import build_head_scorer
 
     # The window grid belongs on this namespace too: ``_build_head_scorer_from_args`` passes
     # ``args.window_k_min``/``window_k_max`` straight through to ``build_head_scorer``, so omitting

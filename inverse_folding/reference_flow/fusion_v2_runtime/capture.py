@@ -38,8 +38,8 @@ provenance
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import Any, Callable
+from collections.abc import Callable, Mapping, Sequence
+from typing import Any
 
 import numpy as np
 import torch
@@ -70,7 +70,9 @@ from ..sampler import (
 )
 
 __all__ = [
-    "V2CaptureError", "FullyResolvedRootError", "adapt_checkpoint_to_live_state",
+    "FullyResolvedRootError",
+    "V2CaptureError",
+    "adapt_checkpoint_to_live_state",
     "capture_depth_zero",
 ]
 

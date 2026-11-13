@@ -41,7 +41,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 # The SAME id the refold cache uses, imported rather than reimplemented so complex-gate rows
 # always join to the monomer structural/immune tables on `id`.
-from inverse_folding.evaluation.esmfold_runner import cache_key as design_id  # noqa: E402
+from inverse_folding.evaluation.esmfold_runner import cache_key as design_id
 
 WT_KIND = "WT"
 DESIGN_KIND = "DESIGN"
@@ -160,8 +160,8 @@ def main() -> None:
     print(f"[staged] binder MSA = "
           f"{'shared ' + str(binder_msa) if binder_msa else 'query-only (de novo binder, no homologs)'}")
     print(f"[staged] {msa_cf}/<pred_id>.a3m + {args.partner_id}.a3m")
-    print(f"[staged] pred_manifest.parquet -> build_protenix_jsons.py --manifest")
-    print(f"[staged] gate_manifest.parquet -> eval_complex_gate.py --manifest")
+    print("[staged] pred_manifest.parquet -> build_protenix_jsons.py --manifest")
+    print("[staged] gate_manifest.parquet -> eval_complex_gate.py --manifest")
     if n_designs and man[man.kind == DESIGN_KIND]["n_mutations"].min() == 0:
         print("[warn] at least one design is identical to the parent", file=sys.stderr)
 

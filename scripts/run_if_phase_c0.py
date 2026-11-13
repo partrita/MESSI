@@ -7,13 +7,13 @@ import argparse
 import json
 import sys
 import time
-from datetime import datetime, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import pandas as pd
 import yaml
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -102,7 +102,7 @@ def generate_rows_for_entries(
     rows: list[dict[str, Any]] = []
     failures: list[dict[str, Any]] = []
 
-    total_entries = int(len(entries))
+    total_entries = len(entries)
     total_designs = total_entries * int(n_designs_per_protein)
     run_start = time.time()
 
@@ -207,7 +207,7 @@ def generate_rows_for_entries_batched(
     rows: list[dict[str, Any]] = []
     failures: list[dict[str, Any]] = []
 
-    total_entries = int(len(entries))
+    total_entries = len(entries)
     total_designs = total_entries * int(n_designs_per_protein)
     run_start = time.time()
     proteins_done = 0
@@ -390,7 +390,7 @@ def _build_run_id(args: argparse.Namespace) -> str:
         return str(args.run_id)
     from inverse_folding.reference_flow.runtime import safe_allele_tag
 
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     return f"c0_{safe_allele_tag(args.allele)}_{args.flag_name}_{stamp}"
 
 
@@ -630,7 +630,7 @@ def main(argv: list[str] | None = None) -> int:
             "arm": "c0_native_sampler",
             "allele": args.allele,
             "checkpoint": str(Path(args.checkpoint).resolve()),
-            "n_input_proteins": int(len(entries)),
+            "n_input_proteins": len(entries),
             "n_designs_per_protein": args.n_designs_per_protein,
             "seed": args.seed,
             "max_iter": args.max_iter,
@@ -703,15 +703,15 @@ def main(argv: list[str] | None = None) -> int:
         "checkpoint_digest": checkpoint_digest(args.checkpoint),
         "timestamp": utc_timestamp(),
         "allele": args.allele,
-        "n_input_proteins": int(len(entries)),
-        "n_rows_generated": int(len(rows)),
-        "n_failures": int(len(failures)),
+        "n_input_proteins": len(entries),
+        "n_rows_generated": len(rows),
+        "n_failures": len(failures),
         "failures_path": "failures.json" if failures else None,
     }
 
     manifest["wall_clock_seconds"] = float(total_wall_seconds)
-    n_rows = int(len(rows))
-    n_failures = int(len(failures))
+    n_rows = len(rows)
+    n_failures = len(failures)
     n_total_designs = int(len(entries) * args.n_designs_per_protein)
     avg_per_design = (
         total_wall_seconds / float(n_rows + n_failures) if (n_rows + n_failures) > 0 else 0.0
@@ -737,7 +737,7 @@ def main(argv: list[str] | None = None) -> int:
     set_summary(
         wandb_run,
         {
-            "summary/n_input_proteins": int(len(entries)),
+            "summary/n_input_proteins": len(entries),
             "summary/n_total_designs": n_total_designs,
             "summary/n_rows_generated": n_rows,
             "summary/n_failures": n_failures,

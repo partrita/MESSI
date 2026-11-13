@@ -3,7 +3,6 @@ import os
 import pickle
 
 from alphafold.data import pipeline, templates
-
 from scripts.utils import add_data_args
 
 

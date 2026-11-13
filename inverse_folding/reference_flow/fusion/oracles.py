@@ -59,7 +59,7 @@ class StructureCache:
         return metrics, False
 
 
-def structure_feasible(metrics, config: "FusionConfig", *, has_active_site: bool) -> tuple[bool, str]:
+def structure_feasible(metrics, config: FusionConfig, *, has_active_site: bool) -> tuple[bool, str]:
     """Absolute target-backbone gate (§1.4). NOT the refiner's seed-relative gate.
 
     scTM floor is always enforced. Unless the active-site metric is explicitly ``none``, an

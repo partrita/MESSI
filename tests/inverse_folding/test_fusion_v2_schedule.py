@@ -27,41 +27,41 @@ def _digest(label):
 
 
 def _cycle(**over):
-    kw = dict(depth=0, r_step=40, c_source_step=50, c_next_step=60, n_steps=S, law=PROG)
+    kw = {"depth": 0, "r_step": 40, "c_source_step": 50, "c_next_step": 60, "n_steps": S, "law": PROG}
     kw.update(over)
     return sch.make_cycle(**kw)
 
 
 def _provenance(**over):
-    kw = dict(
-        schema_version=sch.SCHEDULE_BAND_SCHEMA_VERSION,
-        calibration_scope=sch.SCHEDULE_BAND_SCOPE,
-        calibration_id="band-2026-08-04", calibration_content_digest=_digest("calibration"),
-        sampler_config_digest=_digest("sampler"), tokenizer_digest=_digest("tokenizer"),
-        backbone_digest=_digest("backbone"),
-        coordinate_mask_policy_digest=_digest("coordinate-mask"),
-        constraint_manifest_digest=_digest("constraints"),
-        constraint_stratum_id="unconstrained", cohort_digest=_digest("cohort"),
-        raw_attempts_digest=_digest("raw-attempts"),
-        attempted_seed_digest=_digest("attempted-seeds"),
-        seed_schema=sch.SCHEDULE_BAND_SEED_SCHEMA, code_revision="deadbeef",
-        produced_by="scripts/rho_maturity_scan.py --mode step", n_steps=S, base_form="linear",
-        amplification_form="constant_one", remask_fraction_scale=0.0, head_free=True,
-        n_attempted_seeds=64, n_failed_captures=0,
-    )
+    kw = {
+        "schema_version": sch.SCHEDULE_BAND_SCHEMA_VERSION,
+        "calibration_scope": sch.SCHEDULE_BAND_SCOPE,
+        "calibration_id": "band-2026-08-04", "calibration_content_digest": _digest("calibration"),
+        "sampler_config_digest": _digest("sampler"), "tokenizer_digest": _digest("tokenizer"),
+        "backbone_digest": _digest("backbone"),
+        "coordinate_mask_policy_digest": _digest("coordinate-mask"),
+        "constraint_manifest_digest": _digest("constraints"),
+        "constraint_stratum_id": "unconstrained", "cohort_digest": _digest("cohort"),
+        "raw_attempts_digest": _digest("raw-attempts"),
+        "attempted_seed_digest": _digest("attempted-seeds"),
+        "seed_schema": sch.SCHEDULE_BAND_SEED_SCHEMA, "code_revision": "deadbeef",
+        "produced_by": "scripts/rho_maturity_scan.py --mode step", "n_steps": S, "base_form": "linear",
+        "amplification_form": "constant_one", "remask_fraction_scale": 0.0, "head_free": True,
+        "n_attempted_seeds": 64, "n_failed_captures": 0,
+    }
     kw.update(over)
     return sch.BandProvenance(**kw)
 
 
 def _band(**over):
-    kw = dict(
-        step=40, stratum_key="len200_260", levels=sch.QuantileLevels((0.1, 0.5, 0.9)),
-        rho_quantiles=(0.34, 0.40, 0.46), unresolved_quantiles=(150, 130, 110),
-        rho_accept=sch.BandInterval(lo=0.34, hi=0.46, lo_level=0.1, hi_level=0.9),
-        unresolved_accept=sch.BandInterval(lo=110.0, hi=150.0, lo_level=0.1, hi_level=0.9),
-        combination_rule="both_axes", n_attempts=64, n_captured=64,
-        n_editable_min=200, n_editable_max=260,
-    )
+    kw = {
+        "step": 40, "stratum_key": "len200_260", "levels": sch.QuantileLevels((0.1, 0.5, 0.9)),
+        "rho_quantiles": (0.34, 0.40, 0.46), "unresolved_quantiles": (150, 130, 110),
+        "rho_accept": sch.BandInterval(lo=0.34, hi=0.46, lo_level=0.1, hi_level=0.9),
+        "unresolved_accept": sch.BandInterval(lo=110.0, hi=150.0, lo_level=0.1, hi_level=0.9),
+        "combination_rule": "both_axes", "n_attempts": 64, "n_captured": 64,
+        "n_editable_min": 200, "n_editable_max": 260,
+    }
     kw.update(over)
     return sch.make_band(**kw)
 
@@ -180,7 +180,7 @@ def _schedule(cycles=None, **over):
         _cycle(depth=0, r_step=40, c_source_step=50, c_next_step=60),
         _cycle(depth=1, r_step=45, c_source_step=60, c_next_step=70),
     )
-    kw = dict(schedule_id="sched-1", law=PROG, n_steps=S, depth_cap=len(cycles), cycles=cycles)
+    kw = {"schedule_id": "sched-1", "law": PROG, "n_steps": S, "depth_cap": len(cycles), "cycles": cycles}
     kw.update(over)
     return sch.make_depth_schedule(**kw)
 
@@ -317,14 +317,14 @@ def test_band_rejects_quantile_vectors_that_do_not_match_their_levels():
 def test_band_has_no_default_for_any_scientific_field():
     """PLAN §5.1: omission is a ``TypeError``, never a fallback."""
     for missing in ("levels", "rho_accept", "unresolved_accept", "combination_rule", "stratum_key"):
-        kw = dict(
-            step=40, stratum_key="s", levels=sch.QuantileLevels((0.1, 0.9)),
-            rho_quantiles=(0.34, 0.46), unresolved_quantiles=(150, 110),
-            rho_accept=sch.BandInterval(lo=0.34, hi=0.46, lo_level=0.1, hi_level=0.9),
-            unresolved_accept=sch.BandInterval(lo=110.0, hi=150.0, lo_level=0.1, hi_level=0.9),
-            combination_rule="both_axes", n_attempts=8, n_captured=8,
-            n_editable_min=200, n_editable_max=260,
-        )
+        kw = {
+            "step": 40, "stratum_key": "s", "levels": sch.QuantileLevels((0.1, 0.9)),
+            "rho_quantiles": (0.34, 0.46), "unresolved_quantiles": (150, 110),
+            "rho_accept": sch.BandInterval(lo=0.34, hi=0.46, lo_level=0.1, hi_level=0.9),
+            "unresolved_accept": sch.BandInterval(lo=110.0, hi=150.0, lo_level=0.1, hi_level=0.9),
+            "combination_rule": "both_axes", "n_attempts": 8, "n_captured": 8,
+            "n_editable_min": 200, "n_editable_max": 260,
+        }
         kw.pop(missing)
         with pytest.raises(TypeError):
             sch.make_band(**kw)
@@ -349,11 +349,11 @@ def test_gate_rejects_a_fully_resolved_projected_state_regardless_of_the_band():
 
 def test_gate_accepts_an_in_band_observation_and_rejects_out_of_band_ones():
     table = sch.bind_band_table(provenance=_provenance(), bands=(_band(),))
-    identity = dict(
-        table=table, step=40, stratum_key="len200_260",
-        declared_calibration_id=table.provenance.calibration_id,
-        declared_calibration_digest=table.provenance.calibration_content_digest,
-    )
+    identity = {
+        "table": table, "step": 40, "stratum_key": "len200_260",
+        "declared_calibration_id": table.provenance.calibration_id,
+        "declared_calibration_digest": table.provenance.calibration_content_digest,
+    }
     ok = sch.gate_projected_maturity(observed=_observation(n_unresolved=130), **identity)
     assert ok.accepted is True and ok.reason is sch.BandVerdictReason.ACCEPTED
     low = sch.gate_projected_maturity(observed=_observation(n_unresolved=200), **identity)

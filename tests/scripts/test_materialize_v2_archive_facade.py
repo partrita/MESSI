@@ -20,7 +20,6 @@ from scripts.materialize_v2_archive_facade import (
 )
 from scripts.materialize_v2_canary_config import no_constraint_manifest_digest
 
-
 EXPECTED_MASTER_SEEDS = (20260811, 20260812, 20260813, 20260814)
 DEFAULT_CAPS = {
     "max_definitive_refolds": 64,

@@ -3,33 +3,34 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from inverse_folding.reference_flow.fusion_v2.errors import V2Error  # noqa: E402
+from inverse_folding.reference_flow.fusion_v2.errors import V2Error
 
 __all__ = [
-    "V2OracleError",
-    "OracleSeams",
     "SUPPORT_POLICY_REGISTRY",
-    "V2HeadResult",
+    "OracleSeams",
     "ProductionHeadOracle",
+    "V2HeadResult",
+    "V2OracleError",
     "assert_constraint_class_matches_band",
+    "bind_lineage_incumbent",
+    "build_dual_stack",
     "build_production_oracles",
+    "build_source_geometry_control",
+    "build_v2_oracles",
     "fixed_token_policy_label",
     "reserved_gpu_seconds_clock",
     "resolve_reference",
     "resolve_stratum",
     "resolve_support_policy",
-    "build_dual_stack",
-    "bind_lineage_incumbent",
-    "build_source_geometry_control",
-    "build_v2_oracles",
 ]
 
 
@@ -151,7 +152,9 @@ def build_source_geometry_control(*, treatment_policy, required_writes, required
     provably share one band table, one stratum, one incumbent and one calibration: a control
     assembled independently could agree today and drift with the next config edit.
     """
-    from inverse_folding.reference_flow.fusion_v2.policy import SourceGeometryControlPolicy
+    from inverse_folding.reference_flow.fusion_v2.policy import (
+        SourceGeometryControlPolicy,
+    )
 
     return SourceGeometryControlPolicy(
         band_table=treatment_policy.band_table, stratum_key=treatment_policy.stratum_key,
@@ -234,7 +237,6 @@ class OracleSeams:
 
     def resolved(self) -> dict:
         from inverse_folding.reference_flow.fusion_v2.schedule import load_band_table
-
         from scripts.rf_fusion_model_factory import build_model_factory
 
         return {
@@ -391,7 +393,6 @@ def assert_constraint_class_matches_band(*, band_table: Any, fixed_tokens: Any,
             "do not describe this protein and the reopen cardinality would come from the wrong "
             "distribution"
         )
-    return None
 
 
 def reserved_gpu_seconds_clock():
@@ -418,7 +419,7 @@ def reserved_gpu_seconds_clock():
 
     def clock() -> float:
         try:
-            import torch  # noqa: PLC0415 - deferred so importing this module loads no torch
+            import torch
         except ImportError:
             return 0.0
         if not torch.cuda.is_available():
@@ -532,7 +533,9 @@ class ProductionHeadOracle:
 
     def evaluator_identity(self):
         """The Head evaluator identity, read off the scorer rather than retyped by a caller."""
-        from inverse_folding.reference_flow.fusion_v2.identity import HeadEvaluatorIdentity
+        from inverse_folding.reference_flow.fusion_v2.identity import (
+            HeadEvaluatorIdentity,
+        )
 
         return HeadEvaluatorIdentity(
             allele=self.allele, score_scale=self.score_scale,
@@ -644,7 +647,7 @@ def v0_oracle_arg_defaults() -> dict:
     the calibration and the Canary is folded, so a copied literal that fell behind v0 would silently
     fold under a protocol nothing declared.
     """
-    from scripts.rf_shared_oracles import build_arg_parser  # noqa: PLC0415
+    from scripts.rf_shared_oracles import build_arg_parser
 
     wanted = set(_V0_ORACLE_FIELDS)
     return {action.dest: action.default
@@ -678,7 +681,7 @@ def build_production_oracles(
     from inverse_folding.reference_flow.fusion.v1_admission import StructureOutcome
 
     if build_oracles is None:
-        from scripts.rf_shared_oracles import build_oracles  # noqa: PLC0415
+        from scripts.rf_shared_oracles import build_oracles
 
     fusion_config = load_fusion_config(str(structure_config))
     args = _v0_oracle_args(
@@ -780,15 +783,16 @@ def build_role_b_head_oracle(
         window_k_min=int(window_k_min), window_k_max=int(window_k_max))
 
     identity_b = head_oracle_b.evaluator_identity()
-    if evaluator_a is not None:
-        if identity_b == evaluator_a or \
-                identity_b.head_checkpoint_digest == evaluator_a.head_checkpoint_digest:
-            raise V2OracleError(
-                "role B resolved to the same Head as role A; the checkpoint digest is the only "
-                "bit that distinguishes the two production Heads, so this is a Head mixup rather "
-                "than a bookkeeping difference, and it would make the objective reduce one allele "
-                "against itself"
-            )
+    if evaluator_a is not None and (
+        identity_b == evaluator_a
+        or identity_b.head_checkpoint_digest == evaluator_a.head_checkpoint_digest
+    ):
+        raise V2OracleError(
+            "role B resolved to the same Head as role A; the checkpoint digest is the only "
+            "bit that distinguishes the two production Heads, so this is a Head mixup rather "
+            "than a bookkeeping difference, and it would make the objective reduce one allele "
+            "against itself"
+        )
     if _STRUCTURE_STACKS_BUILT != before:
         raise V2OracleError(
             "building role B constructed a structure stack; Dual evaluates structure exactly once "
@@ -869,9 +873,15 @@ def build_dual_stack(*, overlay: Any, arm: str, inputs: Any, evaluator_a: Any,
     Role B's paths arrive as shard inputs, never from the overlay: the overlay is signed scientific
     identity and is shared across machines, while a checkpoint path is a property of one filesystem.
     """
-    from inverse_folding.reference_flow.fusion_v2.dual_policy import DualSupportAuthority
-    from inverse_folding.reference_flow.fusion_v2.joint_objective import build_arm_objective
-    from inverse_folding.reference_flow.fusion_v2_runtime.dual_runtime import build_dual_runtime
+    from inverse_folding.reference_flow.fusion_v2.dual_policy import (
+        DualSupportAuthority,
+    )
+    from inverse_folding.reference_flow.fusion_v2.joint_objective import (
+        build_arm_objective,
+    )
+    from inverse_folding.reference_flow.fusion_v2_runtime.dual_runtime import (
+        build_dual_runtime,
+    )
     from inverse_folding.reference_flow.fusion_v2_runtime.lookahead import OracleRequest
 
     binding = overlay.head_b_runtime
@@ -894,7 +904,7 @@ def build_dual_stack(*, overlay: Any, arm: str, inputs: Any, evaluator_a: Any,
     from inverse_folding.reference_flow.fusion.state import sequence_md5 as _md5
 
     reference_b = head_b.score([OracleRequest(
-        protein_id=str(getattr(incumbent, "protein_id")), sequence=reference_sequence,
+        protein_id=str(incumbent.protein_id), sequence=reference_sequence,
         sequence_md5=_md5(reference_sequence), sequence_length=len(reference_sequence),
     )])[0]
     reference_score_b = getattr(reference_b, "score", reference_b)
@@ -913,8 +923,8 @@ def build_dual_stack(*, overlay: Any, arm: str, inputs: Any, evaluator_a: Any,
         evaluator_b=declared, counterfactual_scorer_b=scorer_b,
         incumbent_score_b=reference_score_b,
         incumbent_joint_value=float(objective.evaluate(
-            raw_a=float(getattr(incumbent, "head_global_risk")),
-            raw_b=float(getattr(reference_score_b, "global_risk"))).value),
+            raw_a=float(incumbent.head_global_risk),
+            raw_b=float(reference_score_b.global_risk)).value),
         safety_reference_score_b=reference_score_b,
         # Empty at construction: every cycle rebinds it with its own pool, so a donor role B has
         # not scored raises rather than resolving to a stale entry.
@@ -946,8 +956,8 @@ def build_v2_oracles(*, protein_id: str, config: Any, inputs: Any, seams: Oracle
         bind_cumulative_reference,
         open_lineage_ledger,
     )
-    from inverse_folding.reference_flow.fusion_v2_runtime.lookahead import OracleRequest
     from inverse_folding.reference_flow.fusion_v2_runtime.admission import SafetyGate
+    from inverse_folding.reference_flow.fusion_v2_runtime.lookahead import OracleRequest
 
     # ---- the band, content-verified against the run's own provenance --------------------------
     band_digest = _content_digest(config, "schedule_band_calibration")
@@ -1046,37 +1056,37 @@ def build_v2_oracles(*, protein_id: str, config: Any, inputs: Any, seams: Oracle
 
     return {
         "gpu_clock": resolved["gpu_clock"],
-        "cycle_kwargs": dict(
-            sampler=model.sampler, denoiser=denoiser, config=model.rf_config,
-            sequence_length=length, h_values=model.null_h_values(length),
+        "cycle_kwargs": {
+            "sampler": model.sampler, "denoiser": denoiser, "config": model.rf_config,
+            "sequence_length": length, "h_values": model.null_h_values(length),
             # ``id_to_aa``, NOT ``alphabet``: the cycle's ``alphabet`` parameter is a
             # ``Mapping[int, str]`` residue map, and that is what ``PreparedModel`` calls it.  The
             # same rename cost the calibrator a cluster allocation; the AST contract test in
             # ``tests/scripts/test_rf_fusion_v2_oracles.py`` now checks every ``model.<attr>`` this
             # factory reads against the real class, so a third occurrence fails locally.
-            residue_token_ids=model.aa_token_ids, alphabet=model.id_to_aa,
-            fixed_tokens=model.fixed_tokens(protein_id),
-            lineage=ident.LineageRef(
+            "residue_token_ids": model.aa_token_ids, "alphabet": model.id_to_aa,
+            "fixed_tokens": model.fixed_tokens(protein_id),
+            "lineage": ident.LineageRef(
                 protein_id=protein_id, root_id=f"{protein_id}:v2:d0:r0", family_id="fam0",
                 depth=0, parent_state_id=None, parent_transition_id=None,
                 origin_endpoint_id=None),
-            mask_token_id=model.mask_token_id, aa_token_ids=model.aa_token_ids,
-            conditioning=_conditioning(config, model=model, protein_id=protein_id,
+            "mask_token_id": model.mask_token_id, "aa_token_ids": model.aa_token_ids,
+            "conditioning": _conditioning(config, model=model, protein_id=protein_id,
                                        inputs=inputs, band_table=band_table),
-            safety_reference=cumulative.binding,
-            head_oracle=resolved["head_scorer"], structure_oracle=resolved["structure_evaluator"],
-            support_policy=resolve_support_policy(
+            "safety_reference": cumulative.binding,
+            "head_oracle": resolved["head_scorer"], "structure_oracle": resolved["structure_evaluator"],
+            "support_policy": resolve_support_policy(
                 config, band_table=band_table, stratum_key=stratum_key,
                 head_oracle=resolved["head_scorer"], incumbent=incumbent,
                 safety_reference_score=reference_head_score, evaluator=head_identity,
                 window_grid_digest=cumulative.binding.head_binding.window_grid_digest,
                 dual=dual_authority),
-            dual=dual_runtime,
-            band_table=band_table, stratum_key=stratum_key,
-            declared_band_id=band_table.provenance.calibration_id,
-            declared_band_digest=band_table.provenance.calibration_content_digest,
-            safety_gate=safety_gate,
-        ),
+            "dual": dual_runtime,
+            "band_table": band_table, "stratum_key": stratum_key,
+            "declared_band_id": band_table.provenance.calibration_id,
+            "declared_band_digest": band_table.provenance.calibration_content_digest,
+            "safety_gate": safety_gate,
+        },
     }
 
 

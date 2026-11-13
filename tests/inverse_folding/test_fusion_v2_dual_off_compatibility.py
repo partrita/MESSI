@@ -71,8 +71,8 @@ def test_a_donor_gate_called_without_a_joint_view_records_no_joint_view():
 def _signature(**over):
     from scripts.rf_fusion_v2_resume import RunSignature
 
-    kw = dict(config_digest="c", campaign_id="m", split_role="s", arm_role="a",
-              protein_id="p", input_signature="i", code_revision="abc1234")
+    kw = {"config_digest": "c", "campaign_id": "m", "split_role": "s", "arm_role": "a",
+              "protein_id": "p", "input_signature": "i", "code_revision": "abc1234"}
     kw.update(over)
     return RunSignature(**kw)
 
@@ -113,6 +113,7 @@ def test_two_arms_of_one_bundle_do_not_share_a_signature():
     resume -- which is exactly the collision a matched comparison must not have.
     """
     from inverse_folding.reference_flow.fusion_v2 import dual_config as dc
+
     from .test_fusion_v2_dual_config import overlay
 
     over = overlay(arm_bundle=("joint", "a_only", "b_only"))
@@ -133,7 +134,7 @@ def _authoring_mapping(over):
     """
     def coordinate(c):
         return {"location": c.location, "scale": c.scale, "raw_noise_floor": c.raw_noise_floor,
-                "evaluator": dict(c.evaluator.canonical_payload(), **{}), "source_ref": c.source_ref}
+                "evaluator": dict(c.evaluator.canonical_payload()), "source_ref": c.source_ref}
 
     def pair(q):
         if q is None:
@@ -184,6 +185,7 @@ def test_the_overlay_round_trips_through_a_plain_mapping():
     import json
 
     from inverse_folding.reference_flow.fusion_v2 import dual_config as dc
+
     from .test_fusion_v2_dual_config import overlay
 
     original = overlay()
@@ -198,6 +200,7 @@ def test_a_derived_value_may_not_be_authored_back_in():
     signed overlay, and the digest would agree with the file rather than with the law.
     """
     from inverse_folding.reference_flow.fusion_v2 import dual_config as dc
+
     from .test_fusion_v2_dual_config import overlay
 
     node = _authoring_mapping(overlay())

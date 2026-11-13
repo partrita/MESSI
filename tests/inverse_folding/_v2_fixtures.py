@@ -164,8 +164,8 @@ def provenance(token, *, kind, ref=st.FeedbackOriginRef.NONE, depth=0, step=0, t
 
 
 def lineage(depth=0, **over):
-    kw = dict(protein_id="5ZHV_B", root_id="5ZHV_B:v2:d0:r0", family_id="fam0", depth=depth,
-              parent_state_id=None, parent_transition_id=None, origin_endpoint_id=None)
+    kw = {"protein_id": "5ZHV_B", "root_id": "5ZHV_B:v2:d0:r0", "family_id": "fam0", "depth": depth,
+              "parent_state_id": None, "parent_transition_id": None, "origin_endpoint_id": None}
     kw.update(over)
     return ident.LineageRef(**kw)
 
@@ -187,25 +187,25 @@ def source(**over):
             + [provenance(tokens[4], kind=st.ActiveOriginKind.DENOISER_SAMPLE, step=LATE_COMMIT)]
             + [provenance(MASK, kind=st.ActiveOriginKind.UNRESOLVED)])
 
-    kw = dict(
-        schema_version=ident.V2_STATE_SCHEMA_VERSION, lineage=lineage(),
-        sampler_step=C_SOURCE, n_steps=N_STEPS,
-        tokens=tuple(tokens), mask_token_id=MASK, aa_token_ids=AA,
-        hard_anchors=((0, 10),), editable_positions=(1, 2, 3, 4, 5),
-        active_origin_kind_by_pos=tuple(kind),
-        feedback_origin_ref_by_pos=tuple([st.FeedbackOriginRef.NONE] * L),
-        active_commit_depth_step_by_pos=tuple(commit),
-        origin_transition_id_by_pos=tuple([None] * L),
-        active_sampler_score_by_pos=tuple(score),
-        active_score_status_by_pos=tuple(status),
-        provenance_by_pos=tuple(prov),
-        expired_protection=(),
-        replay=st.ReplayIdentity(mode="identity", rng_state={"pos": 7}, fork_seed=None,
+    kw = {
+        "schema_version": ident.V2_STATE_SCHEMA_VERSION, "lineage": lineage(),
+        "sampler_step": C_SOURCE, "n_steps": N_STEPS,
+        "tokens": tuple(tokens), "mask_token_id": MASK, "aa_token_ids": AA,
+        "hard_anchors": ((0, 10),), "editable_positions": (1, 2, 3, 4, 5),
+        "active_origin_kind_by_pos": tuple(kind),
+        "feedback_origin_ref_by_pos": tuple([st.FeedbackOriginRef.NONE] * L),
+        "active_commit_depth_step_by_pos": tuple(commit),
+        "origin_transition_id_by_pos": tuple([None] * L),
+        "active_sampler_score_by_pos": tuple(score),
+        "active_score_status_by_pos": tuple(status),
+        "provenance_by_pos": tuple(prov),
+        "expired_protection": (),
+        "replay": st.ReplayIdentity(mode="identity", rng_state={"pos": 7}, fork_seed=None,
                                  replay_state_hash=D),
-        accumulated_lineage_dfe=C_SOURCE,
-        conditioning=conditioning(), safety_reference=safety_reference(),
-        cost_event_ids=("evt:root",),
-    )
+        "accumulated_lineage_dfe": C_SOURCE,
+        "conditioning": conditioning(), "safety_reference": safety_reference(),
+        "cost_event_ids": ("evt:root",),
+    }
     kw.update(over)
     return st.LivePartialState(**kw)
 
@@ -244,57 +244,57 @@ def endpoint(tokens=ENDPOINT_TOKENS, **over):
         )
         for i, tok in enumerate(tokens)
     )
-    kw = dict(
-        schema_version=ident.V2_STATE_SCHEMA_VERSION, lineage=lin, protein_id=protein,
-        sequence=seq, sequence_md5=seq_md5, sequence_length=L,
-        source_state_id=src.state_id, source_state_content_digest=src.content_digest,
-        fork_index=0, fork_seed=4242,
-        replay=st.ReplayIdentity(mode="fork", rng_state=None, fork_seed=4242,
+    kw = {
+        "schema_version": ident.V2_STATE_SCHEMA_VERSION, "lineage": lin, "protein_id": protein,
+        "sequence": seq, "sequence_md5": seq_md5, "sequence_length": L,
+        "source_state_id": src.state_id, "source_state_content_digest": src.content_digest,
+        "fork_index": 0, "fork_seed": 4242,
+        "replay": st.ReplayIdentity(mode="fork", rng_state=None, fork_seed=4242,
                                  replay_state_hash=E),
-        endpoint_provenance_evidence_by_pos=evidence,
-        head_binding=binding, head_score=score, head_global_risk=-9.1,
-        feasibility_level=st.FeasibilityLevel.DEFINITIVE,
-        structure_outcome=StructureOutcome(feasible=True, metrics={"scTM": 0.91}),
-        cost_event_ids=("evt:fork0",),
-    )
+        "endpoint_provenance_evidence_by_pos": evidence,
+        "head_binding": binding, "head_score": score, "head_global_risk": -9.1,
+        "feasibility_level": st.FeasibilityLevel.DEFINITIVE,
+        "structure_outcome": StructureOutcome(feasible=True, metrics={"scTM": 0.91}),
+        "cost_event_ids": ("evt:fork0",),
+    }
     kw.update(over)
     return st.CompleteEndpoint(**kw)
 
 
 def coords(**over):
-    kw = dict(depth=0, r_step=R_STEP, c_source_step=C_SOURCE, c_next_step=C_NEXT,
-              n_steps=N_STEPS, law=sch.CoordinateLaw.PROGRESSIVE_CHECKPOINT)
+    kw = {"depth": 0, "r_step": R_STEP, "c_source_step": C_SOURCE, "c_next_step": C_NEXT,
+              "n_steps": N_STEPS, "law": sch.CoordinateLaw.PROGRESSIVE_CHECKPOINT}
     kw.update(over)
     return sch.make_cycle(**kw)
 
 
 def band_provenance(**over):
-    kw = dict(
-        schema_version=sch.SCHEDULE_BAND_SCHEMA_VERSION,
-        calibration_scope=sch.SCHEDULE_BAND_SCOPE, calibration_id=BAND_ID,
-        calibration_content_digest=digest("calib"), sampler_config_digest=digest("sampler"),
-        tokenizer_digest=digest("tok"), backbone_digest=digest("bb"),
-        coordinate_mask_policy_digest=digest("cmask"), constraint_manifest_digest=digest("cman"),
-        constraint_stratum_id="anchored", cohort_digest=digest("cohort"),
-        raw_attempts_digest=digest("raw"), attempted_seed_digest=digest("seeds"),
-        seed_schema=sch.SCHEDULE_BAND_SEED_SCHEMA, code_revision="deadbeef",
-        produced_by="scripts/rho_maturity_scan.py --mode step", n_steps=N_STEPS,
-        base_form="linear", amplification_form="constant_one", remask_fraction_scale=0.0,
-        head_free=True, n_attempted_seeds=32, n_failed_captures=0,
-    )
+    kw = {
+        "schema_version": sch.SCHEDULE_BAND_SCHEMA_VERSION,
+        "calibration_scope": sch.SCHEDULE_BAND_SCOPE, "calibration_id": BAND_ID,
+        "calibration_content_digest": digest("calib"), "sampler_config_digest": digest("sampler"),
+        "tokenizer_digest": digest("tok"), "backbone_digest": digest("bb"),
+        "coordinate_mask_policy_digest": digest("cmask"), "constraint_manifest_digest": digest("cman"),
+        "constraint_stratum_id": "anchored", "cohort_digest": digest("cohort"),
+        "raw_attempts_digest": digest("raw"), "attempted_seed_digest": digest("seeds"),
+        "seed_schema": sch.SCHEDULE_BAND_SEED_SCHEMA, "code_revision": "deadbeef",
+        "produced_by": "scripts/rho_maturity_scan.py --mode step", "n_steps": N_STEPS,
+        "base_form": "linear", "amplification_form": "constant_one", "remask_fraction_scale": 0.0,
+        "head_free": True, "n_attempted_seeds": 32, "n_failed_captures": 0,
+    }
     kw.update(over)
     return sch.BandProvenance(**kw)
 
 
 def band(**over):
-    kw = dict(
-        step=R_STEP, stratum_key=STRATUM, levels=sch.QuantileLevels(levels=(0.1, 0.5, 0.9)),
-        rho_quantiles=(0.4, 0.6, 0.8), unresolved_quantiles=(4, 2, 1),
-        rho_accept=sch.BandInterval(lo=0.4, hi=0.8, lo_level=0.1, hi_level=0.9),
-        unresolved_accept=sch.BandInterval(lo=1.0, hi=4.0, lo_level=0.9, hi_level=0.1),
-        combination_rule="both_axes", n_attempts=32, n_captured=32,
-        n_editable_min=4, n_editable_max=8,
-    )
+    kw = {
+        "step": R_STEP, "stratum_key": STRATUM, "levels": sch.QuantileLevels(levels=(0.1, 0.5, 0.9)),
+        "rho_quantiles": (0.4, 0.6, 0.8), "unresolved_quantiles": (4, 2, 1),
+        "rho_accept": sch.BandInterval(lo=0.4, hi=0.8, lo_level=0.1, hi_level=0.9),
+        "unresolved_accept": sch.BandInterval(lo=1.0, hi=4.0, lo_level=0.9, hi_level=0.1),
+        "combination_rule": "both_axes", "n_attempts": 32, "n_captured": 32,
+        "n_editable_min": 4, "n_editable_max": 8,
+    }
     kw.update(over)
     return sch.make_band(**kw)
 
@@ -312,16 +312,16 @@ def default_band_calibration_digest():
 
 
 def policy_identity(**over):
-    kw = dict(policy_id=pol.EXPLICIT_PROBE_POLICY_ID, policy_version="v0",
-              policy_config_digest=digest("pcfg"), policy_spec_digest=digest("pspec"),
-              is_diagnostic_only=True)
+    kw = {"policy_id": pol.EXPLICIT_PROBE_POLICY_ID, "policy_version": "v0",
+              "policy_config_digest": digest("pcfg"), "policy_spec_digest": digest("pspec"),
+              "is_diagnostic_only": True}
     kw.update(over)
     return ident.ProjectionPolicyIdentity(**kw)
 
 
 #: 1 -> endpoint write, 4 -> source-feedback injection, 2 -> reopen, 3 and 5 -> ordinary carry.
-REF_SETS = dict(write_from_endpoint=(1,), inject_from_source_feedback=(4,), reopen=(2,),
-                carry_from_source=(3, 5))
+REF_SETS = {"write_from_endpoint": (1,), "inject_from_source_feedback": (4,), "reopen": (2,),
+                "carry_from_source": (3, 5)}
 
 
 def decision(**over):
@@ -343,8 +343,8 @@ def declared_policy(**over):
     The shared fixture runs the diagnostic probe, so it declares the probe and the one phase that
     authorises one -- any other pairing is unconstructible by design.
     """
-    kw = dict(policy_id=pol.EXPLICIT_PROBE_POLICY_ID, policy_version="v0", is_diagnostic=True,
-              phase="state_transition_canary")
+    kw = {"policy_id": pol.EXPLICIT_PROBE_POLICY_ID, "policy_version": "v0", "is_diagnostic": True,
+              "phase": "state_transition_canary"}
     kw.update(over)
     return pol.DeclaredPolicy(**kw)
 
@@ -354,13 +354,13 @@ def project(**over):
     from inverse_folding.reference_flow.fusion_v2 import projection as proj
 
     table = over.pop("band_table", None) or band_table()
-    kw = dict(
-        source=source(), endpoint=endpoint(), endpoint_tokens=ENDPOINT_TOKENS,
-        alphabet=ALPHABET,
-        decision=decision(), declared_policy=declared_policy(), coordinates=coords(), band_table=table, stratum_key=STRATUM,
-        descendant_fork_seed=9001, origin_transition_id=TXN, declared_band_id=BAND_ID,
-        declared_band_digest=table.provenance.calibration_content_digest,
-    )
+    kw = {
+        "source": source(), "endpoint": endpoint(), "endpoint_tokens": ENDPOINT_TOKENS,
+        "alphabet": ALPHABET,
+        "decision": decision(), "declared_policy": declared_policy(), "coordinates": coords(), "band_table": table, "stratum_key": STRATUM,
+        "descendant_fork_seed": 9001, "origin_transition_id": TXN, "declared_band_id": BAND_ID,
+        "declared_band_digest": table.provenance.calibration_content_digest,
+    }
     kw.update(over)
     return proj.source_writeback(**kw)
 

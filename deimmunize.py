@@ -7,10 +7,10 @@ import argparse
 import hashlib
 import json
 import os
-from pathlib import Path
 import re
 import subprocess
 import sys
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 PATH_OPTIONS = (
@@ -84,12 +84,12 @@ def read_settings(args):
     assets = json.loads((ROOT / 'head-assets.json').read_text())
     head = next(a for a in assets['assets']
                 if a['file'].endswith('.pt') and allele_name(a['allele']) == args.allele)
-    values = dict(head_checkpoint=str(ROOT / head['file']),
-        dplm_checkpoint=str(ROOT / 'dplm/checkpoints/best.ckpt'),
-        band_json=str(calibration / 'global_B_r40.json'),
-        hotspot_json=str(calibration / 'global_relaxed_hotspot.json'),
-        policy_calibration_json=str(calibration / 'head_policy.json'),
-        stratum_key='highrisk_global_unconstrained')
+    values = {'head_checkpoint': str(ROOT / head['file']),
+        'dplm_checkpoint': str(ROOT / 'dplm/checkpoints/best.ckpt'),
+        'band_json': str(calibration / 'global_B_r40.json'),
+        'hotspot_json': str(calibration / 'global_relaxed_hotspot.json'),
+        'policy_calibration_json': str(calibration / 'head_policy.json'),
+        'stratum_key': 'highrisk_global_unconstrained'}
     for block in (data.get('common', {}), alleles.get(args.allele, {})):
         if not isinstance(block, dict) or set(block) - SETTINGS_OPTIONS:
             raise ValueError('unknown installation option; see docs/deimmunize.md')
@@ -132,8 +132,12 @@ def write_json(path, value):
 
 def prepare_structure(args, target):
     import pandas as pd
-    from scripts.build_if_ready_test_set import extract_resolved_residues, write_clean_structure
+
     from inverse_folding.reference_flow.constraints import load_constraint_manifest
+    from scripts.build_if_ready_test_set import (
+        extract_resolved_residues,
+        write_clean_structure,
+    )
 
     source = args.structure.expanduser().resolve()
     # Bio.PDB's existing helper accepts .cif; normalize .mmcif without altering input bytes.
@@ -162,23 +166,24 @@ def prepare_structure(args, target):
     backbone = target / (args.protein_id + '.cif')
     write_clean_structure(structure=structure, clean_path=backbone,
         model_idx=args.model_index, chain_id=args.chain, resolved=residues)
-    pd.DataFrame([dict(protein_id=args.protein_id, sequence=sequence,
-        sequence_length=len(sequence), pdb_path=str(backbone), if_chain_id=args.chain,
-        if_ready=True)]).to_parquet(target / 'cohort.parquet', index=False)
+    pd.DataFrame([{'protein_id': args.protein_id, 'sequence': sequence,
+        'sequence_length': len(sequence), 'pdb_path': str(backbone), 'if_chain_id': args.chain,
+        'if_ready': True}]).to_parquet(target / 'cohort.parquet', index=False)
     reference = target / 'reference.seq'
     reference.write_text(sequence)
     write_json(target / 'references.json', {args.protein_id: {
         'path': str(reference), 'sha256': hashlib.sha256(reference.read_bytes()).hexdigest()}})
-    write_json(target / 'residue_map.json', [dict(index_0b=i, aa=r.aa,
-        author_resnum=r.author_resnum, insertion_code=r.insertion_code,
-        original_resname=r.original_resname) for i, r in enumerate(residues)])
+    write_json(target / 'residue_map.json', [{'index_0b': i, 'aa': r.aa,
+        'author_resnum': r.author_resnum, 'insertion_code': r.insertion_code,
+        'original_resname': r.original_resname} for i, r in enumerate(residues)])
     return backbone
 
 
 def prepare_commands(args, settings, target, backbone):
     import yaml
-    from scripts import materialize_v2_canary_config as materializer
+
     from inverse_folding.reference_flow.fusion_v2.schedule import load_band_table
+    from scripts import materialize_v2_canary_config as materializer
 
     load_band_table(settings['band_json'])
     recipe = json.loads((ROOT / 'examples/messi_official.json').read_text())
@@ -233,7 +238,7 @@ def execute(commands, bundles, *, dry_run):
     if dry_run:
         return
     for command, bundle in zip(commands, bundles, strict=True):
-        result = subprocess.run(command, cwd=ROOT)
+        result = subprocess.run(command, cwd=ROOT, check=False)
         if result.returncode not in (0, 2):
             raise RuntimeError(f'root failed with exit {result.returncode}: {bundle}')
         # Exit 2 can be a complete typed no-design result or a runtime failure.
@@ -248,6 +253,7 @@ def execute(commands, bundles, *, dry_run):
 
 def select_outputs(args, bundles):
     import pandas as pd
+
     from scripts.materialize_v2_archive_facade import main as select
 
     output = args.out_dir / 'generated.parquet'
@@ -291,11 +297,11 @@ def main(argv=None):
         write_json(args.out_dir / 'commands.json', commands)
         execute(commands, bundles, dry_run=args.dry_run)
         if args.dry_run:
-            summary = dict(status='dry_run', generated=0, requested=args.num_designs)
+            summary = {'status': 'dry_run', 'generated': 0, 'requested': args.num_designs}
         else:
             count = select_outputs(args, bundles)
-            summary = dict(status='complete' if count == args.num_designs else 'fewer_than_requested',
-                           generated=count, requested=args.num_designs)
+            summary = {'status': 'complete' if count == args.num_designs else 'fewer_than_requested',
+                           'generated': count, 'requested': args.num_designs}
         write_json(args.out_dir / 'summary.json', summary)
         print(json.dumps(summary))
         return 0

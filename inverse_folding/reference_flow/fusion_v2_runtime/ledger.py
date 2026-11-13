@@ -25,29 +25,30 @@ from __future__ import annotations
 import json
 import os
 import time
+from collections.abc import Mapping, Sequence
 from contextlib import contextmanager
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 from ..fusion_v2.errors import V2Error
 from ..fusion_v2.identity import canonical_digest
 
 __all__ = [
-    "UNKNOWN_AFTER_START",
-    "OBSERVED",
     "LEDGER_PHASES",
     "LEDGER_STATUSES",
-    "V2LedgerError",
-    "CapsExceeded",
-    "V2LedgerEvent",
-    "CapVerdict",
+    "OBSERVED",
+    "UNKNOWN_AFTER_START",
     "AttemptJournal",
     "AttemptReceipt",
+    "CapVerdict",
+    "CapsExceeded",
     "CostMeter",
+    "V2LedgerError",
+    "V2LedgerEvent",
     "aggregate_v2_ledger",
-    "check_caps",
     "assert_within_caps",
+    "check_caps",
     "events_from_journal",
 ]
 
@@ -338,7 +339,7 @@ def check_caps(totals: Mapping[str, Any], caps: Any) -> CapVerdict:
     detail_parts = []
     if breached:
         detail_parts.append("breached: " + ", ".join(
-            f"{name}={totals.get(dict((c, f) for c, f, _ in _CAP_FIELDS)[name], 0)} > "
+            f"{name}={totals.get({c: f for c, f, _ in _CAP_FIELDS}[name], 0)} > "
             f"{getattr(caps, name)}" for name in breached))
     if unverifiable:
         detail_parts.append(
@@ -356,7 +357,6 @@ def assert_within_caps(totals: Mapping[str, Any], caps: Any) -> None:
     verdict = check_caps(totals, caps)
     if not verdict.within:
         raise CapsExceeded(verdict.detail)
-    return None
 
 
 # --------------------------------------------------------------------------------------------
@@ -563,7 +563,7 @@ class CostMeter:
         started_gpu = float(self.gpu_clock())
         try:
             yield receipt
-        except BaseException as exc:                        # noqa: BLE001 - re-raised below
+        except BaseException as exc:
             self.journal.close_unknown(
                 attempt_id, status="failed", reason=f"{type(exc).__name__}: {exc}")
             raise
@@ -605,12 +605,12 @@ def events_from_journal(path: Any) -> tuple[V2LedgerEvent, ...]:
     events: list[V2LedgerEvent] = []
     for attempt_id, request in requests.items():
         outcome = outcomes.get(attempt_id)
-        base = dict(
-            event_id=request["event_id"], attempt_id=attempt_id,
-            protein_id=request["protein_id"], arm=request["arm"], phase=request["phase"],
-            logical_dfe=int(request.get("logical_dfe", 0)),
-            structure_attempts=int(request.get("structure_attempts", 0)),
-        )
+        base = {
+            "event_id": request["event_id"], "attempt_id": attempt_id,
+            "protein_id": request["protein_id"], "arm": request["arm"], "phase": request["phase"],
+            "logical_dfe": int(request.get("logical_dfe", 0)),
+            "structure_attempts": int(request.get("structure_attempts", 0)),
+        }
         if outcome is None or outcome.get("physical_cost_status") == UNKNOWN_AFTER_START:
             events.append(V2LedgerEvent(
                 **base,

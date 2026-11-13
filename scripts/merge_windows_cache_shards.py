@@ -61,7 +61,7 @@ def main() -> None:
         provenance.append({
             "shard": os.path.abspath(shard),
             "n_proteins": int(df["protein_id"].nunique()),
-            "n_rows": int(len(df)),
+            "n_rows": len(df),
             "saved_at": meta.get("saved_at"),
         })
         print(f"[merge] {shard}: {len(df)} rows / {df['protein_id'].nunique()} proteins")
@@ -90,7 +90,7 @@ def main() -> None:
     # 3. Coverage: exact match against the pool the cache claims to serve.
     pids = set(merged["protein_id"].astype(str))
     if args.expect_ids:
-        expected = {line.strip() for line in open(args.expect_ids) if line.strip()}
+        expected = {line.strip() for line in open(args.expect_ids) if line.strip()}  # noqa: SIM115
         if pids != expected:
             raise ValueError(
                 f"coverage mismatch vs {args.expect_ids}: "

@@ -33,12 +33,12 @@ from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (
 
 
 def _event(**over):
-    kw = dict(
-        event_id="evt:5ZHV_B:d0:screen", attempt_id="att:0001", protein_id="5ZHV_B",
-        arm="v2", phase="screen", status="ok",
-        logical_dfe=200, head_calls=4, structure_attempts=4,
-        physical_forwards=200, batch_size=1, walltime_s=1.5, gpu_seconds=1.2,
-    )
+    kw = {
+        "event_id": "evt:5ZHV_B:d0:screen", "attempt_id": "att:0001", "protein_id": "5ZHV_B",
+        "arm": "v2", "phase": "screen", "status": "ok",
+        "logical_dfe": 200, "head_calls": 4, "structure_attempts": 4,
+        "physical_forwards": 200, "batch_size": 1, "walltime_s": 1.5, "gpu_seconds": 1.2,
+    }
     kw.update(over)
     return V2LedgerEvent(**kw)
 
@@ -46,9 +46,9 @@ def _event(**over):
 def _caps(**over):
     from inverse_folding.reference_flow.fusion_v2.config import V2CapsConfig
 
-    kw = dict(max_logical_dfe=10_000, max_head_calls=100, max_definitive_refolds=100,
-              max_gpu_seconds=1000, max_walltime_s=1000, max_retries=2,
-              retry_scope="per_request")
+    kw = {"max_logical_dfe": 10_000, "max_head_calls": 100, "max_definitive_refolds": 100,
+              "max_gpu_seconds": 1000, "max_walltime_s": 1000, "max_retries": 2,
+              "retry_scope": "per_request"}
     kw.update(over)
     return V2CapsConfig(**kw)
 
@@ -163,12 +163,14 @@ def test_a_breached_cap_is_reported_and_names_the_field():
 
 
 def test_caps_are_hard_and_can_be_asserted():
-    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import assert_within_caps
+    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (
+        assert_within_caps,
+    )
 
     totals = aggregate_v2_ledger([_event(head_calls=1000)])
     with pytest.raises(CapsExceeded, match="max_head_calls"):
         assert_within_caps(totals, _caps())
-    assert_within_caps(aggregate_v2_ledger([_event()]), _caps()) is None
+    assert assert_within_caps(aggregate_v2_ledger([_event()]), _caps()) is None
 
 
 def test_unknown_physical_cost_makes_the_physical_caps_unverifiable_and_fails_closed():
@@ -293,7 +295,9 @@ def test_the_journal_survives_reopening_and_reports_what_was_left_open(tmp_path)
 
 def test_events_derived_from_a_journal_carry_the_unknown_status_through(tmp_path):
     """The journal is the source of the ledger, so the sentinel must survive the conversion."""
-    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import events_from_journal
+    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (
+        events_from_journal,
+    )
 
     path = tmp_path / "attempts.jsonl"
     journal = AttemptJournal(path)
@@ -312,7 +316,9 @@ def test_events_derived_from_a_journal_carry_the_unknown_status_through(tmp_path
 def test_an_attempt_left_open_becomes_an_unknown_cost_event_not_a_free_one(tmp_path):
     """A process that died mid-oracle burned budget.  Reading its absence as zero is the failure
     PLAN §5.4 names; the reconstruction must charge it as unknown."""
-    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import events_from_journal
+    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (
+        events_from_journal,
+    )
 
     path = tmp_path / "attempts.jsonl"
     journal = AttemptJournal(path)
@@ -380,14 +386,14 @@ def test_two_commits_of_one_event_may_not_disagree_on_what_was_assigned():
 # --------------------------------------------------------------------------------------------
 
 
-from inverse_folding.reference_flow.fusion_v2_runtime import ledger as ledger_mod  # noqa: E402
+from inverse_folding.reference_flow.fusion_v2_runtime import ledger as ledger_mod
 
 
 def _meter(tmp_path, **over):
     from inverse_folding.reference_flow.fusion_v2_runtime.ledger import CostMeter
 
-    kw = dict(journal=AttemptJournal(tmp_path / "attempts.jsonl"), protein_id="5ZHV_B",
-              arm="v2", gpu_clock=lambda: 0.0)
+    kw = {"journal": AttemptJournal(tmp_path / "attempts.jsonl"), "protein_id": "5ZHV_B",
+              "arm": "v2", "gpu_clock": lambda: 0.0}
     kw.update(over)
     return CostMeter(**kw)
 
@@ -407,7 +413,9 @@ def test_a_meter_requires_a_gpu_instrument_rather_than_assuming_one(tmp_path):
 
 
 def test_an_attempt_that_reports_its_cost_closes_observed(tmp_path):
-    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import events_from_journal
+    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (
+        events_from_journal,
+    )
 
     meter = _meter(tmp_path)
     with meter.attempt(event_id="evt:screen:d0", phase="screen", request_kind="lookahead_pool",
@@ -427,13 +435,19 @@ def test_an_attempt_whose_body_raises_persists_unknown_after_start(tmp_path):
     The exception still propagates -- the journal records what was spent, it does not swallow the
     failure.
     """
-    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import events_from_journal
+    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (
+        events_from_journal,
+    )
 
     meter = _meter(tmp_path)
-    with pytest.raises(RuntimeError):
-        with meter.attempt(event_id="evt:head:d0", phase="head", request_kind="head_batch",
-                           request_digest="abc", head_calls=3):
-            raise RuntimeError("CUDA out of memory")
+    with pytest.raises(RuntimeError), meter.attempt(
+        event_id="evt:head:d0",
+        phase="head",
+        request_kind="head_batch",
+        request_digest="abc",
+        head_calls=3,
+    ):
+        raise RuntimeError("CUDA out of memory")
     events = events_from_journal(tmp_path / "attempts.jsonl")
     assert len(events) == 1
     assert events[0].physical_cost_status == UNKNOWN_AFTER_START
@@ -449,10 +463,14 @@ def test_an_attempt_that_forgets_to_report_is_unknown_and_loud(tmp_path):
     )
 
     meter = _meter(tmp_path)
-    with pytest.raises(V2LedgerError):
-        with meter.attempt(event_id="evt:seg:d0", phase="segment", request_kind="segment",
-                           request_digest="abc", logical_dfe=20):
-            pass
+    with pytest.raises(V2LedgerError), meter.attempt(
+        event_id="evt:seg:d0",
+        phase="segment",
+        request_kind="segment",
+        request_digest="abc",
+        logical_dfe=20,
+    ):
+        pass
     events = events_from_journal(tmp_path / "attempts.jsonl")
     assert events[0].physical_cost_status == UNKNOWN_AFTER_START
 
@@ -460,7 +478,9 @@ def test_an_attempt_that_forgets_to_report_is_unknown_and_loud(tmp_path):
 def test_the_meter_carries_the_shards_identity_onto_every_row(tmp_path):
     """``aggregate_v2_ledger`` refuses one event id under two identities, so the identity has to
     come from the shard rather than from each call site remembering to pass it."""
-    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import events_from_journal
+    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (
+        events_from_journal,
+    )
 
     meter = _meter(tmp_path, protein_id="9L2Q_A", arm="a2")
     with meter.attempt(event_id="evt:x", phase="head", request_kind="head_batch",
@@ -473,7 +493,9 @@ def test_the_meter_carries_the_shards_identity_onto_every_row(tmp_path):
 def test_the_meter_measures_walltime_it_does_not_accept_it(tmp_path):
     """Walltime is measurable in process; letting a caller declare it would make the one field
     nothing else can cross-check into a free parameter."""
-    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import events_from_journal
+    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (
+        events_from_journal,
+    )
 
     meter = _meter(tmp_path)
     with meter.attempt(event_id="evt:x", phase="head", request_kind="head_batch",
@@ -485,7 +507,10 @@ def test_the_meter_measures_walltime_it_does_not_accept_it(tmp_path):
 def test_a_gpu_clock_that_is_not_an_instrument_is_refused(tmp_path):
     """The likely mistake is passing a NUMBER -- "the GPU seconds" -- instead of the thing that
     measures them.  That reads as a declaration of cost and would be silently ignored."""
-    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import CostMeter, V2LedgerError
+    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (
+        CostMeter,
+        V2LedgerError,
+    )
 
     with pytest.raises(V2LedgerError, match="gpu_clock"):
         CostMeter(journal=AttemptJournal(tmp_path / "a.jsonl"), protein_id="5ZHV_B", arm="v2",
@@ -501,8 +526,8 @@ def test_aggregation_is_a_function_of_the_row_SET_not_of_arrival_order():
     number was then dropped without a word.
     """
     def ev(**kw):
-        base = dict(event_id="e1", attempt_id="att:1", protein_id="P", arm="v2",
-                    phase="screen", status="ok")
+        base = {"event_id": "e1", "attempt_id": "att:1", "protein_id": "P", "arm": "v2",
+                    "phase": "screen", "status": "ok"}
         base.update(kw)
         return V2LedgerEvent(**base)
 
@@ -517,8 +542,8 @@ def test_aggregation_is_a_function_of_the_row_SET_not_of_arrival_order():
 def test_a_consistent_batch_aggregates_in_either_order():
     """The guard must not be satisfiable by refusing every batch."""
     def ev(**kw):
-        base = dict(event_id="e1", attempt_id="att:1", protein_id="P", arm="v2",
-                    phase="screen", status="ok")
+        base = {"event_id": "e1", "attempt_id": "att:1", "protein_id": "P", "arm": "v2",
+                    "phase": "screen", "status": "ok"}
         base.update(kw)
         return V2LedgerEvent(**base)
 

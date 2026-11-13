@@ -24,15 +24,14 @@ import hashlib
 import json
 import subprocess
 from collections import OrderedDict
-from dataclasses import asdict, dataclass, field
+from collections.abc import Iterable
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable
 
 import numpy as np
 import pandas as pd
 
 from epitope_head.inference.predictor import InferencePredictor
-
 
 _REQUIRED_META_KEYS = frozenset(
     {
@@ -115,7 +114,7 @@ class StaticWindowCache:
         ]
 
     @classmethod
-    def load(cls, cache_path: Path, meta_path: Path) -> "StaticWindowCache":
+    def load(cls, cache_path: Path, meta_path: Path) -> StaticWindowCache:
         if not cache_path.exists():
             raise HeadScoringCacheError(f"cache parquet not found: {cache_path}")
         if not meta_path.exists():
@@ -480,12 +479,12 @@ class OnlineHeadScorer:
             "score_scale": self.score_scale,
             "window_k_min": self.window_k_min,
             "window_k_max": self.window_k_max,
-            "n_proteins_total": len({pid for pid, _ in self._static_cache.keys()}),
+            "n_proteins_total": len({pid for pid, _ in self._static_cache}),
             "n_windows_total": len(rows),
             "source_dataset": source_dataset,
             "source_dataset_rowcount": int(source_dataset_rowcount),
             "git_commit": _read_git_commit(),
-            "timestamp": _dt.datetime.now(_dt.timezone.utc).isoformat(),
+            "timestamp": _dt.datetime.now(_dt.UTC).isoformat(),
         }
         cache = StaticWindowCache(rows=rows, meta=meta)
         cache.save(self.static_cache_path, self.static_cache_meta_path)
@@ -584,5 +583,5 @@ def _read_git_commit() -> str:
             stderr=subprocess.DEVNULL,
         )
         return out.decode("utf-8").strip()
-    except Exception:
+    except Exception:  # noqa: BLE001
         return "unknown"

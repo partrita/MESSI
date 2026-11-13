@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import contextlib
 import json
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator
 
 import pandas as pd
 import torch
-
 
 CNN_ENCODER_TYPES = frozenset({"dilated_cnn", "multiscale_cnn"})
 

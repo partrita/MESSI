@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import logging
 import math
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 import torch
 import torch.nn.functional as F
@@ -17,7 +17,6 @@ from epitope_head.training.chunking import (
 )
 from epitope_head.training.model import EpitopeScorer
 from epitope_head.training.trainer import load_checkpoint
-
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +120,7 @@ class InferencePredictor:
         model: EpitopeScorer,
         inference_cfg: dict,
         tokenize_fn: Callable[[list[str]], dict[str, torch.Tensor]],
-    ) -> "InferencePredictor":
+    ) -> InferencePredictor:
         """Load checkpoint with metadata+shape guards and build predictor."""
         ckpt = load_checkpoint(Path(checkpoint_path))
         metadata = ckpt.get("metadata", {})

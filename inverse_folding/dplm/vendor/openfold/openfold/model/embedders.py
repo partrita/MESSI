@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
-import torch.nn as nn
-from typing import Tuple, Optional
 
-from openfold.model.primitives import Linear, LayerNorm
-from openfold.utils.tensor_utils import add, one_hot
+import torch
+from torch import nn
+
+from openfold.model.primitives import LayerNorm, Linear
+from openfold.utils.tensor_utils import add
 
 
 class InputEmbedder(nn.Module):
@@ -50,7 +50,7 @@ class InputEmbedder(nn.Module):
             relpos_k:
                 Window size used in relative positional encoding
         """
-        super(InputEmbedder, self).__init__()
+        super().__init__()
 
         self.tf_dim = tf_dim
         self.msa_dim = msa_dim
@@ -96,7 +96,7 @@ class InputEmbedder(nn.Module):
         ri: torch.Tensor,
         msa: torch.Tensor,
         inplace_safe: bool = False,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Args:
             tf:
@@ -132,7 +132,7 @@ class InputEmbedder(nn.Module):
         tf_m = (
             self.linear_tf_m(tf)
             .unsqueeze(-3)
-            .expand(((-1,) * len(tf.shape[:-2]) + (n_clust, -1, -1)))
+            .expand((-1,) * len(tf.shape[:-2]) + (n_clust, -1, -1))
         )
         msa_emb = self.linear_msa_m(msa) + tf_m
 
@@ -166,7 +166,7 @@ class PreembeddingEmbedder(nn.Module):
             relpos_k:
                 Window size used in relative position encoding
         """
-        super(PreembeddingEmbedder, self).__init__()
+        super().__init__()
 
         self.tf_dim = tf_dim
         self.preembedding_dim = preembedding_dim
@@ -212,7 +212,7 @@ class PreembeddingEmbedder(nn.Module):
         ri: torch.Tensor,
         preemb: torch.Tensor,
         inplace_safe: bool = False,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
 
         tf_m = (
             self.linear_tf_m(tf)
@@ -262,7 +262,7 @@ class RecyclingEmbedder(nn.Module):
             no_bins:
                 Number of distogram bins
         """
-        super(RecyclingEmbedder, self).__init__()
+        super().__init__()
 
         self.c_m = c_m
         self.c_z = c_z
@@ -281,7 +281,7 @@ class RecyclingEmbedder(nn.Module):
         z: torch.Tensor,
         x: torch.Tensor,
         inplace_safe: bool = False,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Args:
             m:
@@ -355,7 +355,7 @@ class TemplateAngleEmbedder(nn.Module):
             c_out:
                 Output channel dimension
         """
-        super(TemplateAngleEmbedder, self).__init__()
+        super().__init__()
 
         self.c_out = c_out
         self.c_in = c_in
@@ -398,7 +398,7 @@ class TemplatePairEmbedder(nn.Module):
             c_out:
                 Output channel dimension
         """
-        super(TemplatePairEmbedder, self).__init__()
+        super().__init__()
 
         self.c_in = c_in
         self.c_out = c_out
@@ -441,7 +441,7 @@ class ExtraMSAEmbedder(nn.Module):
             c_out:
                 Output channel dimension
         """
-        super(ExtraMSAEmbedder, self).__init__()
+        super().__init__()
 
         self.c_in = c_in
         self.c_out = c_out

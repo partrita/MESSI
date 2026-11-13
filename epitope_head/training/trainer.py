@@ -21,13 +21,16 @@ from pathlib import Path
 
 import numpy as np
 import torch
-import torch.nn as nn
 import yaml
+from torch import nn
 
 from epitope_head.configs import validate_himp_train_blocks
 from epitope_head.training.eval_metrics import full_val_eval
-from epitope_head.training.losses import compute_loss, exact_margin_loss, residue_pairwise_margin_loss
-from epitope_head.training.span_geom import max_iou_per_window
+from epitope_head.training.losses import (
+    compute_loss,
+    exact_margin_loss,
+    residue_pairwise_margin_loss,
+)
 from epitope_head.training.negatives import sample_negatives
 from epitope_head.training.registry import (
     append_registry_row,
@@ -40,6 +43,7 @@ from epitope_head.training.residue_supervision import (
     build_residue_labels,
     enumerate_all_residue_windows,
 )
+from epitope_head.training.span_geom import max_iou_per_window
 
 logger = logging.getLogger(__name__)
 
@@ -199,7 +203,6 @@ def aggregate_epoch_metrics(step_metrics_list: list[StepMetrics]) -> dict:
 
 class NaNDetected(RuntimeError):
     """Raised when NaN or Inf is detected in loss or logits."""
-    pass
 
 
 def nan_guard(tensor: torch.Tensor, name: str = "tensor"):
@@ -1066,9 +1069,12 @@ class Trainer:
             res_cfg = None
 
         chunk_margin = 0
-        if "chunking" in train_cfg and isinstance(train_cfg["chunking"], dict):
-            if bool(train_cfg["chunking"].get("enabled", False)):
-                chunk_margin = int(train_cfg["chunking"].get("margin", 0))
+        if (
+            "chunking" in train_cfg
+            and isinstance(train_cfg["chunking"], dict)
+            and bool(train_cfg["chunking"].get("enabled", False))
+        ):
+            chunk_margin = int(train_cfg["chunking"].get("margin", 0))
 
         self.neg_cfg = {
             "neg_ratio": train_cfg["neg_ratio"],
@@ -1159,7 +1165,7 @@ class Trainer:
                 logger.info("W&B initialized: %s", wandb.run.url or wandb.run.id)
             except ImportError:
                 logger.warning("wandb not installed, skipping W&B logging")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning("wandb init failed: %s", e)
 
     def _frozen_encoder_guard(self):
@@ -1171,11 +1177,9 @@ class Trainer:
         encoder = self.model.encoder
         # Skip guard if encoder has any trainable params (it's intentionally trainable)
         has_trainable = any(p.requires_grad for p in encoder.parameters())
-        if has_trainable:
-            # For trainable encoders, this guard is not applicable
-            # Check if the encoder was supposed to be frozen (FrozenESMEncoder pattern)
-            if not hasattr(encoder, 'esm'):
-                return  # Non-ESM encoder, trainable by design
+        if has_trainable and not hasattr(encoder, 'esm'):
+            # Non-ESM encoder, trainable by design
+            return
         for name, p in encoder.named_parameters():
             if p.requires_grad:
                 raise RuntimeError(
@@ -1333,8 +1337,8 @@ class Trainer:
                     log_dict["logit_scale"] = self.model.scorer.log_logit_scale.exp().item()
                 self._wandb.log(log_dict, step=epoch)
 
-            pp_auc_str = "%.4f" % val_metrics["pp_auc"] if val_metrics.get("pp_auc") is not None else "N/A"
-            pp_ap_str = "%.4f" % val_metrics["pp_ap"] if val_metrics.get("pp_ap") is not None else "N/A"
+            pp_auc_str = "{:.4f}".format(val_metrics["pp_auc"]) if val_metrics.get("pp_auc") is not None else "N/A"
+            pp_ap_str = "{:.4f}".format(val_metrics["pp_ap"]) if val_metrics.get("pp_ap") is not None else "N/A"
             logger.info(
                 "Epoch %d — train_loss=%.4f, val_loss=%.4f, "
                 "pp_auc=%s, pp_ap=%s, patience=%d/%d",
@@ -1448,7 +1452,7 @@ def verify_run_artifacts(run_dir: Path, n_epochs: int, checkpoint_every_n: int) 
             meta_missing = CHECKPOINT_METADATA_KEYS - set(meta.keys())
             if meta_missing:
                 errors.append(f"{pt_file.name}: missing metadata keys {meta_missing}")
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             errors.append(f"{pt_file.name}: load failed: {exc}")
 
     # Log schema checks
@@ -1471,7 +1475,7 @@ def verify_run_artifacts(run_dir: Path, n_epochs: int, checkpoint_every_n: int) 
             for key in ["final_epoch", "best_monitor_value", "config_hash"]:
                 if key not in summary:
                     errors.append(f"run_summary.json missing '{key}'")
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             errors.append(f"run_summary.json: load failed: {exc}")
 
     return {"ok": len(missing) == 0 and len(errors) == 0,

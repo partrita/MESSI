@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-import torch
+import torch  # noqa: F401
 from torch import nn
-from torch.nn import functional as F
+from torch.nn import functional as F  # noqa: F401
 
 _registry = {}
 
@@ -23,7 +23,7 @@ class _Criterion(nn.Module):
         for name, cfg in self.cfg.items():
             _target_ = cfg.pop("_target_")
             weight = cfg.pop("weight", 1.0)
-            self.criterions[name] = _instantiate(
+            self.criterions[name] = _instantiate(  # noqa: F821
                 _target_, cfg=cfg, registry=_registry
             )
             self.weights[name] = weight

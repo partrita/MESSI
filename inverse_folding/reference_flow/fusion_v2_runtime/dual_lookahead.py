@@ -19,7 +19,8 @@ rather than a silently half-joint archive.
 
 from __future__ import annotations
 
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from ..fusion_v2.dual_evidence import (
     DualEndpointEvidence,
@@ -33,11 +34,11 @@ from ..fusion_v2.joint_objective import AlleleRole, DualObjective
 from .lookahead import bind_head_scores
 
 __all__ = [
-    "dual_stage_event_id",
-    "dual_head_event_id",
-    "paired_request_digest",
     "as_head_result",
     "bind_paired_head_scores",
+    "dual_head_event_id",
+    "dual_stage_event_id",
+    "paired_request_digest",
 ]
 
 
@@ -100,7 +101,7 @@ def as_head_result(result: Any, *, with_density: bool = False) -> HeadResult:
                 "the return-boundary axis was requested but this Head result carries no "
                 "residue_hotspot"
             )
-        density = positive_mass_density(hotspot, int(getattr(binding, "sequence_length")))
+        density = positive_mass_density(hotspot, int(binding.sequence_length))
     return HeadResult(score=result, binding=binding, density=density)
 
 

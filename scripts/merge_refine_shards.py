@@ -18,8 +18,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from inverse_folding.reference_flow.refine import head_first_pareto_front
 from inverse_folding.reference_flow.official_selection import two_axis_pareto_order
+from inverse_folding.reference_flow.refine import head_first_pareto_front
 
 # Per-design tables that carry (protein_id, design_idx) 1:1 with refined_designs.
 PER_DESIGN_TABLES = [
@@ -270,9 +270,10 @@ def _refine_output_contract(shard_dirs) -> tuple[bool, int | None, str | None]:
     if len(set(contracts)) != 1:
         raise ValueError("refinement shards disagree on official/final candidate contract")
     official, count, seed_table = contracts[0]
-    if count is not None:
-        if isinstance(count, bool) or not isinstance(count, int) or count < 1:
-            raise ValueError("refine_config final_candidates_per_protein must be integer >= 1")
+    if count is not None and (
+        isinstance(count, bool) or not isinstance(count, int) or count < 1
+    ):
+        raise ValueError("refine_config final_candidates_per_protein must be integer >= 1")
     if seed_table is not None and (
         not isinstance(seed_table, str) or not seed_table.strip()
     ):
@@ -381,13 +382,13 @@ def main() -> None:
             continue
         tables[t] = merged
         merged.to_parquet(out_dir / f"{t}.parquet", index=False)
-        summary["tables"][t] = {"rows": int(len(merged)), "shards_present": present}
+        summary["tables"][t] = {"rows": len(merged), "shards_present": present}
 
     # refine_trace (keyed on orig_design_idx, not design_idx -> shard_idx only)
     trace, present = _load_concat(shard_dirs, "refine_trace", per_design=False)
     if present:
         trace.to_parquet(out_dir / "refine_trace.parquet", index=False)
-        summary["tables"]["refine_trace"] = {"rows": int(len(trace)), "shards_present": present}
+        summary["tables"]["refine_trace"] = {"rows": len(trace), "shards_present": present}
 
     # final_metrics_status roll-up
     ok = bad = missing = 0
@@ -445,7 +446,7 @@ def main() -> None:
             master["delta_scTM"] = master["scTM"] - master["dplm_native_scTM"]
         summary["dplm_native_structural"] = str(args.dplm_native_structural)
     master.to_parquet(out_dir / "master.parquet", index=False)
-    summary["tables"]["master"] = {"rows": int(len(master))}
+    summary["tables"]["master"] = {"rows": len(master)}
     target_source = _target_source(master)
     summary["target_source"] = target_source
     if target_source != "head" and (
@@ -463,18 +464,15 @@ def main() -> None:
             front = _attach_seed_provenance(front, seed_table)
         front.to_parquet(out_dir / "head_pareto_per_seed.parquet", index=False)
         with open(out_dir / "head_pareto_per_seed.fasta", "w") as handle:
-            for row in front.itertuples(index=False):
-                handle.write(
-                    f">{row.protein_id}_{row.design_uid}"
+            handle.writelines(f">{row.protein_id}_{row.design_uid}"
                     f"_risk{float(row.head_global_risk_after):.6f}"
                     f"_density{float(row.head_positive_mass_density_after):.6f}"
-                    f"_muts{int(row.true_muts)}\n{row.sequence_refined}\n"
-                )
+                    f"_muts{int(row.true_muts)}\n{row.sequence_refined}\n" for row in front.itertuples(index=False))
         n_seeds = int(
             master[["protein_id", "sequence_original"]].drop_duplicates().shape[0]
         )
         summary["head_pareto"] = {
-            "rows": int(len(front)),
+            "rows": len(front),
             "seeds": n_seeds,
             "proteins": int(front["protein_id"].nunique()),
             "min_rows_per_seed": int(
@@ -492,7 +490,7 @@ def main() -> None:
                 official=official,
             )
             summary["final_candidates"] = {
-                "rows": int(len(selected)),
+                "rows": len(selected),
                 "proteins": int(selected["protein_id"].nunique()),
                 "requested_per_protein": int(final_candidates_per_protein),
                 "official": bool(official),
@@ -523,9 +521,8 @@ def main() -> None:
                     .groupby("sequence_original", as_index=False).first())
         best.to_parquet(out_dir / "best_count0_per_seed.parquet", index=False)
         with open(out_dir / "best_count0_per_seed.fasta", "w") as f:
-            for r in best.itertuples(index=False):
-                f.write(f">{r.protein_id}_{r.design_uid}_muts{int(r.true_muts)}"
-                        f"_scTM{getattr(r, 'scTM', float('nan')):.3f}\n{r.sequence_refined}\n")
+            f.writelines(f">{r.protein_id}_{r.design_uid}_muts{int(r.true_muts)}"
+                        f"_scTM{getattr(r, 'scTM', float('nan')):.3f}\n{r.sequence_refined}\n" for r in best.itertuples(index=False))
 
     # top-K refined variants per input seed by lowest core count (does NOT require reaching 0;
     # the deliverable when 0 is not guaranteed — the K best de-immunized designs per protein)
@@ -536,18 +533,17 @@ def main() -> None:
                       .groupby("sequence_original", as_index=False).head(args.top_k))
         topk.to_parquet(out_dir / f"top{args.top_k}_per_seed.parquet", index=False)
         with open(out_dir / f"top{args.top_k}_per_seed.fasta", "w") as f:
-            for r in topk.itertuples(index=False):
-                f.write(f">{r.protein_id}_{r.design_uid}_core{int(r.core_count_after)}"
+            f.writelines(f">{r.protein_id}_{r.design_uid}_core{int(r.core_count_after)}"
                         f"_muts{int(r.true_muts)}_scTM{getattr(r, 'scTM', float('nan')):.3f}"
-                        f"\n{r.sequence_refined}\n")
-        summary["topk"] = {"k": int(args.top_k), "rows": int(len(topk)),
+                        f"\n{r.sequence_refined}\n" for r in topk.itertuples(index=False))
+        summary["topk"] = {"k": int(args.top_k), "rows": len(topk),
                            "proteins": int(topk["protein_id"].nunique()),
                            "core_after_median": float(topk["core_count_after"].median())}
 
     summary["reach0"] = {
         "seeds": int(n_seeds),
         "seeds_with_count0_variant": int(n0_seeds),
-        "designs_total": int(len(master)),
+        "designs_total": len(master),
         "designs_count0": int((master["core_count_after"] == 0).sum()),
     }
     if not best.empty:
@@ -559,7 +555,7 @@ def main() -> None:
     print(f"[merge] {len(shard_dirs)} shards -> {out_dir}")
     print(f"[merge] designs={len(master)} seeds={n_seeds} seeds_with_count0={n0_seeds}/{n_seeds}")
     print(f"[merge] status ok={ok} failed={bad} missing={missing}")
-    print(f"[merge] wrote master.parquet + best_count0_per_seed.{{parquet,fasta}} + merge_summary.json")
+    print("[merge] wrote master.parquet + best_count0_per_seed.{parquet,fasta} + merge_summary.json")
 
 
 if __name__ == "__main__":

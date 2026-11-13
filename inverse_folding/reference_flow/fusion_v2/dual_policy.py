@@ -31,8 +31,12 @@ coordinate.
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
-from typing import Any, Mapping, Sequence
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from .reward import JointComparison
 
 from .errors import V2Error
 from .evidence import (
@@ -46,14 +50,14 @@ from .identity import HeadEvaluatorIdentity, canonical_digest
 from .joint_objective import AlleleRole, DualObjective, QuantityCoordinates
 
 __all__ = [
-    "DualReopenEvidence",
     "DualDecisionEvidence",
-    "V2DualPolicyError",
+    "DualReopenEvidence",
+    "DualSupportAuthority",
+    "JointContribution",
     "PairedWindowEvidence",
     "UnionConjunct",
-    "JointContribution",
+    "V2DualPolicyError",
     "score_joint_leave_one_out",
-    "DualSupportAuthority",
 ]
 
 
@@ -399,9 +403,9 @@ class DualReopenEvidence:
     """
 
     position: int
-    new_hotspot: "UnionConjunct"
-    worsening: "UnionConjunct"
-    residual_burden: "UnionConjunct"
+    new_hotspot: UnionConjunct
+    worsening: UnionConjunct
+    residual_burden: UnionConjunct
 
     @property
     def ordering_conjunct(self) -> str:
@@ -445,7 +449,7 @@ class DualDecisionEvidence:
     #: derived margin. Recorded because the artifact recomputed eligibility against 0.0 and
     #: therefore contradicted the decision it claimed to be reading off.
     write_epsilon: float = 0.0
-    contributions: tuple["JointContribution", ...] = ()
+    contributions: tuple[JointContribution, ...] = ()
     reopen: tuple[DualReopenEvidence, ...] = ()
 
     def canonical_payload(self) -> dict[str, Any]:
@@ -547,7 +551,7 @@ class DualSupportAuthority:
         if not isinstance(self.donor_score_b_by_endpoint, Mapping):
             raise V2DualPolicyError("donor_score_b_by_endpoint must be a mapping")
 
-    def joint_comparison(self, *, donor: Any) -> "JointComparison":
+    def joint_comparison(self, *, donor: Any) -> JointComparison:
         """The ``(donor J, incumbent J)`` pair the donor gate compares, bound to this calibration."""
         from .reward import JointComparison as _JointComparison
 
@@ -555,7 +559,7 @@ class DualSupportAuthority:
         if raw_b is None:
             raise V2DualPolicyError("role B's donor score carries no global_risk")
         value = self.objective.evaluate(
-            raw_a=float(getattr(donor, "head_global_risk")), raw_b=float(raw_b))
+            raw_a=float(donor.head_global_risk), raw_b=float(raw_b))
         coordinates = self.objective.coordinates
         return _JointComparison(
             donor_value=float(value.value),
@@ -575,7 +579,7 @@ class DualSupportAuthority:
 
     def paired_windows(self, *, donor_score_a: Any, donor_score_b: Any, reference_score_a: Any,
                        reference_score_b: Any, evaluator_a: HeadEvaluatorIdentity,
-                       reference_label: str) -> "PairedWindowEvidence":
+                       reference_label: str) -> PairedWindowEvidence:
         """The union window view for one donor against one reference, on both alleles."""
         from .evidence import build_window_evidence
 
@@ -659,7 +663,7 @@ class DualSupportAuthority:
             raise V2DualPolicyError("the incumbent carries no head_global_risk")
         derived = self.objective.evaluate(
             raw_a=float(raw_a),
-            raw_b=float(getattr(self.incumbent_score_b, "global_risk"))).value
+            raw_b=float(self.incumbent_score_b.global_risk)).value
         if float(self.incumbent_joint_value) != float(derived):
             raise V2DualPolicyError(
                 f"incumbent_joint_value is {self.incumbent_joint_value!r} but this objective's own "
@@ -668,7 +672,7 @@ class DualSupportAuthority:
                 "measured"
             )
 
-    def advanced(self, *, donor: Any) -> "DualSupportAuthority":
+    def advanced(self, *, donor: Any) -> DualSupportAuthority:
         """Role B's half of ``advance_lineage_incumbent``: adopt ``donor`` as the new incumbent.
 
         The policy is immutable and advances by replacing its incumbent, which carried this object
@@ -685,7 +689,7 @@ class DualSupportAuthority:
             self,
             incumbent_score_b=score_b,
             incumbent_joint_value=float(self.objective.evaluate(
-                raw_a=float(getattr(donor, "head_global_risk")),
-                raw_b=float(getattr(score_b, "global_risk"))).value),
+                raw_a=float(donor.head_global_risk),
+                raw_b=float(score_b.global_risk)).value),
             donor_score_b_by_endpoint={},
         )

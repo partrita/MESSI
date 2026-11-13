@@ -12,33 +12,33 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from functools import reduce
 import importlib
 import math
 import sys
+from collections.abc import Sequence
+from functools import reduce
 from operator import mul
 
 import torch
-import torch.nn as nn
-from typing import Optional, Tuple, Sequence
+from torch import nn
 
-from openfold.model.primitives import Linear, LayerNorm, ipa_point_weights_init_
+from openfold.model.primitives import LayerNorm, Linear, ipa_point_weights_init_
 from openfold.np.residue_constants import (
-    restype_rigid_group_default_frame,
-    restype_atom14_to_rigid_group,
     restype_atom14_mask,
     restype_atom14_rigid_group_positions,
+    restype_atom14_to_rigid_group,
+    restype_rigid_group_default_frame,
 )
 from openfold.utils.feats import (
     frames_and_literature_positions_to_atom14_pos,
     torsion_angles_to_frames,
 )
 from openfold.utils.precision_utils import is_fp16_enabled
-from openfold.utils.rigid_utils import Rotation, Rigid
+from openfold.utils.rigid_utils import Rigid, Rotation
 from openfold.utils.tensor_utils import (
     dict_multimap,
-    permute_final_dims,
     flatten_final_dims,
+    permute_final_dims,
 )
 
 try:
@@ -54,7 +54,7 @@ class AngleResnetBlock(nn.Module):
             c_hidden:
                 Hidden channel dimension
         """
-        super(AngleResnetBlock, self).__init__()
+        super().__init__()
 
         self.c_hidden = c_hidden
 
@@ -94,7 +94,7 @@ class AngleResnet(nn.Module):
             epsilon:
                 Small constant for normalization
         """
-        super(AngleResnet, self).__init__()
+        super().__init__()
 
         self.c_in = c_in
         self.c_hidden = c_hidden
@@ -116,7 +116,7 @@ class AngleResnet(nn.Module):
 
     def forward(
         self, s: torch.Tensor, s_initial: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Args:
             s:
@@ -191,7 +191,7 @@ class InvariantPointAttention(nn.Module):
             no_v_points:
                 Number of value points to generate
         """
-        super(InvariantPointAttention, self).__init__()
+        super().__init__()
 
         self.c_s = c_s
         self.c_z = c_z
@@ -216,11 +216,11 @@ class InvariantPointAttention(nn.Module):
         hpkv = self.no_heads * (self.no_qk_points + self.no_v_points) * 3
         self.linear_kv_points = Linear(self.c_s, hpkv)
 
-        hpv = self.no_heads * self.no_v_points * 3
+        self.no_heads * self.no_v_points * 3
 
         self.linear_b = Linear(self.c_z, self.no_heads)
 
-        self.head_weights = nn.Parameter(torch.zeros((no_heads)))
+        self.head_weights = nn.Parameter(torch.zeros(no_heads))
         ipa_point_weights_init_(self.head_weights)
 
         concat_out_dim = self.no_heads * (
@@ -234,12 +234,12 @@ class InvariantPointAttention(nn.Module):
     def forward(
         self,
         s: torch.Tensor,
-        z: Optional[torch.Tensor],
+        z: torch.Tensor | None,
         r: Rigid,
         mask: torch.Tensor,
         inplace_safe: bool = False,
         _offload_inference: bool = False,
-        _z_reference_list: Optional[Sequence[torch.Tensor]] = None,
+        _z_reference_list: Sequence[torch.Tensor] | None = None,
     ) -> torch.Tensor:
         """
         Args:
@@ -445,13 +445,13 @@ class BackboneUpdate(nn.Module):
             c_s:
                 Single representation channel dimension
         """
-        super(BackboneUpdate, self).__init__()
+        super().__init__()
 
         self.c_s = c_s
 
         self.linear = Linear(self.c_s, 6, init="final")
 
-    def forward(self, s: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, s: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Args:
             [*, N_res, C_s] single representation
@@ -466,7 +466,7 @@ class BackboneUpdate(nn.Module):
 
 class StructureModuleTransitionLayer(nn.Module):
     def __init__(self, c):
-        super(StructureModuleTransitionLayer, self).__init__()
+        super().__init__()
 
         self.c = c
 
@@ -491,7 +491,7 @@ class StructureModuleTransitionLayer(nn.Module):
 
 class StructureModuleTransition(nn.Module):
     def __init__(self, c, num_layers, dropout_rate):
-        super(StructureModuleTransition, self).__init__()
+        super().__init__()
 
         self.c = c
         self.num_layers = num_layers
@@ -569,7 +569,7 @@ class StructureModule(nn.Module):
             inf:
                 Large number used for attention masking
         """
-        super(StructureModule, self).__init__()
+        super().__init__()
 
         self.c_s = c_s
         self.c_z = c_z

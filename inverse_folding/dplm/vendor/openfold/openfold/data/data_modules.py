@@ -1,15 +1,15 @@
 import copy
-from functools import partial
 import json
 import logging
 import os
 import pickle
-from typing import Optional, Sequence, List, Any
+from collections.abc import Sequence
+from functools import partial
+from typing import Any
 
 import ml_collections as mlc
 import pytorch_lightning as pl
 import torch
-from torch.utils.data import RandomSampler
 
 from openfold.data import (
     data_pipeline,
@@ -17,7 +17,7 @@ from openfold.data import (
     mmcif_parsing,
     templates,
 )
-from openfold.utils.tensor_utils import tensor_tree_map, dict_multimap
+from openfold.utils.tensor_utils import dict_multimap, tensor_tree_map
 
 
 class OpenFoldSingleDataset(torch.utils.data.Dataset):
@@ -27,18 +27,18 @@ class OpenFoldSingleDataset(torch.utils.data.Dataset):
         template_mmcif_dir: str,
         max_template_date: str,
         config: mlc.ConfigDict,
-        chain_data_cache_path: Optional[str] = None,
+        chain_data_cache_path: str | None = None,
         kalign_binary_path: str = '/usr/bin/kalign',
         max_template_hits: int = 4,
-        obsolete_pdbs_file_path: Optional[str] = None,
-        template_release_dates_cache_path: Optional[str] = None,
-        shuffle_top_k_prefiltered: Optional[int] = None,
+        obsolete_pdbs_file_path: str | None = None,
+        template_release_dates_cache_path: str | None = None,
+        shuffle_top_k_prefiltered: int | None = None,
         treat_pdb_as_distillation: bool = True,
-        filter_path: Optional[str] = None,
+        filter_path: str | None = None,
         mode: str = "train", 
-        alignment_index: Optional[Any] = None,
+        alignment_index: Any | None = None,
         _output_raw: bool = False,
-        _structure_index: Optional[Any] = None,
+        _structure_index: Any | None = None,
     ):
         """
             Args:
@@ -81,7 +81,7 @@ class OpenFoldSingleDataset(torch.utils.data.Dataset):
                 mode:
                     "train", "val", or "predict"
         """
-        super(OpenFoldSingleDataset, self).__init__()
+        super().__init__()
         self.data_dir = data_dir
 
         self.chain_data_cache = None
@@ -105,7 +105,7 @@ class OpenFoldSingleDataset(torch.utils.data.Dataset):
             raise ValueError(f'mode must be one of {valid_modes}')
 
         if(template_release_dates_cache_path is None):
-            logging.warning(
+            logging.warning(  # noqa: LOG015
                 "Template release dates cache does not exist. Remember to run "
                 "scripts/generate_mmcif_cache.py before running OpenFold"
             )
@@ -117,7 +117,7 @@ class OpenFoldSingleDataset(torch.utils.data.Dataset):
 
         if(filter_path is not None):
             with open(filter_path, "r") as f:
-                chains_to_include = set([l.strip() for l in f.readlines()])
+                chains_to_include = {l.strip() for l in f}
 
             self._chain_ids = [
                 c for c in self._chain_ids if c in chains_to_include
@@ -139,7 +139,7 @@ class OpenFoldSingleDataset(torch.utils.data.Dataset):
                 missing_examples = ", ".join(missing[:max_to_print])
                 if len(missing) > max_to_print:
                     missing_examples += ", ..."
-                logging.warning(
+                logging.warning(  # noqa: LOG015
                     "Removing %d alignment entries (%s) with no corresponding "
                     "entries in chain_data_cache (%s).",
                     len(missing),
@@ -178,7 +178,7 @@ class OpenFoldSingleDataset(torch.utils.data.Dataset):
         # Crash if an error is encountered. Any parsing errors should have
         # been dealt with at the alignment stage.
         if(mmcif_object.mmcif_object is None):
-            raise list(mmcif_object.errors.values())[0]
+            raise next(iter(mmcif_object.errors.values()))
 
         mmcif_object = mmcif_object.mmcif_object
 
@@ -301,15 +301,12 @@ def deterministic_train_filter(
         counts[aa] += 1
     largest_aa_count = max(counts.values())
     largest_single_aa_prop = largest_aa_count / len(seq)
-    if(largest_single_aa_prop > max_single_aa_prop):
-        return False
-
-    return True
+    return not largest_single_aa_prop > max_single_aa_prop
 
 
 def get_stochastic_train_filter_prob(
     chain_data_cache_entry: Any,
-) -> List[float]:
+) -> list[float]:
     # Stochastic filters
     probabilities = []
     
@@ -357,8 +354,7 @@ class OpenFoldDataset(torch.utils.data.Dataset):
                     replacement=False,
                     generator=self.generator,
                 )
-                for idx in shuf:
-                    yield idx
+                yield from shuf
 
         def looped_samples(dataset_idx):
             max_cache_len = int(epoch_len * probabilities[dataset_idx])
@@ -390,8 +386,7 @@ class OpenFoldDataset(torch.utils.data.Dataset):
 
                 cache = [i for i, s in zip(idx, samples) if s]
 
-                for datapoint_idx in cache:
-                    yield datapoint_idx
+                yield from cache
 
         self._samples = [looped_samples(i) for i in range(len(self.datasets))]
 
@@ -515,29 +510,29 @@ class OpenFoldDataModule(pl.LightningDataModule):
         config: mlc.ConfigDict,
         template_mmcif_dir: str,
         max_template_date: str,
-        train_data_dir: Optional[str] = None,
-        train_alignment_dir: Optional[str] = None,
-        train_chain_data_cache_path: Optional[str] = None,
-        distillation_data_dir: Optional[str] = None,
-        distillation_alignment_dir: Optional[str] = None,
-        distillation_chain_data_cache_path: Optional[str] = None,
-        val_data_dir: Optional[str] = None,
-        val_alignment_dir: Optional[str] = None,
-        predict_data_dir: Optional[str] = None,
-        predict_alignment_dir: Optional[str] = None,
+        train_data_dir: str | None = None,
+        train_alignment_dir: str | None = None,
+        train_chain_data_cache_path: str | None = None,
+        distillation_data_dir: str | None = None,
+        distillation_alignment_dir: str | None = None,
+        distillation_chain_data_cache_path: str | None = None,
+        val_data_dir: str | None = None,
+        val_alignment_dir: str | None = None,
+        predict_data_dir: str | None = None,
+        predict_alignment_dir: str | None = None,
         kalign_binary_path: str = '/usr/bin/kalign',
-        train_filter_path: Optional[str] = None,
-        distillation_filter_path: Optional[str] = None,
-        obsolete_pdbs_file_path: Optional[str] = None,
-        template_release_dates_cache_path: Optional[str] = None,
-        batch_seed: Optional[int] = None,
+        train_filter_path: str | None = None,
+        distillation_filter_path: str | None = None,
+        obsolete_pdbs_file_path: str | None = None,
+        template_release_dates_cache_path: str | None = None,
+        batch_seed: int | None = None,
         train_epoch_len: int = 50000, 
-        _distillation_structure_index_path: Optional[str] = None,
-        alignment_index_path: Optional[str] = None,
-        distillation_alignment_index_path: Optional[str] = None,
+        _distillation_structure_index_path: str | None = None,
+        alignment_index_path: str | None = None,
+        distillation_alignment_index_path: str | None = None,
         **kwargs
     ):
-        super(OpenFoldDataModule, self).__init__()
+        super().__init__()
 
         self.config = config
         self.template_mmcif_dir = template_mmcif_dir

@@ -40,8 +40,7 @@ def read_fasta(path):
 def cif_to_pdb(cif_text):
     """Best-effort mmCIF -> PDB via biotite (installed as an esm dependency)."""
     import numpy as np
-    import biotite.structure.io.pdb as pdb
-    import biotite.structure.io.pdbx as pdbx
+    from biotite.structure.io import pdb, pdbx
 
     cif = pdbx.CIFFile.read(io.StringIO(cif_text))
     arr = pdbx.get_structure(cif, model=1, extra_fields=["b_factor"])
@@ -166,8 +165,7 @@ def main():
         fasta_out = Path(args.emit_fold_fasta)
         fasta_out.parent.mkdir(parents=True, exist_ok=True)
         with open(fasta_out, "w") as fh:
-            for pid, seq in recs:
-                fh.write(f">{pid}\n{seq}\n")
+            fh.writelines(f">{pid}\n{seq}\n" for pid, seq in recs)
         print(f"[emit-fasta] {len(recs)} records -> {fasta_out}", flush=True)
         return
 
@@ -193,7 +191,7 @@ def main():
         for line in manifest_path.read_text().splitlines():
             try:
                 done.add(json.loads(line)["id"])
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
     todo = [(pid, seq) for pid, seq in recs if pid not in done]
     print(f"[run] {len(todo)} to fold ({len(done)} already done) -> {out}", flush=True)
@@ -224,7 +222,7 @@ def main():
             pdb_ok = True
             try:
                 (out / "pdb" / f"{safe}.pdb").write_text(cif_to_pdb(cif))
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 pdb_ok = False
                 if k == 0:
                     print(f"[diag] pdb-convert failed: {e!r}", flush=True)

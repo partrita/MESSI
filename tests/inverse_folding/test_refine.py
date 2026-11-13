@@ -176,7 +176,7 @@ def test_head_residue_targets_collapse_plateau_and_allow_zero_targets():
 
 
 def test_head_target_mode_fails_closed_without_valid_window_table():
-    base = dict(global_risk=1.0, residue_hotspot=(1.0,) * 4, sequence_length=4)
+    base = {"global_risk": 1.0, "residue_hotspot": (1.0,) * 4, "sequence_length": 4}
     with pytest.raises(ValueError, match="windows are required"):
         refine.head_refinement_metrics(
             SimpleNamespace(**base), protein_id="P", sequence="ACDE"
@@ -203,7 +203,6 @@ def _head_metrics(global_risk, density, *, length=4):
 
 
 def test_head_single_aa_selection_keeps_each_axis_extreme_per_position():
-    seed = "AAAA"
     candidates = [
         Candidate("A0C", "CAAA", (0,)),
         Candidate("A0D", "DAAA", (0,)),
@@ -746,7 +745,7 @@ def test_incremental_nmp_splice_matches_full_scoring():
     def _full_rows(seq):
         rows = []
         for L in LENGTHS:
-            for pos in range(0, len(seq) - L + 1):
+            for pos in range(len(seq) - L + 1):
                 pep = seq[pos:pos + L]
                 rows.append({"pos": pos, "pep_length": L, "peptide": pep,
                              "core": pep[:9], "rank_EL": 0.001 if "W" in pep else 0.5})
@@ -776,7 +775,7 @@ def test_incremental_refine_equals_full_refine():
     # full path under a position-independent per-window NMP.
     def _rows(seq):
         rows = []
-        for pos in range(0, len(seq) - 9 + 1):
+        for pos in range(len(seq) - 9 + 1):
             pep = seq[pos:pos + 9]
             rows.append({"pos": pos, "pep_length": 9, "peptide": pep, "core": pep,
                          "rank_EL": 0.001 if "W" in pep else 0.5})
@@ -792,9 +791,9 @@ def test_incremental_refine_equals_full_refine():
         return _OK
 
     seed = "ACDEFGHIK" * 8 + "W" + "ACDEFGHIK" * 5    # one strong hotspot (the 'W' windows)
-    kw = dict(propose_fn=_propose_singles, head_fn=head, nmp_fn=nmp, struct_fn=struct,
-              anchors=set(), topB=None, beam_width=4, max_rounds=5, scTM_eps=0.05,
-              target_window_idx_fn=lambda cores: [0])
+    kw = {"propose_fn": _propose_singles, "head_fn": head, "nmp_fn": nmp, "struct_fn": struct,
+              "anchors": set(), "topB": None, "beam_width": 4, "max_rounds": 5, "scTM_eps": 0.05,
+              "target_window_idx_fn": lambda cores: [0]}
     full = refine_sequence("P", seed, incremental_nmp=False, **kw)
     inc = refine_sequence("P", seed, incremental_nmp=True, **kw)
     assert full.best_core_count == inc.best_core_count

@@ -1,23 +1,13 @@
 import argparse
 import logging
 import os
-import random
 import sys
-import time
 
-import numpy as np
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks.lr_monitor import LearningRateMonitor
-from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
-from pytorch_lightning.loggers import WandbLogger
-from pytorch_lightning.plugins.training_type import DeepSpeedPlugin, DDPPlugin
-from pytorch_lightning.plugins.environments import SLURMEnvironment
 import torch
-
 from openfold.config import model_config
 from openfold.data.data_modules import (
     OpenFoldDataModule,
-    DummyDataLoader,
 )
 from openfold.model.model import AlphaFold
 from openfold.model.torchscript import script_preset_
@@ -27,6 +17,10 @@ from openfold.utils.callbacks import (
     EarlyStoppingVerbose,
 )
 from openfold.utils.exponential_moving_average import ExponentialMovingAverage
+from openfold.utils.import_weights import (
+    import_jax_weights_,
+)
+from openfold.utils.logger import PerformanceLoggingCallback
 from openfold.utils.loss import AlphaFoldLoss, lddt_ca
 from openfold.utils.lr_schedulers import AlphaFoldLRScheduler
 from openfold.utils.seed import seed_everything
@@ -34,23 +28,22 @@ from openfold.utils.superimposition import superimpose
 from openfold.utils.tensor_utils import tensor_tree_map
 from openfold.utils.validation_metrics import (
     drmsd,
-    gdt_ts,
     gdt_ha,
+    gdt_ts,
 )
-from openfold.utils.import_weights import (
-    import_jax_weights_,
-)
+from pytorch_lightning.callbacks.lr_monitor import LearningRateMonitor
+from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
+from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.plugins.training_type import DDPPlugin, DeepSpeedPlugin
 from scripts.zero_to_fp32 import (
     get_fp32_state_dict_from_zero_checkpoint,
-    get_global_step_from_zero_checkpoint
+    get_global_step_from_zero_checkpoint,
 )
-
-from openfold.utils.logger import PerformanceLoggingCallback
 
 
 class OpenFoldWrapper(pl.LightningModule):
     def __init__(self, config):
-        super(OpenFoldWrapper, self).__init__()
+        super().__init__()
         self.config = config
         self.model = AlphaFold(config)
         self.loss = AlphaFoldLoss(config.loss)
@@ -274,7 +267,7 @@ def main(args):
             sd = torch.load(args.resume_from_ckpt)
             last_global_step = int(sd['global_step'])
         model_module.resume_last_lr_step(last_global_step)
-        logging.info("Successfully loaded last lr step...")
+        logging.info("Successfully loaded last lr step...")  # noqa: LOG015
     if(args.resume_from_ckpt and args.resume_model_weights_only):
         if(os.path.isdir(args.resume_from_ckpt)):
             sd = get_fp32_state_dict_from_zero_checkpoint(args.resume_from_ckpt)
@@ -282,10 +275,10 @@ def main(args):
             sd = torch.load(args.resume_from_ckpt)
         sd = {k[len("module."):]:v for k,v in sd.items()}
         model_module.load_state_dict(sd)
-        logging.info("Successfully loaded model weights...")
+        logging.info("Successfully loaded model weights...")  # noqa: LOG015
     if(args.resume_from_jax_params):
         model_module.load_from_jax(args.resume_from_jax_params)
-        logging.info(f"Successfully loaded JAX parameters at {args.resume_from_jax_params}...")
+        logging.info(f"Successfully loaded JAX parameters at {args.resume_from_jax_params}...")  # noqa: LOG015
  
     # TorchScript components of the model
     if(args.script_modules):
@@ -341,7 +334,7 @@ def main(args):
             save_dir=args.output_dir,
             id=args.wandb_id,
             project=args.wandb_project,
-            **{"entity": args.wandb_entity}
+            entity=args.wandb_entity
         )
         loggers.append(wdb_logger)
 

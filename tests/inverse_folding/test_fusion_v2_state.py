@@ -74,29 +74,29 @@ def _live(**over):
         for i in range(1, 5)
     ] + [_provenance(MASK, kind=st.ActiveOriginKind.UNRESOLVED)]
 
-    kw = dict(
-        schema_version=ident.V2_STATE_SCHEMA_VERSION,
-        lineage=ident.LineageRef(protein_id="5ZHV_B", root_id="5ZHV_B:v2:d0:r0", family_id="fam0",
+    kw = {
+        "schema_version": ident.V2_STATE_SCHEMA_VERSION,
+        "lineage": ident.LineageRef(protein_id="5ZHV_B", root_id="5ZHV_B:v2:d0:r0", family_id="fam0",
                                  depth=0, parent_state_id=None, parent_transition_id=None,
                                  origin_endpoint_id=None),
-        sampler_step=50, n_steps=100,
-        tokens=tuple(tokens), mask_token_id=MASK, aa_token_ids=AA,
-        hard_anchors=((0, 10),), editable_positions=(1, 2, 3, 4, 5),
-        active_origin_kind_by_pos=tuple(kind),
-        feedback_origin_ref_by_pos=tuple(ref),
-        active_commit_depth_step_by_pos=tuple(commit),
-        origin_transition_id_by_pos=tuple(txn),
-        active_sampler_score_by_pos=tuple(score),
-        active_score_status_by_pos=tuple(status),
-        provenance_by_pos=tuple(prov),
-        expired_protection=(),
-        replay=st.ReplayIdentity(mode="identity", rng_state={"pos": 7}, fork_seed=None,
+        "sampler_step": 50, "n_steps": 100,
+        "tokens": tuple(tokens), "mask_token_id": MASK, "aa_token_ids": AA,
+        "hard_anchors": ((0, 10),), "editable_positions": (1, 2, 3, 4, 5),
+        "active_origin_kind_by_pos": tuple(kind),
+        "feedback_origin_ref_by_pos": tuple(ref),
+        "active_commit_depth_step_by_pos": tuple(commit),
+        "origin_transition_id_by_pos": tuple(txn),
+        "active_sampler_score_by_pos": tuple(score),
+        "active_score_status_by_pos": tuple(status),
+        "provenance_by_pos": tuple(prov),
+        "expired_protection": (),
+        "replay": st.ReplayIdentity(mode="identity", rng_state={"pos": 7}, fork_seed=None,
                                  replay_state_hash=D),
-        accumulated_lineage_dfe=50,
-        conditioning=_conditioning(),
-        safety_reference=_safety_reference(),
-        cost_event_ids=("evt:root",),
-    )
+        "accumulated_lineage_dfe": 50,
+        "conditioning": _conditioning(),
+        "safety_reference": _safety_reference(),
+        "cost_event_ids": ("evt:root",),
+    }
     kw.update(over)
     return st.LivePartialState(**kw)
 
@@ -400,43 +400,43 @@ def _projected(**over):
             granted_by_transition_id=TXN, grant_reason=reason,
         )
 
-    kw = dict(
-        schema_version=ident.V2_STATE_SCHEMA_VERSION,
-        lineage=ident.LineageRef(
+    kw = {
+        "schema_version": ident.V2_STATE_SCHEMA_VERSION,
+        "lineage": ident.LineageRef(
             protein_id="5ZHV_B", root_id="5ZHV_B:v2:d0:r0", family_id="fam0", depth=1,
             parent_state_id=_live().state_id, parent_transition_id=TXN,
             origin_endpoint_id=ident.make_endpoint_id(_live().state_id, fork_index=0,
                                                       sequence_md5_hex=SEQ_MD5),
         ),
-        r_step=R_STEP, c_next_step=C_NEXT, n_steps=100,
-        coordinate_law=sch.CoordinateLaw.PROGRESSIVE_CHECKPOINT,
-        tokens=tuple(tokens), mask_token_id=MASK, aa_token_ids=AA,
-        hard_anchors=((0, 10),), editable_positions=(1, 2, 3, 4, 5),
+        "r_step": R_STEP, "c_next_step": C_NEXT, "n_steps": 100,
+        "coordinate_law": sch.CoordinateLaw.PROGRESSIVE_CHECKPOINT,
+        "tokens": tuple(tokens), "mask_token_id": MASK, "aa_token_ids": AA,
+        "hard_anchors": ((0, 10),), "editable_positions": (1, 2, 3, 4, 5),
         # positions resolved in the SOURCE state at c_d; position 5 was already masked there.
         # Needed to tell a genuine reopen from an inherited mask relabelled as one.
-        source_resolved_positions=(1, 2, 3, 4),
-        active_origin_kind_by_pos=tuple(kind),
-        feedback_origin_ref_by_pos=tuple(ref),
-        active_commit_depth_step_by_pos=tuple(commit),
-        origin_transition_id_by_pos=tuple(txn),
-        active_sampler_score_by_pos=tuple(score),
-        active_score_status_by_pos=tuple(status),
-        provenance_by_pos=tuple(prov),
-        support=st.SupportPartition(
+        "source_resolved_positions": (1, 2, 3, 4),
+        "active_origin_kind_by_pos": tuple(kind),
+        "feedback_origin_ref_by_pos": tuple(ref),
+        "active_commit_depth_step_by_pos": tuple(commit),
+        "origin_transition_id_by_pos": tuple(txn),
+        "active_sampler_score_by_pos": tuple(score),
+        "active_score_status_by_pos": tuple(status),
+        "provenance_by_pos": tuple(prov),
+        "support": st.SupportPartition(
             write_from_endpoint=(1,), inject_from_source_feedback=(2,), reopen=(3,),
             carry_from_source=(4, 5),
             reason_by_pos={1: "improvement_associated", 2: "future_source_identity",
                            3: "uncertain", 4: "temporally_valid", 5: "inherited_mask"},
         ),
-        active_temporary_protection=(_prot(1, st.ProtectionGrantReason.ENDPOINT_INJECTION),
+        "active_temporary_protection": (_prot(1, st.ProtectionGrantReason.ENDPOINT_INJECTION),
                                      _prot(2, st.ProtectionGrantReason.SOURCE_FEEDBACK_INJECTION)),
-        descendant_fork_seed=1234567890,
-        origin_transition_id=TXN,
-        declared_band_id="band-2026-08-04", declared_band_digest=D,
-        inherited_lineage_dfe=170, planned_segment_dfe=C_NEXT - R_STEP,
-        conditioning=_conditioning(), safety_reference=_safety_reference(),
-        cost_event_ids=("evt:proj",),
-    )
+        "descendant_fork_seed": 1234567890,
+        "origin_transition_id": TXN,
+        "declared_band_id": "band-2026-08-04", "declared_band_digest": D,
+        "inherited_lineage_dfe": 170, "planned_segment_dfe": C_NEXT - R_STEP,
+        "conditioning": _conditioning(), "safety_reference": _safety_reference(),
+        "cost_event_ids": ("evt:proj",),
+    }
     kw.update(over)
     return st.ProjectedPartialState(**kw)
 
@@ -720,9 +720,8 @@ def test_a_projected_state_stores_band_identity_but_never_a_tolerance():
 # Steps 16-18: propagated capture, CompleteEndpoint, ArchiveEntry, FeedbackTransition
 # ============================================================================================
 
-from inverse_folding.reference_flow.fusion.v1_admission import StructureOutcome  # noqa: E402
-
-from inverse_folding.reference_flow.fusion.state import sequence_md5  # noqa: E402
+from inverse_folding.reference_flow.fusion.state import sequence_md5
+from inverse_folding.reference_flow.fusion.v1_admission import StructureOutcome
 
 SEQ = "ACDEFG"          # canonical AA20, length L
 SEQ_MD5 = sequence_md5(SEQ)
@@ -776,21 +775,21 @@ def _captured(**over):
         parent_transition_id=proj.lineage.parent_transition_id,
         origin_endpoint_id=proj.lineage.origin_endpoint_id,
     )
-    kw = dict(
-        schema_version=ident.V2_STATE_SCHEMA_VERSION, lineage=propagated_lineage,
-        sampler_step=C_NEXT, n_steps=100,
-        tokens=tuple(tokens), mask_token_id=MASK, aa_token_ids=AA,
-        hard_anchors=((0, 10),), editable_positions=(1, 2, 3, 4, 5),
-        active_origin_kind_by_pos=tuple(kind), feedback_origin_ref_by_pos=tuple(ref),
-        active_commit_depth_step_by_pos=tuple(commit), origin_transition_id_by_pos=tuple(txn),
-        active_sampler_score_by_pos=tuple(score), active_score_status_by_pos=tuple(status),
-        provenance_by_pos=tuple(provenance),
-        expired_protection=proj.active_temporary_protection,
-        replay=st.ReplayIdentity(mode="fork", rng_state=None, fork_seed=1234567890,
+    kw = {
+        "schema_version": ident.V2_STATE_SCHEMA_VERSION, "lineage": propagated_lineage,
+        "sampler_step": C_NEXT, "n_steps": 100,
+        "tokens": tuple(tokens), "mask_token_id": MASK, "aa_token_ids": AA,
+        "hard_anchors": ((0, 10),), "editable_positions": (1, 2, 3, 4, 5),
+        "active_origin_kind_by_pos": tuple(kind), "feedback_origin_ref_by_pos": tuple(ref),
+        "active_commit_depth_step_by_pos": tuple(commit), "origin_transition_id_by_pos": tuple(txn),
+        "active_sampler_score_by_pos": tuple(score), "active_score_status_by_pos": tuple(status),
+        "provenance_by_pos": tuple(provenance),
+        "expired_protection": proj.active_temporary_protection,
+        "replay": st.ReplayIdentity(mode="fork", rng_state=None, fork_seed=1234567890,
                                  replay_state_hash=D),
-        accumulated_lineage_dfe=190, conditioning=_conditioning(),
-        safety_reference=_safety_reference(), cost_event_ids=("evt:seg",),
-    )
+        "accumulated_lineage_dfe": 190, "conditioning": _conditioning(),
+        "safety_reference": _safety_reference(), "cost_event_ids": ("evt:seg",),
+    }
     kw.update(over)
     # one unresolved position is required of a live state; keep 5 open unless told otherwise
     if "tokens" not in over:
@@ -807,7 +806,7 @@ def _captured(**over):
 
 
 def _capture(**over):
-    kw = dict(projected=_projected(), propagated=_captured(), background_remask_events=0)
+    kw = {"projected": _projected(), "propagated": _captured(), "background_remask_events": 0}
     kw.update(over)
     return st.validate_propagated_capture(**kw)
 
@@ -926,20 +925,20 @@ def _endpoint(**over):
                                     completion_logprob=-0.4, inherited_from_source=i < 4)
         for i in range(L)
     )
-    kw = dict(
-        schema_version=ident.V2_STATE_SCHEMA_VERSION, lineage=_live().lineage,
-        protein_id="5ZHV_B", sequence=SEQ, sequence_md5=SEQ_MD5, sequence_length=L,
-        source_state_id=src.state_id, source_state_content_digest=src.content_digest,
-        fork_index=0, fork_seed=99,
-        replay=st.ReplayIdentity(mode="fork", rng_state=None, fork_seed=99, replay_state_hash=D),
-        endpoint_provenance_evidence_by_pos=evidence,
-        head_binding=head_binding,
-        head_score=head_score,
-        head_global_risk=-9.1,
-        feasibility_level=st.FeasibilityLevel.DEFINITIVE,
-        structure_outcome=StructureOutcome(feasible=True, metrics={"scTM": 0.91}),
-        cost_event_ids=("evt:tail",),
-    )
+    kw = {
+        "schema_version": ident.V2_STATE_SCHEMA_VERSION, "lineage": _live().lineage,
+        "protein_id": "5ZHV_B", "sequence": SEQ, "sequence_md5": SEQ_MD5, "sequence_length": L,
+        "source_state_id": src.state_id, "source_state_content_digest": src.content_digest,
+        "fork_index": 0, "fork_seed": 99,
+        "replay": st.ReplayIdentity(mode="fork", rng_state=None, fork_seed=99, replay_state_hash=D),
+        "endpoint_provenance_evidence_by_pos": evidence,
+        "head_binding": head_binding,
+        "head_score": head_score,
+        "head_global_risk": -9.1,
+        "feasibility_level": st.FeasibilityLevel.DEFINITIVE,
+        "structure_outcome": StructureOutcome(feasible=True, metrics={"scTM": 0.91}),
+        "cost_event_ids": ("evt:tail",),
+    }
     kw.update(over)
     return st.CompleteEndpoint(**kw)
 
@@ -970,7 +969,7 @@ def test_endpoint_rejects_a_forged_id_or_foreign_source_digest():
 @pytest.mark.parametrize("bad_sequence", ["ACDEF_", "ACDEFX", "acdefg", "ACDEF", ""])
 def test_a_non_canonical_sequence_never_reaches_the_head_or_the_archive(bad_sequence):
     """§7.2 #17. The Head is fail-open on non-canonical input, so this guard is load-bearing."""
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: B017
         _endpoint(sequence=bad_sequence)
 
 
@@ -1029,12 +1028,12 @@ def test_endpoint_digest_binds_head_identity_and_full_structure_evidence():
 
 def _entry(**over):
     ep = _endpoint()
-    kw = dict(
-        endpoint_id=ep.endpoint_id, endpoint_content_digest=ep.content_digest, lineage=ep.lineage,
-        sequence_equivalence_key=SEQ_MD5, feasibility_level=st.FeasibilityLevel.DEFINITIVE,
-        first_depth_seen=0, last_depth_seen=0,
-        membership=st.ArchiveMembership(is_elite=True, elite_rank=0, is_diversity_frontier=False),
-    )
+    kw = {
+        "endpoint_id": ep.endpoint_id, "endpoint_content_digest": ep.content_digest, "lineage": ep.lineage,
+        "sequence_equivalence_key": SEQ_MD5, "feasibility_level": st.FeasibilityLevel.DEFINITIVE,
+        "first_depth_seen": 0, "last_depth_seen": 0,
+        "membership": st.ArchiveMembership(is_elite=True, elite_rank=0, is_diversity_frontier=False),
+    }
     kw.update(over)
     return st.ArchiveEntry(**kw)
 
@@ -1069,27 +1068,27 @@ def test_last_depth_seen_is_non_decreasing():
 
 def _transition(**over):
     proj, cap, ep = _projected(), _captured(), _endpoint()
-    kw = dict(
-        schema_version=ident.V2_STATE_SCHEMA_VERSION, lineage=cap.lineage, source_depth=0,
-        coordinate_law=sch.CoordinateLaw.PROGRESSIVE_CHECKPOINT,
-        r_step=R_STEP, c_step=C_SOURCE, c_next_step=C_NEXT,
-        source_state_id=_live().state_id, source_state_content_digest=_live().content_digest,
-        selected_endpoint_id=ep.endpoint_id, endpoint_sequence_md5=SEQ_MD5,
-        endpoint_content_digest=ep.content_digest,
-        policy=ident.ProjectionPolicyIdentity(
+    kw = {
+        "schema_version": ident.V2_STATE_SCHEMA_VERSION, "lineage": cap.lineage, "source_depth": 0,
+        "coordinate_law": sch.CoordinateLaw.PROGRESSIVE_CHECKPOINT,
+        "r_step": R_STEP, "c_step": C_SOURCE, "c_next_step": C_NEXT,
+        "source_state_id": _live().state_id, "source_state_content_digest": _live().content_digest,
+        "selected_endpoint_id": ep.endpoint_id, "endpoint_sequence_md5": SEQ_MD5,
+        "endpoint_content_digest": ep.content_digest,
+        "policy": ident.ProjectionPolicyIdentity(
             policy_id="source_writeback_v1", policy_version="1", policy_config_digest=D,
             policy_spec_digest=D, is_diagnostic_only=False),
-        support=proj.support, projected_state_id=proj.state_id,
-        projected_state_content_digest=proj.content_digest,
-        propagated_state_id=cap.state_id, propagated_state_content_digest=cap.content_digest,
-        descendant_fork_seed=1234567890, fork_index=0, pair_id="5ZHV_B:d0:r40-c60:p0",
-        matched_seed_context_digest=D,
-        assimilation=st.AssimilationRecord(n_pending_at_reentry=2, n_assimilated=2,
+        "support": proj.support, "projected_state_id": proj.state_id,
+        "projected_state_content_digest": proj.content_digest,
+        "propagated_state_id": cap.state_id, "propagated_state_content_digest": cap.content_digest,
+        "descendant_fork_seed": 1234567890, "fork_index": 0, "pair_id": "5ZHV_B:d0:r40-c60:p0",
+        "matched_seed_context_digest": D,
+        "assimilation": st.AssimilationRecord(n_pending_at_reentry=2, n_assimilated=2,
                                            assimilation_temperature=1.0),
-        segment_logical_dfe=C_NEXT - R_STEP, background_remask_events=0,
-        cost_event_ids=("evt:seg",), parent_transition_id=None,
-        outcome=st.TransitionOutcome.COMMITTED,
-    )
+        "segment_logical_dfe": C_NEXT - R_STEP, "background_remask_events": 0,
+        "cost_event_ids": ("evt:seg",), "parent_transition_id": None,
+        "outcome": st.TransitionOutcome.COMMITTED,
+    }
     kw.update(over)
     return st.FeedbackTransition(**kw)
 

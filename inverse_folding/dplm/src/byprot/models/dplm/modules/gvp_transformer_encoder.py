@@ -2,23 +2,30 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import warnings
+
 import esm
 import torch
-from torch import nn
-
 from byprot.models import register_model
+from torch import nn
 
 
 @register_model("gvp_trans_encoder")
 class GVPTransformerEncoderWrapper(nn.Module):
     def __init__(self, freeze=True, output_logits=False, d_model=512):
         super().__init__()
-        import biotite.structure as structure
+        from biotite import structure
 
         # fair-esm 2.0 imports the old name; Biotite 1.x renamed this same filter.
         if not hasattr(structure, "filter_backbone"):
             structure.filter_backbone = structure.filter_peptide_backbone
-        _model, _alphabet = esm.pretrained.esm_if1_gvp4_t16_142M_UR50()
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message=r"Regression weights not found.*",
+                category=UserWarning,
+            )
+            _model, _alphabet = esm.pretrained.esm_if1_gvp4_t16_142M_UR50()
         self.encoder = _model.encoder
         if freeze:
             for param in self.encoder.parameters():

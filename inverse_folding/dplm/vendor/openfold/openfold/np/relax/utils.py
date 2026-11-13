@@ -15,11 +15,13 @@
 
 """Utils for minimization."""
 import io
-from openfold.np import residue_constants
-from Bio import PDB
+
 import numpy as np
+from Bio import PDB
 from openmm import app as openmm_app
 from openmm.app.internal.pdbstructure import PdbStructure
+
+from openfold.np import residue_constants
 
 
 def overwrite_pdb_coordinates(pdb_str: str, pos) -> str:

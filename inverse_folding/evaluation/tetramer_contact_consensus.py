@@ -12,8 +12,8 @@ calculation and never participate in contact inclusion.
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Iterable, Sequence
 
 import numpy as np
 import pandas as pd
@@ -22,7 +22,6 @@ from inverse_folding.evaluation.complex_interfaces import (
     canonical_protein_atoms,
     interface_residue_candidates,
 )
-
 
 AA3_TO_1 = {
     "ALA": "A",
@@ -665,8 +664,8 @@ def canonical_residue_pair_contacts(
             str(mapped_a.chain), int(mapped_a.index_0b), int(mapped_a.res_id), str(mapped_a.ins_code)
         ):
             left, right = right, left
-        key_1, row_1 = left
-        key_2, row_2 = right
+        _key_1, row_1 = left
+        _key_2, row_2 = right
         index_1, index_2 = int(row_1.index_0b), int(row_2.index_0b)
         is_inter = str(row_1.chain) != str(row_2.chain)
         rows.append({

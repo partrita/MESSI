@@ -1,6 +1,6 @@
 import argparse
-import os
 import logging
+import os
 import random
 
 import numpy
@@ -9,15 +9,20 @@ from openfold.config import model_config
 from openfold.data import feature_pipeline
 from openfold.data.data_pipeline import make_sequence_features_with_custom_template
 from openfold.np import protein
-from openfold.utils.script_utils import load_models_from_command_line, parse_fasta, run_model, prep_output, \
-    relax_protein
+from openfold.utils.script_utils import (
+    load_models_from_command_line,
+    parse_fasta,
+    prep_output,
+    relax_protein,
+    run_model,
+)
 from openfold.utils.tensor_utils import (
     tensor_tree_map,
 )
 from scripts.utils import add_data_args
 
 logging.basicConfig()
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
 
 torch_versions = torch.__version__.split(".")
@@ -165,7 +170,7 @@ if __name__ == "__main__":
         )
 
     if(args.model_device == "cpu" and torch.cuda.is_available()):
-        logging.warning(
+        logging.warning(  # noqa: LOG015
             """The model is being run on CPU. Consider specifying 
             --model_device for better performance"""
         )

@@ -118,7 +118,7 @@ def validate_augmentation_config(raw: dict) -> AugmentationConfig:
     # Input paths
     inputs = raw["inputs"]
     if not isinstance(inputs, dict):
-        raise ValueError("augmentation.inputs must be a dict")
+        raise ValueError("augmentation.inputs must be a dict")  # noqa: TRY004
     missing_in = REQUIRED_INPUT_KEYS - set(inputs.keys())
     if missing_in:
         raise ValueError(f"augmentation.inputs missing keys: {sorted(missing_in)}")
@@ -126,7 +126,7 @@ def validate_augmentation_config(raw: dict) -> AugmentationConfig:
     # Output paths
     outputs = raw["outputs"]
     if not isinstance(outputs, dict):
-        raise ValueError("augmentation.outputs must be a dict")
+        raise ValueError("augmentation.outputs must be a dict")  # noqa: TRY004
     missing_out = REQUIRED_OUTPUT_KEYS - set(outputs.keys())
     if missing_out:
         raise ValueError(f"augmentation.outputs missing keys: {sorted(missing_out)}")
@@ -522,7 +522,7 @@ class MutationRegistryIndex:
     weights: dict[str, np.ndarray] = field(default_factory=dict)
 
     @staticmethod
-    def from_parquet(registry_path: Path | str) -> "MutationRegistryIndex":
+    def from_parquet(registry_path: Path | str) -> MutationRegistryIndex:
         """Load registry and build weighted index for runtime sampling."""
         path = Path(registry_path)
         if not path.exists():

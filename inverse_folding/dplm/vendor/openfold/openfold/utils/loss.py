@@ -13,24 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from functools import partial
 import logging
+
 import ml_collections
 import numpy as np
 import torch
-import torch.nn as nn
-from torch.distributions.bernoulli import Bernoulli
-from typing import Dict, Optional, Tuple
+from torch import nn
 
 from openfold.np import residue_constants
-from openfold.utils import feats
-from openfold.utils.rigid_utils import Rotation, Rigid
+from openfold.utils.rigid_utils import Rigid, Rotation
 from openfold.utils.tensor_utils import (
-    tree_map,
-    tensor_tree_map,
     masked_mean,
     permute_final_dims,
-    batched_gather,
+    tensor_tree_map,
+    tree_map,
 )
 
 
@@ -87,7 +83,7 @@ def compute_fape(
     target_positions: torch.Tensor,
     positions_mask: torch.Tensor,
     length_scale: float,
-    l1_clamp_distance: Optional[float] = None,
+    l1_clamp_distance: float | None = None,
     eps=1e-8,
 ) -> torch.Tensor:
     """
@@ -157,7 +153,7 @@ def backbone_loss(
     backbone_rigid_tensor: torch.Tensor,
     backbone_rigid_mask: torch.Tensor,
     traj: torch.Tensor,
-    use_clamped_fape: Optional[torch.Tensor] = None,
+    use_clamped_fape: torch.Tensor | None = None,
     clamp_distance: float = 10.0,
     loss_unit_distance: float = 10.0,
     eps: float = 1e-4,
@@ -262,8 +258,8 @@ def sidechain_loss(
 
 
 def fape_loss(
-    out: Dict[str, torch.Tensor],
-    batch: Dict[str, torch.Tensor],
+    out: dict[str, torch.Tensor],
+    batch: dict[str, torch.Tensor],
     config: ml_collections.ConfigDict,
 ) -> torch.Tensor:
     bb_loss = backbone_loss(
@@ -477,7 +473,7 @@ def lddt_loss(
     eps: float = 1e-10,
     **kwargs,
 ) -> torch.Tensor:
-    n = all_atom_mask.shape[-2]
+    all_atom_mask.shape[-2]
 
     ca_pos = residue_constants.atom_order["CA"]
     all_atom_pred_pos = all_atom_pred_pos[..., ca_pos, :]
@@ -576,7 +572,7 @@ def _calculate_bin_centers(boundaries: torch.Tensor):
 def _calculate_expected_aligned_error(
     alignment_confidence_breaks: torch.Tensor,
     aligned_distance_error_probs: torch.Tensor,
-) -> Tuple[torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, torch.Tensor]:
     bin_centers = _calculate_bin_centers(alignment_confidence_breaks)
     return (
         torch.sum(aligned_distance_error_probs * bin_centers, dim=-1),
@@ -589,7 +585,7 @@ def compute_predicted_aligned_error(
     max_bin: int = 31,
     no_bins: int = 64,
     **kwargs,
-) -> Dict[str, torch.Tensor]:
+) -> dict[str, torch.Tensor]:
     """Computes aligned confidence metrics from logits.
 
     Args:
@@ -626,7 +622,7 @@ def compute_predicted_aligned_error(
 
 def compute_tm(
     logits: torch.Tensor,
-    residue_weights: Optional[torch.Tensor] = None,
+    residue_weights: torch.Tensor | None = None,
     max_bin: int = 31,
     no_bins: int = 64,
     eps: float = 1e-8,
@@ -723,7 +719,7 @@ def between_residue_bond_loss(
     tolerance_factor_soft=12.0,
     tolerance_factor_hard=12.0,
     eps=1e-6,
-) -> Dict[str, torch.Tensor]:
+) -> dict[str, torch.Tensor]:
     """Flat-bottom loss to penalize structural violations between residues.
 
     This is a loss penalizing any violation of the geometry around the peptide
@@ -882,7 +878,7 @@ def between_residue_clash_loss(
     overlap_tolerance_soft=1.5,
     overlap_tolerance_hard=1.5,
     eps=1e-10,
-) -> Dict[str, torch.Tensor]:
+) -> dict[str, torch.Tensor]:
     """Loss to penalize steric clashes between residues.
 
     This is a loss penalizing any steric clashes due to non bonded atoms in
@@ -1028,7 +1024,7 @@ def within_residue_violations(
     atom14_dists_upper_bound: torch.Tensor,
     tighten_bounds_for_loss=0.0,
     eps=1e-10,
-) -> Dict[str, torch.Tensor]:
+) -> dict[str, torch.Tensor]:
     """Loss to penalize steric clashes within residues.
 
     This is a loss penalizing any steric violations or clashes of non-bonded atoms
@@ -1109,12 +1105,12 @@ def within_residue_violations(
 
 
 def find_structural_violations(
-    batch: Dict[str, torch.Tensor],
+    batch: dict[str, torch.Tensor],
     atom14_pred_positions: torch.Tensor,
     violation_tolerance_factor: float,
     clash_overlap_tolerance: float,
     **kwargs,
-) -> Dict[str, torch.Tensor]:
+) -> dict[str, torch.Tensor]:
     """Computes several checks for structural violations."""
 
     # Compute between residue backbone violations of bonds and angles.
@@ -1156,7 +1152,7 @@ def find_structural_violations(
         overlap_tolerance=clash_overlap_tolerance,
         bond_length_tolerance_factor=violation_tolerance_factor,
     )
-    atom14_atom_exists = batch["atom14_atom_exists"]
+    batch["atom14_atom_exists"]
     atom14_dists_lower_bound = atom14_pred_positions.new_tensor(
         restype_atom14_bounds["lower_bound"]
     )[batch["aatype"]]
@@ -1222,10 +1218,10 @@ def find_structural_violations(
 
 
 def find_structural_violations_np(
-    batch: Dict[str, np.ndarray],
+    batch: dict[str, np.ndarray],
     atom14_pred_positions: np.ndarray,
     config: ml_collections.ConfigDict,
-) -> Dict[str, np.ndarray]:
+) -> dict[str, np.ndarray]:
     to_tensor = lambda x: torch.tensor(x)
     batch = tree_map(to_tensor, batch, np.ndarray)
     atom14_pred_positions = to_tensor(atom14_pred_positions)
@@ -1276,10 +1272,10 @@ def extreme_ca_ca_distance_violations(
 
 
 def compute_violation_metrics(
-    batch: Dict[str, torch.Tensor],
+    batch: dict[str, torch.Tensor],
     atom14_pred_positions: torch.Tensor,  # (N, 14, 3)
-    violations: Dict[str, torch.Tensor],
-) -> Dict[str, torch.Tensor]:
+    violations: dict[str, torch.Tensor],
+) -> dict[str, torch.Tensor]:
     """Compute several metrics to assess the structural violations."""
     ret = {}
     extreme_ca_ca_violations = extreme_ca_ca_distance_violations(
@@ -1319,10 +1315,10 @@ def compute_violation_metrics(
 
 
 def compute_violation_metrics_np(
-    batch: Dict[str, np.ndarray],
+    batch: dict[str, np.ndarray],
     atom14_pred_positions: np.ndarray,
-    violations: Dict[str, np.ndarray],
-) -> Dict[str, np.ndarray]:
+    violations: dict[str, np.ndarray],
+) -> dict[str, np.ndarray]:
     to_tensor = lambda x: torch.tensor(x)
     batch = tree_map(to_tensor, batch, np.ndarray)
     atom14_pred_positions = to_tensor(atom14_pred_positions)
@@ -1335,7 +1331,7 @@ def compute_violation_metrics_np(
 
 
 def violation_loss(
-    violations: Dict[str, torch.Tensor],
+    violations: dict[str, torch.Tensor],
     atom14_atom_exists: torch.Tensor,
     eps=1e-6,
     **kwargs,
@@ -1360,10 +1356,10 @@ def violation_loss(
 
 
 def compute_renamed_ground_truth(
-    batch: Dict[str, torch.Tensor],
+    batch: dict[str, torch.Tensor],
     atom14_pred_positions: torch.Tensor,
     eps=1e-10,
-) -> Dict[str, torch.Tensor]:
+) -> dict[str, torch.Tensor]:
     """
     Find optimal renaming of ground truth based on the predicted positions.
 
@@ -1527,18 +1523,18 @@ def masked_msa_loss(logits, true_msa, bert_mask, eps=1e-8, **kwargs):
 class AlphaFoldLoss(nn.Module):
     """Aggregation of the various losses described in the supplement"""
     def __init__(self, config):
-        super(AlphaFoldLoss, self).__init__()
+        super().__init__()
         self.config = config
 
     def forward(self, out, batch, _return_breakdown=False):
-        if "violation" not in out.keys():
+        if "violation" not in out:
             out["violation"] = find_structural_violations(
                 batch,
                 out["sm"]["positions"][-1],
                 **self.config.violation,
             )
 
-        if "renamed_atom14_gt_positions" not in out.keys():
+        if "renamed_atom14_gt_positions" not in out:
             batch.update(
                 compute_renamed_ground_truth(
                     batch,
@@ -1596,7 +1592,7 @@ class AlphaFoldLoss(nn.Module):
                 #    if(torch.any(torch.isnan(v)) or torch.any(torch.isinf(v))):
                 #        logging.warning(f"{k}: is nan")
                 #logging.warning(f"{loss_name}: {loss}")
-                logging.warning(f"{loss_name} loss is NaN. Skipping...")
+                logging.warning(f"{loss_name} loss is NaN. Skipping...")  # noqa: LOG015
                 loss = loss.new_tensor(0., requires_grad=True)
             cum_loss = cum_loss + weight * loss
             losses[loss_name] = loss.detach().clone()

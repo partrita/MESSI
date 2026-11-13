@@ -27,9 +27,9 @@ import logging
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
 
 import pandas as pd
 
@@ -46,7 +46,7 @@ PDBE_BEST_STRUCTURES = (
 # ─────────────────────────────────────────────────────────────────────────
 
 
-def load_test_uniprots(manifest_dir: Path) -> List[str]:
+def load_test_uniprots(manifest_dir: Path) -> list[str]:
     """Read `splits/test_ids.txt` from a per-allele manifest directory."""
     p = Path(manifest_dir) / "splits" / "test_ids.txt"
     if not p.is_file():
@@ -54,23 +54,23 @@ def load_test_uniprots(manifest_dir: Path) -> List[str]:
     return [line.strip() for line in p.read_text().splitlines() if line.strip()]
 
 
-def load_uniprot_seqs(fasta_path: Path) -> Dict[str, str]:
+def load_uniprot_seqs(fasta_path: Path) -> dict[str, str]:
     """Parse a FASTA into `{uniprot_id: sequence}`.
 
     Accepts both bare-accession headers (`>P12345`) and SwissProt-style
     headers (`>sp|P12345|NAME`). NCBI-style `>NP_xxx` headers are kept as-is.
     Versioned accessions (`P12345.2`) are stripped to bare ID.
     """
-    seqs: Dict[str, str] = {}
-    cur_id: Optional[str] = None
-    cur_lines: List[str] = []
+    seqs: dict[str, str] = {}
+    cur_id: str | None = None
+    cur_lines: list[str] = []
     with Path(fasta_path).open() as f:
         for line in f:
             if line.startswith(">"):
                 if cur_id is not None:
                     seqs[cur_id] = "".join(cur_lines)
                 header = line[1:].strip()
-                if header.startswith("sp|") or header.startswith("tr|"):
+                if header.startswith(("sp|", "tr|")):
                     parts = header.split("|")
                     cur_id = parts[1] if len(parts) >= 2 else parts[0]
                 else:
@@ -96,7 +96,7 @@ def _safe_json_loads(s):
 def load_iedb_spans(
     mhc_if_v2_path: Path,
     allele: str,
-) -> Dict[str, List[dict]]:
+) -> dict[str, list[dict]]:
     """Return `{uniprot: [{start_0b, end_0b, peptide, source}, ...]}` for one allele.
 
     Filters rows whose `alleles` JSON list contains `allele` exactly. Spans are
@@ -111,7 +111,7 @@ def load_iedb_spans(
         return bool(alist) and allele in alist
 
     sub = df[df["alleles"].apply(has_allele)]
-    out: Dict[str, List[dict]] = {}
+    out: dict[str, list[dict]] = {}
     for _, row in sub.iterrows():
         accs = _safe_json_loads(row.get("protein_accessions")) or []
         ppi = _safe_json_loads(row.get("peptide_position_info")) or []
@@ -136,10 +136,10 @@ def load_iedb_spans(
             out.setdefault(uni, []).append(entry)
 
     # Dedup per uniprot, keeping order of first appearance
-    for uni in out:
+    for uni, spans in out.items():
         seen = set()
         unique = []
-        for sp in out[uni]:
+        for sp in spans:
             k = (sp["start_0b"], sp["end_0b"], sp["peptide"])
             if k in seen:
                 continue
@@ -160,7 +160,7 @@ def extract_spans_for_chain(
     chain_range_start: int,  # 1-based UniProt position of sequence[0]
     chain_range_end: int,    # 1-based UniProt position of sequence[-1]
     iedb_ref_label: str = "IEDB",
-) -> List[dict]:
+) -> list[dict]:
     """Return spans whose [start_0b, end_0b) lies fully inside the chain range.
 
     For each kept span the chain-local slice `chain_seq[start-(s-1):end-(s-1)]`
@@ -171,7 +171,7 @@ def extract_spans_for_chain(
     """
     chain_start_0b = chain_range_start - 1
     chain_end_0b = chain_range_end          # half-open upper bound
-    out: List[dict] = []
+    out: list[dict] = []
     for sp in spans_full:
         s0 = sp["start_0b"]
         e0 = sp["end_0b"]
@@ -206,14 +206,14 @@ class SiftsChain:
     unp_end: int
     pdb_start: int
     pdb_end: int
-    resolution: Optional[float]
+    resolution: float | None
     method: str
-    coverage: Optional[float]
+    coverage: float | None
 
 
-def _parse_sifts_payload(payload: dict, uniprot: str) -> List[SiftsChain]:
+def _parse_sifts_payload(payload: dict, uniprot: str) -> list[SiftsChain]:
     items = payload.get(uniprot) or []
-    out: List[SiftsChain] = []
+    out: list[SiftsChain] = []
     for it in items:
         try:
             out.append(SiftsChain(
@@ -234,25 +234,25 @@ def _parse_sifts_payload(payload: dict, uniprot: str) -> List[SiftsChain]:
 
 def query_sifts_best_structures(
     uniprot: str,
-    cache_dir: Optional[Path] = None,
+    cache_dir: Path | None = None,
     api_delay_s: float = 0.10,
     timeout_s: float = 20.0,
     user_agent: str = "build_tier1_candidates/1.0",
-) -> List[SiftsChain]:
+) -> list[SiftsChain]:
     """Hit PDBe `/mappings/best_structures/{uniprot}`.
 
     Returns the SIFTS-ranked list (best first). Network failures and 404 yield
     an empty list and a logged warning — the caller treats "no PDB mapping" as
     a soft skip. Successful responses are JSON-cached under `cache_dir`.
     """
-    cache_path: Optional[Path] = None
+    cache_path: Path | None = None
     if cache_dir is not None:
         cache_path = Path(cache_dir) / f"{uniprot}.json"
         if cache_path.is_file():
             try:
                 payload = json.loads(cache_path.read_text())
                 return _parse_sifts_payload(payload, uniprot)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning("Cache read failed for %s (%s); refetching", uniprot, e)
 
     url = PDBE_BEST_STRUCTURES.format(uniprot=uniprot)
@@ -309,7 +309,7 @@ def build_candidate_entry(
     allele: str,
     epitope_head_split: str,
     filters: FilterParams,
-) -> Optional[dict]:
+) -> dict | None:
     """Try to construct one Tier 1 entry. Returns None if the chain is rejected.
 
     Rejection reasons (silent — caller may keep stats):
@@ -380,23 +380,23 @@ def build_candidate_entry(
 
 def build_tier1_candidates(
     test_uniprots: Sequence[str],
-    spans_by_uniprot: Dict[str, List[dict]],
-    uniprot_seqs: Dict[str, str],
+    spans_by_uniprot: dict[str, list[dict]],
+    uniprot_seqs: dict[str, str],
     allele: str,
     filters: FilterParams,
     n_select: int,
     rank_by: str = "epitope_coverage",
     rank_descending: bool = True,
-    sifts_cache_dir: Optional[Path] = None,
+    sifts_cache_dir: Path | None = None,
     api_delay_s: float = 0.10,
     epitope_head_split: str = "test",
     progress_log_every: int = 25,
-) -> Tuple[List[dict], dict]:
+) -> tuple[list[dict], dict]:
     """End-to-end candidate construction. Returns (selected, stats)."""
     if rank_by not in ("epitope_coverage", "n_epitope_spans", "n_covered_residues"):
         raise ValueError(f"Unsupported rank_by={rank_by!r}")
 
-    candidates: List[dict] = []
+    candidates: list[dict] = []
     stats = {
         "n_test_uniprots": len(test_uniprots),
         "n_with_spans": 0,
@@ -425,7 +425,7 @@ def build_tier1_candidates(
             continue
         stats["n_with_sifts_chains"] += 1
 
-        chosen: Optional[dict] = None
+        chosen: dict | None = None
         for ch in sifts_chains:
             entry = build_candidate_entry(
                 uniprot=uni,

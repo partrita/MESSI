@@ -18,8 +18,9 @@ internally, so no V2 config surface, artifact, or call site carries an h-map fie
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from typing import Any, Iterable, Mapping, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from inverse_folding.reference_flow.fusion.v1_records import (
     ConditioningDigest,
@@ -32,16 +33,39 @@ from inverse_folding.reference_flow.fusion.v1_records import (
 from .errors import V2Error
 
 __all__ = [
-    "V2_STATE_SCHEMA_VERSION", "ID_NAMESPACES", "CONTENT_ROLE_TO_FIELD", "FROZEN_DIGEST_ROLES",
-    "OWN_CONDITIONING_FIELDS", "BASE_CONDITIONING_FIELDS", "V2IdentityError",
-    "canonical_json_bytes", "sha256_hex", "content_digest", "make_root_id", "canonical_digest",
-    "require_digest", "LineageRef", "make_v2_conditioning", "V2ConditioningIdentity",
-    "WindowRiskLike", "HeadScoreLike", "HeadEvaluatorIdentity", "HeadScoreBinding",
-    "window_grid_digest", "SafetyReferenceBinding", "ProjectionPolicyIdentity",
-    "make_live_state_id", "make_projected_state_id", "make_endpoint_id", "make_transition_id",
-    "make_archive_entry_id", "id_namespace", "require_id_namespace",
-    "require_id_namespace_in", "assert_id_binds_digest",
+    "BASE_CONDITIONING_FIELDS",
+    "CONTENT_ROLE_TO_FIELD",
+    "FROZEN_DIGEST_ROLES",
+    "ID_NAMESPACES",
+    "OWN_CONDITIONING_FIELDS",
+    "V2_STATE_SCHEMA_VERSION",
+    "HeadEvaluatorIdentity",
+    "HeadScoreBinding",
+    "HeadScoreLike",
+    "LineageRef",
+    "ProjectionPolicyIdentity",
+    "SafetyReferenceBinding",
+    "V2ConditioningIdentity",
+    "V2IdentityError",
+    "WindowRiskLike",
+    "assert_id_binds_digest",
     "assert_no_id_collisions",
+    "canonical_digest",
+    "canonical_json_bytes",
+    "content_digest",
+    "id_namespace",
+    "make_archive_entry_id",
+    "make_endpoint_id",
+    "make_live_state_id",
+    "make_projected_state_id",
+    "make_root_id",
+    "make_transition_id",
+    "make_v2_conditioning",
+    "require_digest",
+    "require_id_namespace",
+    "require_id_namespace_in",
+    "sha256_hex",
+    "window_grid_digest",
 ]
 
 #: Bumped whenever any canonical payload projection changes, so an old digest can never silently

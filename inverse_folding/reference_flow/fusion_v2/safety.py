@@ -29,8 +29,9 @@ from __future__ import annotations
 
 import enum
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, Sequence
+from typing import Any
 
 from inverse_folding.reference_flow.fusion.objective import window_coord
 from inverse_folding.reference_flow.fusion.state import sequence_md5
@@ -50,19 +51,43 @@ from .identity import (
 )
 
 __all__ = [
-    "V2SafetyError", "HeadIdentityMismatch", "ReferenceLengthMismatch", "WindowGridMismatch",
-    "EmptyWindowGrid", "NonFiniteWindowRisk", "SelfReferentialReference", "ReferenceRebindAttempt",
+    "AdmissibilityVerdict",
+    "CumulativeSafetyReference",
+    "EmptyWindowGrid",
+    "HeadIdentityMismatch",
+    "HotspotThreshold",
+    "ImmediateParentReference",
+    "IncrementalInapplicable",
+    "LineageDepthSkew",
+    "LineageSafetyLedger",
+    "NoImmediateParent",
+    "NonFiniteWindowRisk",
     "ReferenceContentMismatch",
-    "ReferenceKindMismatch", "UncalibratedThreshold", "NoImmediateParent", "LineageDepthSkew",
-    "ReferenceKind", "WholeHotspotEvidence", "HotspotThreshold", "WholeHotspotVerdict",
-    "IncrementalInapplicable", "incremental_inapplicable",
+    "ReferenceKind",
+    "ReferenceKindMismatch",
+    "ReferenceLengthMismatch",
+    "ReferenceRebindAttempt",
     "SafetyAdmissionPolicy",
-    "CumulativeSafetyReference", "ImmediateParentReference", "LineageSafetyLedger",
-    "AdmissibilityVerdict", "reference_sequence_content_digest",
-    "whole_landscape_new_hotspot", "bind_cumulative_reference",
-    "bind_admission_policy", "bind_immediate_parent", "make_admissibility_verdict",
-    "open_lineage_ledger", "measure_cumulative", "measure_incremental", "apply_threshold",
-    "advance_lineage", "assert_lineage_binding", "cumulative_incremental_slack",
+    "SelfReferentialReference",
+    "UncalibratedThreshold",
+    "V2SafetyError",
+    "WholeHotspotEvidence",
+    "WholeHotspotVerdict",
+    "WindowGridMismatch",
+    "advance_lineage",
+    "apply_threshold",
+    "assert_lineage_binding",
+    "bind_admission_policy",
+    "bind_cumulative_reference",
+    "bind_immediate_parent",
+    "cumulative_incremental_slack",
+    "incremental_inapplicable",
+    "make_admissibility_verdict",
+    "measure_cumulative",
+    "measure_incremental",
+    "open_lineage_ledger",
+    "reference_sequence_content_digest",
+    "whole_landscape_new_hotspot",
 ]
 
 
@@ -865,7 +890,7 @@ class IncrementalInapplicable:
     cumulative_reference_binding_id: str
 
 
-def incremental_inapplicable(ledger: "LineageSafetyLedger") -> IncrementalInapplicable:
+def incremental_inapplicable(ledger: LineageSafetyLedger) -> IncrementalInapplicable:
     """Mint the marker, and only where the fact holds.
 
     Derived from the LEDGER and never supplied by a caller: one that could construct a marker for a

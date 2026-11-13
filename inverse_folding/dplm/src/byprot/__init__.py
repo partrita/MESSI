@@ -5,4 +5,4 @@
 import byprot.datamodules
 import byprot.models
 import byprot.tasks
-import byprot.utils
+import byprot.utils  # noqa: F401

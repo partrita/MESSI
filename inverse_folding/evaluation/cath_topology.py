@@ -7,10 +7,8 @@ across CATH architecture classes.
 
 import json
 import os
-from typing import Optional
 
 import pandas as pd
-
 
 # CATH architecture classes (first digit of topology code)
 _CATH_CLASSES = {
@@ -24,7 +22,7 @@ _CATH_CLASSES = {
 def assign_topology(
     protein_id: str,
     cath_domain_list_path: str,
-) -> Optional[str]:
+) -> str | None:
     """Look up CATH topology code for a protein's PDB code.
 
     Accepts either:

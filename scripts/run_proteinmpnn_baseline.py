@@ -41,7 +41,7 @@ import subprocess
 import sys
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -49,7 +49,6 @@ import pandas as pd
 import yaml
 from Bio.Data import PDBData
 from Bio.PDB import MMCIFParser, PDBParser
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PROTEINMPNN_ROOT = PROJECT_ROOT / "DRAKES" / "drakes_protein" / "ProteinMPNN"
@@ -639,7 +638,7 @@ def score_designs_with_nmp(
     for (entry_id, _seq), (pid, di, _ci) in zip(entries, entry_back):
         scored = batch_out.get(entry_id, {})
         bucket = agg.setdefault((pid, di), {"n_windows": 0, "sum_rank": 0.0, "n_sb": 0})
-        for pl, peptide_scores in scored.items():
+        for peptide_scores in scored.values():
             for ps in peptide_scores:
                 bucket["n_windows"] += 1
                 bucket["sum_rank"] += float(ps.el_rank)
@@ -721,10 +720,9 @@ def write_outputs(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # generated.parquet
-    rows: list[dict[str, Any]] = []
-    for pid in sorted(designs.keys()):
-        for d in designs[pid]:
-            rows.append(d)
+    rows: list[dict[str, Any]] = [
+        d for pid in sorted(designs.keys()) for d in designs[pid]
+    ]
     df = pd.DataFrame(rows)
     df.to_parquet(output_dir / "generated.parquet", index=False)
 
@@ -813,7 +811,7 @@ def main(argv: list[str] | None = None) -> int:
 
     run_config = {
         "method": "proteinmpnn_baseline",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "args": {k: (str(v) if isinstance(v, Path) else v) for k, v in vars(args).items()},
         "n_proteins": len(designs),
         "n_designs": n_designs,
@@ -830,11 +828,11 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"[done] artifacts written under {args.output_dir}")
     print(f"  generated.parquet  ({n_designs} rows)")
-    print(f"  generated.fasta")
-    print(f"  run_config.yaml")
+    print("  generated.fasta")
+    print("  run_config.yaml")
     if selections is not None:
         print(f"  selection.parquet  ({len(selections)} rows)")
-        print(f"  selection.json")
+        print("  selection.json")
     if not args.keep_mpnn_raw:
         # Trim bulky helper artifacts but keep parsed inputs, seqs, and staging
         # manifest for audit.

@@ -12,19 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from functools import partial
-import weakref
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 from openfold.model.embedders import (
+    ExtraMSAEmbedder,
     InputEmbedder,
+    PreembeddingEmbedder,
     RecyclingEmbedder,
     TemplateAngleEmbedder,
     TemplatePairEmbedder,
-    ExtraMSAEmbedder,
-    PreembeddingEmbedder,
 )
 from openfold.model.evoformer import EvoformerStack, ExtraMSAStack
 from openfold.model.heads import AuxiliaryHeads
@@ -35,20 +33,16 @@ from openfold.model.template import (
     embed_templates_average,
     embed_templates_offload,
 )
-import openfold.np.residue_constants as residue_constants
+from openfold.np import residue_constants
 from openfold.utils.feats import (
-    pseudo_beta_fn,
+    atom14_to_atom37,
     build_extra_msa_feat,
     build_template_angle_feat,
     build_template_pair_feat,
-    atom14_to_atom37,
-)
-from openfold.utils.loss import (
-    compute_plddt,
+    pseudo_beta_fn,
 )
 from openfold.utils.tensor_utils import (
     add,
-    dict_multimap,
     tensor_tree_map,
 )
 
@@ -66,7 +60,7 @@ class AlphaFold(nn.Module):
             config:
                 A dict-like config object (like the one in config.py)
         """
-        super(AlphaFold, self).__init__()
+        super().__init__()
 
         self.globals = config.globals
         self.config = config.model
@@ -147,7 +141,7 @@ class AlphaFold(nn.Module):
         for i in range(n_templ):
             idx = batch["template_aatype"].new_tensor(i)
             single_template_feats = tensor_tree_map(
-                lambda t: torch.index_select(t, templ_dim, idx).squeeze(templ_dim),
+                lambda t: torch.index_select(t, templ_dim, idx).squeeze(templ_dim),  # noqa: B023
                 batch,
             )
 
@@ -236,7 +230,7 @@ class AlphaFold(nn.Module):
         no_batch_dims = len(batch_dims)
         n = feats["target_feat"].shape[-2]
         n_seq = feats["msa_feat"].shape[-3]
-        device = feats["target_feat"].device
+        feats["target_feat"].device  # noqa: B018
         
         # Controls whether the model uses in-place operations throughout
         # The dual condition accounts for activation checkpoints
@@ -516,13 +510,13 @@ class AlphaFold(nn.Module):
         num_iters = batch["aatype"].shape[-1]
         for cycle_no in range(num_iters): 
             # Select the features for the current recycling cycle
-            fetch_cur_batch = lambda t: t[..., cycle_no]
+            fetch_cur_batch = lambda t: t[..., cycle_no]  # noqa: B023
             feats = tensor_tree_map(fetch_cur_batch, batch)
 
             # Enable grad iff we're training and it's the final recycling layer
             is_final_iter = cycle_no == (num_iters - 1)
             with torch.set_grad_enabled(is_grad_enabled and is_final_iter):
-                if is_final_iter:
+                if is_final_iter:  # noqa: SIM102
                     # Sidestep AMP bug (PyTorch issue #65766)
                     if torch.is_autocast_enabled():
                         torch.clear_autocast_cache()

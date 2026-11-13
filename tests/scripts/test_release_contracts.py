@@ -1,25 +1,28 @@
 """Release defaults and provenance survive removal of the research entry points."""
 import json
 import os
-from pathlib import Path
 import subprocess
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 import yaml
 
+from inverse_folding.reference_flow.fusion_v2.dual_config import dual_overlay_payload
+from inverse_folding.reference_flow.fusion_v2.errors import V2Error
+from inverse_folding.reference_flow.fusion_v2.joint_objective import (
+    arm_objective_digest,
+)
 from scripts.refine_rf_designs import build_arg_parser
 from scripts.rf_fusion_v2_cohort import ShardInputs, _terminal_stop_label
 from scripts.run_rf_fusion_v2 import resolve_dual
-from inverse_folding.reference_flow.fusion_v2.errors import V2Error
-from inverse_folding.reference_flow.fusion_v2.dual_config import dual_overlay_payload
-from inverse_folding.reference_flow.fusion_v2.joint_objective import arm_objective_digest
-from tests.inverse_folding.test_fusion_v2_dual_config import overlay
 from tests.inverse_folding.test_fusion_v2_dual_arms import ARMS, _objective
+from tests.inverse_folding.test_fusion_v2_dual_config import overlay
 
 
 def test_selected_release_constraints_and_full_data_recipes():
     import hashlib
+
     from inverse_folding.reference_flow.constraints import load_constraint_manifest
 
     root = Path(__file__).resolve().parents[2]
@@ -79,7 +82,7 @@ def test_merge_cli_runs_without_an_inherited_pythonpath():
     env = {key: value for key, value in os.environ.items() if key != 'PYTHONPATH'}
     result = subprocess.run(
         [sys.executable, str(root / 'scripts/merge_refine_shards.py'), '--help'],
-        cwd=root, env=env, capture_output=True, text=True,
+        cwd=root, env=env, capture_output=True, text=True, check=False,
     )
     assert result.returncode == 0, result.stderr
     assert 'usage:' in result.stdout.lower()

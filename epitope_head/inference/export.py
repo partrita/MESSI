@@ -15,7 +15,6 @@ from pathlib import Path
 
 import torch
 
-
 # ── Required payload keys ────────────────────────────────────────────────────
 
 REQUIRED_PAYLOAD_KEYS = frozenset({

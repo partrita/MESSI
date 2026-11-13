@@ -13,9 +13,8 @@ Coordinate convention: spans are 0-based half-open ``[start, end)`` and ``pep_le
 from __future__ import annotations
 
 import math
+from collections.abc import Callable, Iterable
 from enum import Enum
-from typing import Callable, Iterable
-
 
 # ── Span relation enum ──────────────────────────────────────────────────────
 

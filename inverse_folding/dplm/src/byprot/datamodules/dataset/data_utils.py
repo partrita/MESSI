@@ -3,16 +3,10 @@
 
 
 import heapq
+from collections.abc import Callable, Iterator
 from typing import (
     Any,
-    Callable,
-    Iterator,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
     TypeVar,
-    Union,
 )
 
 import esm
@@ -20,15 +14,19 @@ import numpy as np
 import torch
 from pytorch_lightning import seed_everything
 from torch import distributed as dist
-from torch.utils.data import DataChunk, Dataset
+from torch.utils.data import DataChunk
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data.sampler import BatchSampler, SequentialSampler
 
 
-class Alphabet(object):
+class Alphabet:
     def __init__(
-        self, name="esm", featurizer="cath", alphabet_cfg={}, featurizer_cfg={}
+        self, name="esm", featurizer="cath", alphabet_cfg=None, featurizer_cfg=None
     ):
+        if featurizer_cfg is None:
+            featurizer_cfg = {}
+        if alphabet_cfg is None:
+            alphabet_cfg = {}
         self.name = name
         self._alphabet = None
 
@@ -76,7 +74,7 @@ class Alphabet(object):
     def __getattr__(self, name: str) -> Any:
         try:
             return getattr(self._alphabet, name)
-        except:
+        except:  # noqa: E722
             raise AttributeError(
                 f"{self.__class__} has no attribute `{name}`."
             )
@@ -124,7 +122,7 @@ class Alphabet(object):
         return ret
 
 
-class PDBDataProcessor(object):
+class PDBDataProcessor:
     def parse_PDB(
         self,
         path_to_pdb,
@@ -205,12 +203,6 @@ class PDBDataProcessor(object):
             s = 0
             concat_seq = ""
             concat_coords = []
-            concat_N = []
-            concat_CA = []
-            concat_C = []
-            concat_O = []
-            concat_mask = []
-            coords_dict = {}
             for letter in chain_alphabet:
                 if ca_only:
                     sidechain_atoms = ["CA"]
@@ -257,13 +249,15 @@ class PDBDataProcessor(object):
                 c += 1
         return pdb_dict_list[0]
 
-    def parse_PDB_biounits(self, x, atoms=["N", "CA", "C"], chain=None):
+    def parse_PDB_biounits(self, x, atoms=None, chain=None):
         """
         input:  x = PDB filename
                 atoms = atoms to extract (optional)
         output: (length, atoms, coords=(x,y,z)), sequence
         """
 
+        if atoms is None:
+            atoms = ["N", "CA", "C"]
         alpha_1 = list("ARNDCQEGHILKMFPSTWYVX")
         states = len(alpha_1)
         alpha_3 = [
@@ -293,8 +287,8 @@ class PDBDataProcessor(object):
         aa_1_N = {a: n for n, a in enumerate(alpha_1)}
         aa_3_N = {a: n for n, a in enumerate(alpha_3)}
         aa_N_1 = {n: a for n, a in enumerate(alpha_1)}
-        aa_1_3 = {a: b for a, b in zip(alpha_1, alpha_3)}
-        aa_3_1 = {b: a for a, b in zip(alpha_1, alpha_3)}
+        {a: b for a, b in zip(alpha_1, alpha_3)}
+        {b: a for a, b in zip(alpha_1, alpha_3)}
 
         def AA_to_N(x):
             # ["ARND"] -> [[0,1,2,3]]
@@ -311,7 +305,7 @@ class PDBDataProcessor(object):
             return ["".join([aa_N_1.get(a, "X") for a in y]) for y in x]
 
         xyz, seq, min_resn, max_resn = {}, {}, 1e6, -1e6
-        for line in open(x, "rb"):
+        for line in open(x, "rb"):  # noqa: SIM115
             line = line.decode("utf-8", "ignore").rstrip()
 
             if line[:6] == "HETATM" and line[17 : 17 + 3] == "MSE":
@@ -331,10 +325,8 @@ class PDBDataProcessor(object):
                     else:
                         resa, resn = "", int(resn) - 1
                     #         resn = int(resn)
-                    if resn < min_resn:
-                        min_resn = resn
-                    if resn > max_resn:
-                        max_resn = resn
+                    min_resn = min(min_resn, resn)
+                    max_resn = max(max_resn, resn)
                     if resn not in xyz:
                         xyz[resn] = {}
                     if resa not in xyz[resn]:
@@ -388,7 +380,7 @@ class MaxTokensBatchSampler(BatchSampler):
         max_tokens=6000,
         drop_last=False,
         distributed=False,
-        sort_key: Callable = None,
+        sort_key: Callable | None = None,
         sort=False,
         buffer_size_multiplier=100,
         seed=42,
@@ -422,16 +414,16 @@ class MaxTokensBatchSampler(BatchSampler):
             yield batch
 
     def _build_batches(self):
-        buffer: List = []
+        buffer: list = []
         buffer_size: int = 0
 
-        batch: List = []
+        batch: list = []
         batch_size: int = 0
 
         bucket_batches = []
 
         if self.sort:
-            indices = sorted(list(self.sampler), key=self.sort_key)
+            indices = sorted(self.sampler, key=self.sort_key)
         else:
             indices = self.sampler
 

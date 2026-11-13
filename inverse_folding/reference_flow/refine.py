@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import hashlib
 import math
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
-from typing import Iterable, Mapping, Sequence
 
 MHC2_POCKETS = (0, 3, 5, 8)  # P1, P4, P6, P9 offsets within the 9-mer MHC-II core
 AA20 = "ACDEFGHIKLMNPQRSTVWY"
@@ -174,7 +174,7 @@ def rank_margin_mass(core_ranks, *, strong_rank: float = 0.02, margin_band: floa
     return float(sum(max(strong_rank - r, 0.0) for r in core_ranks if r < margin_band))
 
 
-def structure_gate(seed: "StructureMetrics", cand: "StructureMetrics", *,
+def structure_gate(seed: StructureMetrics, cand: StructureMetrics, *,
                    scTM_eps: float | None,
                    scTM_min: float | None = None,
                    cat_max_scRMSD_max: float | None = None,
@@ -258,7 +258,7 @@ class RefineResult:
     seed_core_count: int
     best_seq: str
     best_core_count: int
-    best_structure: "StructureMetrics"
+    best_structure: StructureMetrics
     n_accepts: int
     diverged: bool
     shortlist: list = field(default_factory=list)    # per-output immune + selected structure metrics
@@ -302,7 +302,7 @@ class HeadRefineResult:
     protein_id: str
     seed_seq: str
     seed_head: HeadRefinementMetrics
-    seed_structure: "StructureMetrics"
+    seed_structure: StructureMetrics
     n_accepts: int
     diverged: bool
     shortlist: list = field(default_factory=list)
@@ -365,7 +365,7 @@ def head_refinement_metrics(
         for name in ("start_0b", "end_0b", "k"):
             value = getattr(window, name, None)
             if isinstance(value, bool) or not isinstance(value, int):
-                raise ValueError(f"Head window {index} has invalid integer {name}")
+                raise ValueError(f"Head window {index} has invalid integer {name}")  # noqa: TRY004
             fields[name] = int(value)
         z = float(getattr(window, "z", float("nan")))
         if not math.isfinite(z):
@@ -973,7 +973,7 @@ def splice_nmp_rows(seed_rows, sub_rows, edited_positions, offset, *, context=3)
     context touches the mutation. EXACT iff each covered window keeps its full peptide+context
     inside the sub-sequence; the caller guarantees this with margin ≥ max_len + context.
     """
-    edited = set(int(p) for p in edited_positions)
+    edited = {int(p) for p in edited_positions}
 
     def covers(pos, plen):
         return any(pos - context <= p < pos + plen + context for p in edited)

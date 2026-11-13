@@ -4,21 +4,22 @@ from __future__ import annotations
 
 import json
 import sys
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:  # allow `python scripts/...` as well as `import scripts...`
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from inverse_folding.reference_flow.fusion_v2.errors import V2Error  # noqa: E402
-from inverse_folding.reference_flow.fusion_v2.identity import canonical_digest  # noqa: E402
+from inverse_folding.reference_flow.fusion_v2.errors import V2Error
+from inverse_folding.reference_flow.fusion_v2.identity import canonical_digest
 
 # REUSE, not reimplementation: the V1 writers already give an explicit Arrow schema, declared
 # column order, a stable sort, atomic manifest writes and the append-safe JSONL ledger format.
 # V2 adds its own column vocabulary through ``write_stable_parquet(types=...)`` -- an argument, not
 # a second parquet implementation (``AGENTS.md`` §5 reuse rule).
-from scripts.rf_artifact_io import (  # noqa: E402,F401
+from scripts.rf_artifact_io import (
     TableSchema,
     write_cost_ledger_jsonl,
     write_manifest,
@@ -26,27 +27,27 @@ from scripts.rf_artifact_io import (  # noqa: E402,F401
 )
 
 __all__ = [
-    "V2ArtifactError",
-    "V2_TABLE_SCHEMAS",
-    "DUAL_TABLE_SCHEMAS",
-    "SCORABLE_CONTRAST_VIEWS",
-    "POLICY_QUALIFICATION_CONTRAST_VIEWS",
-    "V2_COLUMN_TYPES",
     "DUAL_COLUMN_TYPES",
-    "dual_terminal_summary_rows",
-    "dual_feedback_evidence_rows",
-    "dual_endpoint_evidence_rows",
-    "run_manifest",
-    "partial_state_rows",
-    "complete_endpoint_rows",
-    "archive_rows",
-    "structure_evaluation_rows",
-    "feedback_event_rows",
-    "a2_view_rows",
-    "terminal_validation_rows",
+    "DUAL_TABLE_SCHEMAS",
     "MECHANISM_CONTRAST_VIEWS",
+    "POLICY_QUALIFICATION_CONTRAST_VIEWS",
+    "SCORABLE_CONTRAST_VIEWS",
+    "V2_COLUMN_TYPES",
+    "V2_TABLE_SCHEMAS",
+    "V2ArtifactError",
+    "a2_view_rows",
+    "archive_rows",
+    "complete_endpoint_rows",
+    "dual_endpoint_evidence_rows",
+    "dual_feedback_evidence_rows",
+    "dual_terminal_summary_rows",
+    "feedback_event_rows",
     "free_domain",
     "mechanism_contrast_rows",
+    "partial_state_rows",
+    "run_manifest",
+    "structure_evaluation_rows",
+    "terminal_validation_rows",
     "write_v2_bundle",
 ]
 
@@ -403,7 +404,7 @@ def archive_rows(archive: Any, *, admission_by_endpoint: Mapping[str, str] | Non
     by_id = {endpoint.endpoint_id: endpoint for endpoint in archive.endpoints()}
     rows: list[dict] = []
     for entry in archive.raw_rows():
-        endpoint = by_id[entry.endpoint_id]
+        _ = by_id[entry.endpoint_id]
         rows.append({
             "endpoint_id": entry.endpoint_id,
             "endpoint_content_digest": entry.endpoint_content_digest,
@@ -419,7 +420,6 @@ def archive_rows(archive: Any, *, admission_by_endpoint: Mapping[str, str] | Non
             "last_depth_seen": int(entry.last_depth_seen),
             "may_become_ancestry": bool(archive.may_become_ancestry(entry.endpoint_id)),
             "admission_reason": reasons.get(entry.endpoint_id),
-            **({} if endpoint is None else {}),
         })
     return rows
 
@@ -485,8 +485,8 @@ def feedback_event_rows(events: Iterable[Mapping[str, Any]]) -> list[dict]:
         policy = event.get("policy")
         support = getattr(projected, "support", None)
 
-        def _set(name):
-            return list(getattr(support, name, ()) or ())
+        def _set(name, _support=support):
+            return list(getattr(_support, name, ()) or ())
 
         rows.append({
             "transition_id": (
@@ -1240,7 +1240,7 @@ def _validated_ledger_events(events: Sequence[Any]) -> Sequence[Any]:
     rebuilt event would fill absent fields with dataclass defaults, and a defaulted ``0.0`` in a
     physical column is indistinguishable in the artifact from a measurement of zero.
     """
-    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (  # noqa: PLC0415
+    from inverse_folding.reference_flow.fusion_v2_runtime.ledger import (
         V2LedgerError,
         V2LedgerEvent,
     )

@@ -1,15 +1,15 @@
 import argparse
 import logging
 import os
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
 from openfold.data.tools import hhsearch
 
 
 def _split_a3ms(output_dir):
     for fname in os.listdir(output_dir):
-        if(not os.path.splitext(fname)[-1] == ".a3m"):
+        if(os.path.splitext(fname)[-1] != ".a3m"):
             continue
 
         fpath = os.path.join(output_dir, fname)
@@ -34,7 +34,7 @@ def _split_a3ms(output_dir):
 
 def main(args):
     with open(args.input_fasta, "r") as f:
-        lines = [l.strip() for l in f.readlines()]
+        lines = [l.strip() for l in f]
 
     names = lines[::2]
     seqs =  lines[1::2]
@@ -79,7 +79,7 @@ def main(args):
             "0", # db-load-mode
         ]
 
-        logging.info('Launching subprocess "%s"', " ".join(cmd))
+        logging.info('Launching subprocess "%s"', " ".join(cmd))  # noqa: LOG015
         process = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
@@ -89,8 +89,7 @@ def main(args):
         
         if retcode:
             raise RuntimeError(
-                "MMseqs failed\nstdout:\n%s\n\nstderr:\n%s\n"
-                % (stdout.decode("utf-8"), stderr.decode("utf-8"))
+                "MMseqs failed\nstdout:\n{}\n\nstderr:\n{}\n".format(stdout.decode("utf-8"), stderr.decode("utf-8"))
             )
 
         _split_a3ms(args.output_dir)
@@ -111,7 +110,7 @@ def main(args):
         for fname in os.listdir(dpath):
             fpath = os.path.join(dpath, fname)
             if(not "uniref" in fname or 
-                not os.path.splitext(fname)[-1] == ".a3m"):
+                os.path.splitext(fname)[-1] != ".a3m"):
                 continue
 
             with open(fpath, "r") as fp:

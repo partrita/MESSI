@@ -12,7 +12,12 @@ from inverse_folding.reference_flow.fusion_v2_runtime import archive as arch
 from inverse_folding.reference_flow.fusion_v2_runtime import dual_selection as ds
 
 from . import _v2_fixtures as fx
-from .test_fusion_v2_dual_evidence import EVAL_B, calibration, objective, result_a, score_b
+from .test_fusion_v2_dual_evidence import (
+    calibration,
+    objective,
+    result_a,
+    score_b,
+)
 
 
 def endpoint(tokens, **over):
@@ -88,7 +93,7 @@ def test_an_endpoint_without_dual_evidence_is_refused_rather_than_ordered_by_the
 
 
 def test_a_pool_carrying_two_calibrations_cannot_be_ordered_at_all():
-    first, second, evidence, _ = pool()
+    _first, second, evidence, _ = pool()
     other = objective(cal=calibration(density=True))
     evidence[second.endpoint_id] = de.bind_dual_evidence(
         endpoint=second, result_a=result_a(second), result_b=score_b(second, risk=-50.0),
@@ -147,7 +152,7 @@ def test_the_dual_gate_compares_joint_values_while_the_raw_fields_keep_their_mea
 
 
 def test_a_donor_and_incumbent_from_two_calibrations_cannot_form_a_margin():
-    first, second, evidence, _ = pool()
+    first, _second, evidence, _ = pool()
     with pytest.raises(de.V2DualEvidenceError):
         ds.joint_comparison_for(
             donor=first, incumbent_value=-1.0,
@@ -159,7 +164,7 @@ def test_a_joint_comparison_requires_finite_values_and_a_real_digest():
     with pytest.raises(rw.V2RewardError):
         rw.JointComparison(donor_value=float("nan"), incumbent_value=0.0,
                            objective_digest=fx.digest("o"))
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: B017
         rw.JointComparison(donor_value=0.0, incumbent_value=0.0, objective_digest="unset:obj")
 
 

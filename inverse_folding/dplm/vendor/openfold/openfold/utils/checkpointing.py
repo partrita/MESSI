@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import importlib
-from typing import Any, Tuple, List, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 deepspeed_is_installed = importlib.util.find_spec("deepspeed") is not None
 if(deepspeed_is_installed):
@@ -21,9 +22,8 @@ if(deepspeed_is_installed):
 import torch
 import torch.utils.checkpoint
 
-
 BLOCK_ARG = Any
-BLOCK_ARGS = List[BLOCK_ARG]
+BLOCK_ARGS = list[BLOCK_ARG]
 
 
 def get_checkpoint_fn():
@@ -41,9 +41,9 @@ def get_checkpoint_fn():
 
 @torch.jit.ignore
 def checkpoint_blocks(
-    blocks: List[Callable],
+    blocks: list[Callable],
     args: BLOCK_ARGS,
-    blocks_per_ckpt: Optional[int],
+    blocks_per_ckpt: int | None,
 ) -> BLOCK_ARGS:
     """
     Chunk a list of blocks and run each chunk with activation

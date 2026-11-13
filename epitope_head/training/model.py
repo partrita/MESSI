@@ -12,10 +12,8 @@ Implements PLAN.md Task E3 and codemap §6:
 from __future__ import annotations
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-
+from torch import nn
 
 # ── ESM-2 Tokenizer (for datamodule collate_fn) ─────────────────────────────
 
@@ -117,7 +115,7 @@ class FrozenESMEncoder(nn.Module):
         residue_lengths = real_counts - 2  # subtract BOS and EOS
 
         # Extract residue embeddings (positions 1..L for each sample)
-        B, T, D = hidden.shape
+        B, _T, D = hidden.shape
         L_max = int(residue_lengths.max().item())
         embeddings = torch.zeros(B, L_max, D, device=hidden.device, dtype=hidden.dtype)
         for i in range(B):

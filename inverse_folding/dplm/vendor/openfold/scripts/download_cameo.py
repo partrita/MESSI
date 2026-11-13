@@ -1,13 +1,11 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 import argparse
 import json
 import os
 import re
+
 import requests
-
 from openfold.data import mmcif_parsing
-
 
 VALID_PERIODS = [
     "1-year",
@@ -53,7 +51,7 @@ def main(args):
         )
         mmcif_object = parsed_cif.mmcif_object
         if(mmcif_object is None):
-            raise list(parsed_cif.errors.values())[0]
+            raise next(iter(parsed_cif.errors.values()))
 
         seq = mmcif_object.chain_to_seqres[chain_id]
 

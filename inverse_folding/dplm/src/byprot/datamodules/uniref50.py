@@ -2,22 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from functools import partial
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    TypeVar,
-)
 
 import numpy as np
-import torch
 from pytorch_lightning import LightningDataModule
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 
 from byprot import utils
 from byprot.datamodules import register_datamodule
@@ -51,11 +39,11 @@ class UniRefDataModule(LightningDataModule):
 
         self.alphabet = None
 
-        self.train_data: Optional[Dataset] = None
-        self.valid_data: Optional[Dataset] = None
-        self.test_data: Optional[Dataset] = None
+        self.train_data: Dataset | None = None
+        self.valid_data: Dataset | None = None
+        self.test_data: Dataset | None = None
 
-    def setup(self, stage: Optional[str] = None):
+    def setup(self, stage: str | None = None):
         """Load data. Set variables: `self.data_train`, `self.data_val`,
         `self.data_test`.
 

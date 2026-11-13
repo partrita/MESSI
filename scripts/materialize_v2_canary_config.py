@@ -17,9 +17,13 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 __all__ = [
-    "build_parser", "main",
-    "file_digest", "head_config_hash", "no_constraint_manifest_digest",
-    "resolve_content_bindings", "fill_config",
+    "build_parser",
+    "file_digest",
+    "fill_config",
+    "head_config_hash",
+    "main",
+    "no_constraint_manifest_digest",
+    "resolve_content_bindings",
 ]
 
 
@@ -229,8 +233,12 @@ def _resolve_relative_bands(args) -> None:
     if getattr(args, "exploratory_profile", None) != "highrisk_d4_k12_relative":
         return
     from dataclasses import replace
+
     from inverse_folding.reference_flow.fusion_v2.schedule import (
-        assumed_linear_band, band_table_payload, load_band_table, make_band_table,
+        assumed_linear_band,
+        band_table_payload,
+        load_band_table,
+        make_band_table,
     )
     source = load_band_table(args.band_json)
     bands = list(source.bands)

@@ -193,7 +193,7 @@ def load_constraint_manifest(path: str | Path) -> ConstraintManifest:
     with open(path) as handle:
         raw = yaml.safe_load(handle) or {}
     if not isinstance(raw, dict):
-        raise ValueError(f"constraint manifest {path} must be a mapping at top level")
+        raise ValueError(f"constraint manifest {path} must be a mapping at top level")  # noqa: TRY004
 
     entries_raw = raw.get("entries")
     if not isinstance(entries_raw, list) or not entries_raw:

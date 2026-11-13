@@ -17,7 +17,7 @@
 
 import collections
 import functools
-from typing import Mapping, List, Tuple
+from collections.abc import Mapping
 from importlib import resources
 
 import numpy as np
@@ -437,11 +437,11 @@ BondAngle = collections.namedtuple(
 )
 
 
-@functools.lru_cache(maxsize=None)
-def load_stereo_chemical_props() -> Tuple[
-    Mapping[str, List[Bond]],
-    Mapping[str, List[Bond]],
-    Mapping[str, List[BondAngle]],
+@functools.cache
+def load_stereo_chemical_props() -> tuple[
+    Mapping[str, list[Bond]],
+    Mapping[str, list[Bond]],
+    Mapping[str, list[BondAngle]],
 ]:
     """Load stereo_chemical_props.txt into a nice structure.
 
@@ -909,7 +909,7 @@ def sequence_to_onehot(
     if sorted(set(mapping.values())) != list(range(num_entries)):
         raise ValueError(
             "The mapping must have values from 0 to num_unique_aas-1 "
-            "without any gaps. Got: %s" % sorted(mapping.values())
+            f"without any gaps. Got: {sorted(mapping.values())}"
         )
 
     one_hot_arr = np.zeros((len(sequence), num_entries), dtype=np.int32)

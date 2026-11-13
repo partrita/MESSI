@@ -19,8 +19,6 @@ tests + post-hoc real training.
 
 from __future__ import annotations
 
-import math
-
 import numpy as np
 import pytest
 import torch
@@ -30,7 +28,6 @@ from epitope_head.training.losses import (
     info_nce_loss,
     margin_hard_loss,
 )
-
 
 # ── Weighted InfoNCE ────────────────────────────────────────────────────────
 
@@ -191,7 +188,7 @@ class TestPrepareChunkSpansExtras:
         )
         # 5-tuple after HIMP4: (pos, neg, allele_pos, allele_neg, extras)
         assert len(result) == 5
-        pos, neg, ap, an, extras = result
+        _pos, _neg, _ap, _an, extras = result
         assert isinstance(extras, list)
         assert len(extras) == 1
         # In legacy mode (no near_positive/residue cfg) extras dict has the
@@ -218,7 +215,7 @@ class TestPrepareChunkSpansExtras:
             near_positive_cfg=np_cfg,
         )
         assert len(result) == 5
-        pos, neg, ap, an, extras = result
+        _pos, neg, _ap, _an, extras = result
         chunk_extras = extras[0]
         # Weights present, length == n_neg.
         weights = chunk_extras["neg_weights"]

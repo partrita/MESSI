@@ -1,5 +1,4 @@
 import argparse
-import logging
 import os
 import shutil
 
@@ -27,7 +26,7 @@ def main(args):
 
         # Only consider files with matching mmCIF files
         if(pdb_id == os.path.splitext(mmcifs[mmcif_idx])[0].upper()):
-            dirname = os.path.join(args.out_dir, '_'.join([pdb_id, chain_id]))
+            dirname = os.path.join(args.out_dir, f'{pdb_id}_{chain_id}')
             os.makedirs(dirname, exist_ok=True)
             dest = os.path.join(dirname, f)
             if(args.copy):

@@ -7,14 +7,13 @@ import hashlib
 import json
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pandas as pd
 import torch
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 BYPROT_SRC = PROJECT_ROOT / "inverse_folding" / "dplm" / "src"
@@ -27,7 +26,7 @@ from dataclasses import dataclass
 # EXACTLY the file this runtime will later load; a validator with its own copy of the candidate
 # order would certify a path the run does not use. Re-exported here, so existing imports and the
 # monkeypatch target ``reference_flow.runtime.resolve_structure_path`` are unchanged.
-from inverse_folding.reference_flow.structure_paths import (  # noqa: E402
+from inverse_folding.reference_flow.structure_paths import (
     infer_chain_id,
     resolve_structure_path,
     safe_file_id,
@@ -69,7 +68,7 @@ def safe_allele_tag(allele: str) -> str:
 
 
 def utc_timestamp() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def git_sha(root: Path | None = None) -> str:
@@ -221,7 +220,7 @@ def prepare_backbone_batch(
             coords, structure_path = _coords_from_entry_or_structure(
                 row, pdb_root=pdb_root
             )
-        except Exception as exc:  # noqa: BLE001 - per-entry isolation
+        except Exception as exc:
             if not skip_invalid:
                 raise
             prep_failures.append(
@@ -244,7 +243,7 @@ def prepare_backbone_batch(
     featurizer = task.alphabet.featurizer
     try:
         batch = featurizer(items)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         if not skip_invalid:
             raise
         # The featurizer rarely fails after per-entry load succeeded; if
@@ -333,13 +332,13 @@ def generate_native_sequences_batched(
     batch["prev_tokens"] = prev_tokens
     batch["prev_token_mask"] = prev_token_mask
 
-    generate_kwargs: dict[str, Any] = dict(
-        batch=batch,
-        max_iter=max_iter,
-        sampling_strategy=sampling_strategy,
-        temperature=temperature,
-        use_draft_seq=bool(task.hparams.generator.use_draft_seq),
-    )
+    generate_kwargs: dict[str, Any] = {
+        "batch": batch,
+        "max_iter": max_iter,
+        "sampling_strategy": sampling_strategy,
+        "temperature": temperature,
+        "use_draft_seq": bool(task.hparams.generator.use_draft_seq),
+    }
     if logit_processor is not None:
         generate_kwargs["logit_processor"] = logit_processor
     output_tokens, _ = task.model.generate(**generate_kwargs)
@@ -384,13 +383,13 @@ def generate_native_sequence(
     batch["prev_tokens"] = prev_tokens
     batch["prev_token_mask"] = prev_token_mask
 
-    generate_kwargs: dict[str, Any] = dict(
-        batch=batch,
-        max_iter=max_iter,
-        sampling_strategy=sampling_strategy,
-        temperature=temperature,
-        use_draft_seq=bool(task.hparams.generator.use_draft_seq),
-    )
+    generate_kwargs: dict[str, Any] = {
+        "batch": batch,
+        "max_iter": max_iter,
+        "sampling_strategy": sampling_strategy,
+        "temperature": temperature,
+        "use_draft_seq": bool(task.hparams.generator.use_draft_seq),
+    }
     if logit_processor is not None:
         generate_kwargs["logit_processor"] = logit_processor
     output_tokens, _ = task.model.generate(**generate_kwargs)

@@ -2,15 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
-    List,
     Literal,
-    Mapping,
-    Optional,
     Union,
 )
 
@@ -19,7 +14,6 @@ from lightning.pytorch.loggers.logger import Logger
 from lightning.pytorch.loggers.wandb import WandbLogger
 
 if TYPE_CHECKING:
-    from wandb import Artifact
     from wandb.sdk.lib import RunDisabled
     from wandb.wandb_run import Run
 
@@ -32,18 +26,18 @@ from lightning.pytorch.utilities.exceptions import MisconfigurationException
 class ByProtWandbLogger(WandbLogger):
     def __init__(
         self,
-        name: Optional[str] = None,
+        name: str | None = None,
         save_dir: _PATH = ".",
-        version: Optional[str] = None,
+        version: str | None = None,
         offline: bool = False,
-        dir: Optional[_PATH] = None,
-        id: Optional[str] = None,
-        anonymous: Optional[bool] = None,
-        project: Optional[str] = None,
-        log_model: Union[Literal["all"], bool] = False,
+        dir: _PATH | None = None,
+        id: str | None = None,
+        anonymous: bool | None = None,
+        project: str | None = None,
+        log_model: Literal["all"] | bool = False,
         experiment: Union["Run", "RunDisabled", None] = None,
         prefix: str = "",
-        checkpoint_name: Optional[str] = None,
+        checkpoint_name: str | None = None,
         **kwargs: Any,
     ) -> None:
         # HIGHLIGHT: Remove this check below
@@ -63,8 +57,8 @@ class ByProtWandbLogger(WandbLogger):
         self._log_model = log_model
         self._prefix = prefix
         self._experiment = experiment
-        self._logged_model_time: Dict[str, float] = {}
-        self._checkpoint_callback: Optional[ModelCheckpoint] = None
+        self._logged_model_time: dict[str, float] = {}
+        self._checkpoint_callback: ModelCheckpoint | None = None
 
         # paths are processed as strings
         if save_dir is not None:
@@ -75,7 +69,7 @@ class ByProtWandbLogger(WandbLogger):
         project = project or os.environ.get("WANDB_PROJECT", "lightning_logs")
 
         # set wandb init arguments
-        self._wandb_init: Dict[str, Any] = {
+        self._wandb_init: dict[str, Any] = {
             "name": name,
             "project": project,
             "dir": save_dir or dir,

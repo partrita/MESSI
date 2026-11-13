@@ -15,7 +15,8 @@ from __future__ import annotations
 
 import argparse
 import os
-from typing import Any, Iterable, Sequence
+from collections.abc import Iterable, Sequence
+from typing import Any
 
 try:  # pragma: no cover - import guard exercised on cluster only
     import wandb as _wandb
@@ -93,7 +94,7 @@ def init_wandb_from_args(
     if extra_tags:
         tags.extend(extra_tags)
 
-    project = str(getattr(args, "wandb_project"))
+    project = str(args.wandb_project)
     group = getattr(args, "wandb_group", None)
 
     run = _wandb.init(
@@ -134,7 +135,7 @@ def set_summary(run: Any, summary: dict[str, Any]) -> None:
             continue
         try:
             run.summary[key] = value
-        except Exception:  # noqa: BLE001 - never break the host script on telemetry
+        except Exception:  # noqa: BLE001, S110
             pass
 
 
@@ -143,7 +144,7 @@ def finish_wandb(run: Any) -> None:
         return
     try:
         run.finish()
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001, S110
         pass
 
 

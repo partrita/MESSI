@@ -32,19 +32,19 @@ def window_pair(*, scale_a=2.0, scale_b=4.0, loc_a=0.0, loc_b=1.0):
 
 
 def calibration(**over):
-    kwargs = dict(
-        panel=jo.PanelBinding(
+    kwargs = {
+        "panel": jo.PanelBinding(
             panel_id="tier2_natural_v1", panel_digest=fx.digest("panel"), n_proteins=53184,
             overlap_fraction_a=0.041, overlap_fraction_b=0.049,
             equal_risk_line_stderr=0.028, leave_overlap_out_shift=0.004,
             cross_allele_pearson=0.19),
-        risk=jo.QuantityCoordinates(
+        "risk": jo.QuantityCoordinates(
             quantity="global_risk", a=coordinate(jo.AlleleRole.A, EVAL_A),
             b=coordinate(jo.AlleleRole.B, EVAL_B)),
-        density=None, window=window_pair(),
-        law=jo.DualObjectiveLaw(mode=jo.ObjectiveMode.SMOOTH_MAX, tau=0.15,
+        "density": None, "window": window_pair(),
+        "law": jo.DualObjectiveLaw(mode=jo.ObjectiveMode.SMOOTH_MAX, tau=0.15,
                                 tau_units="normalized", version="dual-obj-1"),
-        version="dual-cal-1")
+        "version": "dual-cal-1"}
     kwargs.update(over)
     return jo.DualCalibration(**kwargs)
 
@@ -78,7 +78,7 @@ def paired(donor_z_a, ref_z_a, donor_z_b, ref_z_b, **over):
         reference_score=score(EVAL_B, z_by_window=ref_z_b, sequence=INCUMBENT,
                               md5=sequence_md5(INCUMBENT)),
         evaluator=EVAL_B, reference_label="lineage_incumbent")
-    kw = dict(a=a, b=b, coordinates=calibration().window)
+    kw = {"a": a, "b": b, "coordinates": calibration().window}
     kw.update(over)
     return dp.PairedWindowEvidence(**kw)
 
@@ -327,17 +327,17 @@ def b_score(**over):
 
 def authority(**over):
     cal = calibration()
-    kwargs = dict(
-        objective=jo.DualObjective(cal),
-        window_coordinates=cal.window,
-        evaluator_b=EVAL_B,
-        counterfactual_scorer_b=Scorer(EVAL_B, {}, -4.0),
-        incumbent_score_b=b_score(),
-        incumbent_joint_value=-1.0,
-        safety_reference_score_b=b_score(),
-        donor_score_b_by_endpoint={"endpoint:x": b_score()},
-        max_counterfactual_sequences_per_cycle=64,
-    )
+    kwargs = {
+        "objective": jo.DualObjective(cal),
+        "window_coordinates": cal.window,
+        "evaluator_b": EVAL_B,
+        "counterfactual_scorer_b": Scorer(EVAL_B, {}, -4.0),
+        "incumbent_score_b": b_score(),
+        "incumbent_joint_value": -1.0,
+        "safety_reference_score_b": b_score(),
+        "donor_score_b_by_endpoint": {"endpoint:x": b_score()},
+        "max_counterfactual_sequences_per_cycle": 64,
+    }
     kwargs.update(over)
     return dp.DualSupportAuthority(**kwargs)
 
@@ -345,14 +345,14 @@ def authority(**over):
 def donor_stub(endpoint_id="endpoint:x", **over):
     """Role A's view of one donor: the identity fields the role B score is proved against."""
     reference = b_score()
-    kwargs = dict(
-        endpoint_id=endpoint_id, protein_id=reference.protein_id,
-        sequence_md5=reference.sequence_md5, sequence_length=reference.sequence_length,
-        head_global_risk=-1.0,
-        head_binding=ident.HeadScoreBinding(
+    kwargs = {
+        "endpoint_id": endpoint_id, "protein_id": reference.protein_id,
+        "sequence_md5": reference.sequence_md5, "sequence_length": reference.sequence_length,
+        "head_global_risk": -1.0,
+        "head_binding": ident.HeadScoreBinding(
             protein_id=reference.protein_id, sequence_md5=reference.sequence_md5,
             sequence_length=reference.sequence_length,
-            window_grid_digest=ident.window_grid_digest(reference.windows), evaluator=EVAL_A))
+            window_grid_digest=ident.window_grid_digest(reference.windows), evaluator=EVAL_A)}
     kwargs.update(over)
     return dataclasses.make_dataclass(
         "_Donor", [(name, object) for name in kwargs], frozen=True)(**kwargs)
