@@ -3,7 +3,7 @@ name = "messi"
 version = "0.1.0"
 description = "MESSI: protein deimmunization with discrete diffusion"
 channels = ["conda-forge"]
-platforms = [{ platform = "linux-64", virtual-packages = ["__linux=4.18"] }]
+platforms = [{ name = "linux-64-el8", platform = "linux-64", linux = "4.18" }]
 
 [dependencies]
 python = "3.12.*"

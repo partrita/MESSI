@@ -1,9 +1,10 @@
 version: 7
 platforms:
-- name: linux-64
+- name: linux-64-el8
+  subdir: linux-64
   virtual-packages:
-  - __unix=0
   - __linux=4.18
+  - __unix=0
   - __glibc=2.28
   - __archspec=0=x86_64
 environments:
@@ -14,7 +15,7 @@ environments:
     - https://pypi.org/simple
     - https://download.pytorch.org/whl/cpu
     packages:
-      linux-64:
+      linux-64-el8:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/bzip2-1.0.8-hda65f42_10.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.46.1-default_hbd61a6d_103.conda
@@ -90,7 +91,7 @@ environments:
     - https://pypi.org/simple
     - https://download.pytorch.org/whl/cu128
     packages:
-      linux-64:
+      linux-64-el8:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/bzip2-1.0.8-hda65f42_10.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.46.1-default_hbd61a6d_103.conda
@@ -181,7 +182,7 @@ environments:
     - https://pypi.org/simple
     - https://download.pytorch.org/whl/cu128
     packages:
-      linux-64:
+      linux-64-el8:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/bzip2-1.0.8-hda65f42_10.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.46.1-default_hbd61a6d_103.conda
@@ -274,7 +275,7 @@ environments:
     find-links:
     - url: https://data.pyg.org/whl/torch-2.7.0+cpu.html
     packages:
-      linux-64:
+      linux-64-el8:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/bzip2-1.0.8-hda65f42_10.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.46.1-default_hbd61a6d_103.conda
@@ -402,7 +403,7 @@ environments:
     find-links:
     - url: https://data.pyg.org/whl/torch-2.7.0+cu128.html
     packages:
-      linux-64:
+      linux-64-el8:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/bzip2-1.0.8-hda65f42_10.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.46.1-default_hbd61a6d_103.conda
