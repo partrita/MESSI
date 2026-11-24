@@ -3,7 +3,7 @@ name = "byprot"
 version = "1.0.0"
 description = "A pytorch library for swift protein design research and developing."
 authors = ["ByteDance Research <zhengzaixiang@bytedance.com>"]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "torch",
     "torchmetrics",
