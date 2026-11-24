@@ -1,11 +1,17 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+# Dependabot version updates for the uv-managed generation project.
+# The repository itself is a Pixi workspace (pixi.toml/pixi.lock); the only
+# manifest Dependabot can read here is inverse_folding/dplm (pyproject.toml +
+# uv.lock), so updates are pointed there.
 
 version: 2
 updates:
-  - package-ecosystem: "" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "uv"
+    directory: "/inverse_folding/dplm"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      dplm-python:
+        patterns: ["*"]
