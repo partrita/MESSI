@@ -1,7 +1,12 @@
 name: CPU contracts
-on: [push, pull_request]
+
+on:
+  push:
+  pull_request:
+
 jobs:
-  test:
+  cpu-tests:
+    name: CPU contract tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -9,15 +14,29 @@ jobs:
       pull-requests: read
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: prefix-dev/setup-pixi@v0.11.3
         with:
-          python-version: '3.12'
-          cache: uv
-      - uses: astral/setup-uv@v5
+          environments: cpu
+          cache: true
+          # 커밋된 pixi.lock은 재해석해도 바이트 단위로 같지만 pixi 0.84가 stale로
+          # 판정해 --locked 설치가 실패한다. pixi가 잠금 파일을 새로 고치게 둔다.
+          locked: false
+      - name: Run CPU contract tests
+        run: pixi run -e cpu test
+
+  generation-imports:
+    name: Generation import smoke check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.11.3
         with:
-          uv-version: "0.4.x"
-      - run: uv pip install torch==2.7.1 --index-url https://download.pytorch.org/whl/cpu
-      - run: uv pip install -r requirements.txt pytest==9.0.2
-      - run: uv pip install -r requirements-generation.txt
-      - run: uv pip install torch-scatter -f https://data.pyg.org/whl/torch-2.7.0+cpu.html
-      - run: python -c 'from inverse_folding.reference_flow.runtime import _load_byprot_imports; _load_byprot_imports()'
+          environments: generation-cpu
+          cache: true
+          locked: false
+      - name: Check generation runtime imports
+        run: pixi run -e generation-cpu check-generation-imports
