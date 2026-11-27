@@ -593,7 +593,7 @@ requires-dist = [
     { name = "torch-sparse", marker = "extra == 'pyg'" },
     { name = "torch-spline-conv", marker = "extra == 'pyg'" },
     { name = "torchmetrics" },
-    { name = "transformers", specifier = "==5.24.0" },
+    { name = "transformers", specifier = "==5.24.1" },
 ]
 provides-extras = ["pyg"]
 
@@ -1723,6 +1723,16 @@ dependencies = [
     { name = "msgpack" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/1e/b2/feac5472e17295abc7c08dc2dda23c538559dc58dc58eb31095182498d86/ihm-2.13.tar.gz", hash = "sha256:71c9e30f4ded27f8985961ecb51fd1b932a9bf5ced17eff4069f1f5fc22093af", size = 435129, upload-time = "2026-11-12T08:04:36.738Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8a/32/a61591c9e70c1c1320208eb4bd5e6291e8ca7d40bac307bbd6af31c28da0/ihm-2.13-cp311-abi3-macosx_10_9_x86_64.whl", hash = "sha256:3fa02315eafde8571e8079ae118d7320243a334a53ae531ef91f2916e6d03a8a", size = 251136, upload-time = "2026-11-25T01:46:57.116Z" },
+    { url = "https://files.pythonhosted.org/packages/49/4e/c7b1e25d99e0f54a79ceba03c3763eb7dfc801938da8e7f744eddaae1df3/ihm-2.13-cp311-abi3-macosx_11_0_arm64.whl", hash = "sha256:80626261abb1feacb5157b19ead56e479a15f09d64bba3c56ed0dde37795243a", size = 251002, upload-time = "2026-11-25T01:46:58.1Z" },
+    { url = "https://files.pythonhosted.org/packages/0e/19/8e08af82aeebbbeebeb08e1f4128dd5eafc00ec374caed3d1bd32585d26a/ihm-2.13-cp311-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:2c29e001dc45447aee629defc30ed6e665219ea3c7925a771a2ce5e367f0d25a", size = 450902, upload-time = "2026-11-25T01:46:59.049Z" },
+    { url = "https://files.pythonhosted.org/packages/8b/65/541affc7e578a5dffda0fac1040d93d82fade1adb28bb0dc0864123ceb99/ihm-2.13-cp311-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:a6d0e3b884d04bd30fb97ca9079930e72ba151d1562a11097cb7a6cf29f21a8f", size = 454015, upload-time = "2026-11-25T01:46:59.934Z" },
+    { url = "https://files.pythonhosted.org/packages/77/fc/964123cd710fe001f1523c1d50e1376c8c1c697ea0fd9652724b61eac13d/ihm-2.13-cp311-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:9e4d8ff48ecf9e07aac6d052dca5e27c34e1542955270d5636e9027a4fc02dd4", size = 448740, upload-time = "2026-11-25T01:47:00.989Z" },
+    { url = "https://files.pythonhosted.org/packages/bf/be/d4db4b0925abdd762770850ddb56bf229b1332daa8e9d2d4e79f1b778722/ihm-2.13-cp311-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:f5074a7d1784e8c586ee02a8555fa5f028fa958c5a8317ad24bfc47bb0bdbd40", size = 451806, upload-time = "2026-11-25T01:47:01.908Z" },
+    { url = "https://files.pythonhosted.org/packages/74/fc/4d5a673c906fb40e9d45aebcd1fac9f6060db1e7f66e1a2860b427655ed4/ihm-2.13-cp311-abi3-win32.whl", hash = "sha256:c9d2eedd230a5fb7dd96e8e6bf74aabbf34237cfe7828032445cb4eb1057cc52", size = 230383, upload-time = "2026-11-25T01:46:30.512Z" },
+    { url = "https://files.pythonhosted.org/packages/db/e4/e4b50f7cfd8af6a49bb1f5936bf35db0d6a32d309eba73512496d556417a/ihm-2.13-cp311-abi3-win_amd64.whl", hash = "sha256:6032c48f5b72e9c978b9894a29ffffbcb2850f98d2c765a1d4018386dea4c77e", size = 237686, upload-time = "2026-11-25T01:46:10.611Z" },
+]
 
 [[package]]
 name = "iniconfig"
@@ -5057,7 +5067,7 @@ wheels = [
 
 [[package]]
 name = "transformers"
-version = "5.24.0"
+version = "5.24.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "huggingface-hub" },
@@ -5071,9 +5081,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ee/3b/1680200d94d5e567443223dce26f9c6c26c6366ce5232981923c6c01e9d6/transformers-5.24.0.tar.gz", hash = "sha256:906cb8c3cb2123575e263962586a4d21a979ce97feeb95fe6aaf66fe6ae88bf3", size = 10751687, upload-time = "2026-11-21T12:24:32.616Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cb/35/b341c8fddb57f9b404438d048ff0d41d6523b3c6440f8eeed0bb3f4e1725/transformers-5.24.1.tar.gz", hash = "sha256:71fae247d9ad61f553fb84de2089f427f5ff2c080686f9deb51e660487e8c270", size = 10758394, upload-time = "2026-11-24T16:11:46.481Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a4/6c/0a5b01b84e605e811f25d091262f199894c0839dcd7f2a289254cf7a16a7/transformers-5.24.0-py3-none-any.whl", hash = "sha256:ff5ebedf9359f94bb63772b6380eba6e7104d010cbbb2cb82c788817ea7486f6", size = 13549890, upload-time = "2026-11-21T12:24:29.434Z" },
+    { url = "https://files.pythonhosted.org/packages/1c/45/8aa25aeec09086bfd5fa094b91917ff52025c55907363fc94022eac4a0df/transformers-5.24.1-py3-none-any.whl", hash = "sha256:505b39d3e45a3715f3acb81b858eb245ce1a462373b7f99e26f0dcd41ed4cd0f", size = 13556588, upload-time = "2026-11-24T16:11:43.459Z" },
 ]
 
 [[package]]
