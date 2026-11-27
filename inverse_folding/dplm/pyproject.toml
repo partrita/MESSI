@@ -43,7 +43,7 @@ dependencies = [
     "seaborn",
     "sympy",
     "tmtools",
-    "transformers==5.24.0",
+    "transformers==5.24.1",
     "MDAnalysis",
 ]
 
